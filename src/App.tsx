@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Trophy, 
@@ -45,6 +45,9 @@ import {
   Eye,
   Key,
   AlertTriangle,
+  AlertCircle,
+  Home,
+  ArrowRight,
   Trash2,
   Download,
   Upload,
@@ -177,9 +180,21 @@ export default function App() {
   const [userAnswer, setUserAnswer] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [stats, setStats] = useState<GameStats>({});
+  const [ownedCards, setOwnedCards] = useState<Record<string, number>>({});
+  const [penaltyActive, setPenaltyActive] = useState(false);
+  const [penaltyTime, setPenaltyTime] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [showGacha, setShowGacha] = useState(false);
+  const [gachaResult, setGachaResult] = useState<string | null>(null);
+  const [isGachaRolling, setIsGachaRolling] = useState(false);
+  const [gachaResults, setGachaResults] = useState<string[]>([]);
+  const [currentGachaIndex, setCurrentGachaIndex] = useState(-1);
+  const [targetCardId, setTargetCardId] = useState<string | null>(null);
   const [resetStep, setResetStep] = useState(0);
 
-  // Load stats from localStorage
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Load stats and collection from localStorage
   useEffect(() => {
     const savedStats = localStorage.getItem('it_quiz_stats');
     if (savedStats) {
@@ -189,7 +204,22 @@ export default function App() {
         console.error("Failed to parse stats", e);
       }
     }
+
+    const savedCollection = localStorage.getItem('it_quiz_collection');
+    if (savedCollection) {
+      try {
+        setOwnedCards(JSON.parse(savedCollection));
+      } catch (e) {
+        console.error("Failed to parse collection", e);
+      }
+    }
   }, []);
+
+  // Save collection to localStorage
+  const saveCollection = (newCollection: Record<string, number>) => {
+    setOwnedCards(newCollection);
+    localStorage.setItem('it_quiz_collection', JSON.stringify(newCollection));
+  };
 
   // Save stats to localStorage
   const saveStats = (newStats: GameStats) => {
@@ -261,13 +291,106 @@ export default function App() {
     }
   };
 
+  // Gacha Logic
+  const pullGacha = () => {
+    if (isGachaRolling) return;
+    setIsGachaRolling(true);
+    setGachaResults([]);
+    setCurrentGachaIndex(-1);
+
+    // Determine number of pulls
+    let pullCount = 1;
+    if (questions.length === 20) pullCount = 5;
+    else if (questions.length === 10) pullCount = 2;
+
+    const results: string[] = [];
+    const newCollection = { ...ownedCards };
+
+    for (let i = 0; i < pullCount; i++) {
+      // Rarity weights based on score
+      let weights = { UR: 1, SR: 5, R: 20, C: 74 };
+      if (score > 3000) weights = { UR: 10, SR: 25, R: 40, C: 25 };
+      else if (score > 2000) weights = { UR: 5, SR: 15, R: 40, C: 40 };
+      else if (score > 1000) weights = { UR: 2, SR: 10, R: 30, C: 58 };
+
+      const allTerms = Object.keys(termDescriptions);
+      
+      // Determine rarity first
+      const rand = Math.random() * 100;
+      let selectedRarity: Rarity = 'C';
+      let cumulative = 0;
+      for (const [rarity, weight] of Object.entries(weights)) {
+        cumulative += weight;
+        if (rand <= cumulative) {
+          selectedRarity = rarity as Rarity;
+          break;
+        }
+      }
+
+      // Filter terms by rarity
+      let possibleTerms = allTerms.filter(term => (termRarities[term] || 'C') === selectedRarity);
+      
+      // Bias: 70% chance to pick from unowned if available in this rarity
+      const unownedInRarity = possibleTerms.filter(term => !newCollection[term]);
+      if (unownedInRarity.length > 0 && Math.random() < 0.7) {
+        possibleTerms = unownedInRarity;
+      }
+
+      const resultTerm = possibleTerms[Math.floor(Math.random() * possibleTerms.length)];
+      results.push(resultTerm);
+      newCollection[resultTerm] = (newCollection[resultTerm] || 0) + 1;
+    }
+
+    setTimeout(() => {
+      saveCollection(newCollection);
+      setGachaResults(results);
+      setCurrentGachaIndex(0);
+      setIsGachaRolling(false);
+    }, 2000);
+  };
+
+  const jumpToCollection = (term: string) => {
+    // Find category and subcategory for this term
+    let catId = quizCategories[0].id;
+    let subId: string | null = null;
+
+    for (const cat of quizCategories) {
+      for (const sub of cat.subcategories) {
+        if (sub.terms.includes(term)) {
+          catId = cat.id;
+          subId = sub.id;
+          break;
+        }
+      }
+    }
+
+    setActiveCollectionTab(catId);
+    setActiveSubcollectionTab(subId);
+    setTargetCardId(term);
+    setGameState('COLLECTION');
+  };
+
+  // Scroll to target card when jumping to collection
+  useEffect(() => {
+    if (gameState === 'COLLECTION' && targetCardId && cardRefs.current[targetCardId]) {
+      setTimeout(() => {
+        cardRefs.current[targetCardId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Highlight effect could be added here
+        setTargetCardId(null);
+      }, 500);
+    }
+  }, [gameState, targetCardId]);
+
   const handleCardClick = (term: string) => {
+    if (!ownedCards[term]) return;
+
     if (pickedCard?.term === term) {
-      // If already picked, cycle description
+      // If already picked, cycle description (only unlocked ones)
       const descriptions = termDescriptions[term] || ["説明がありません。"];
+      const unlockedCount = Math.min(ownedCards[term], descriptions.length);
       setPickedCard({
         term,
-        descriptionIndex: (pickedCard.descriptionIndex + 1) % descriptions.length
+        descriptionIndex: (pickedCard.descriptionIndex + 1) % unlockedCount
       });
     } else {
       setPickedCard({ term, descriptionIndex: 0 });
@@ -396,6 +519,11 @@ export default function App() {
     setTimeLeft(15);
     setUserAnswer(null);
     setFeedback(null);
+    setCorrectCount(0);
+    setPenaltyActive(false);
+    setPenaltyTime(0);
+    setShowGacha(false);
+    setGachaResult(null);
   };
 
   const quitQuiz = () => {
@@ -416,7 +544,22 @@ export default function App() {
     return () => clearInterval(timer);
   }, [gameState, timeLeft, feedback]);
 
+  // Penalty timer logic
+  useEffect(() => {
+    let timer: number;
+    if (penaltyActive && penaltyTime > 0) {
+      timer = window.setInterval(() => {
+        setPenaltyTime(prev => Math.max(0, prev - 0.1));
+      }, 100);
+    } else if (penaltyTime <= 0 && penaltyActive) {
+      setPenaltyActive(false);
+    }
+    return () => clearInterval(timer);
+  }, [penaltyActive, penaltyTime]);
+
   const handleAnswer = (answer: string) => {
+    if (penaltyActive) return;
+
     const currentQuestion = questions[currentQuestionIndex];
     const isCorrect = answer === currentQuestion.correctAnswer;
     setUserAnswer(answer);
@@ -428,11 +571,16 @@ export default function App() {
       setScore(prev => prev + 100 + timeBonus + comboBonus);
       setCombo(prev => prev + 1);
       setMaxCombo(prev => Math.max(prev, combo + 1));
+      setCorrectCount(prev => prev + 1);
       setFeedback('CORRECT');
     } else {
       setCombo(0);
       setFeedback('WRONG');
+      setPenaltyActive(true);
+      setPenaltyTime(5);
     }
+
+    const delay = isCorrect ? 2000 : 5000;
 
     setTimeout(() => {
       setFeedback(null);
@@ -447,7 +595,7 @@ export default function App() {
         }
         setGameState('RESULT');
       }
-    }, 2000);
+    }, delay);
   };
 
   // Filtered terms for collection
@@ -790,58 +938,69 @@ export default function App() {
                       {categoryTerms.map(({ term }, index) => {
                         const rarity = termRarities[term] || 'C';
                         const styles = getRarityStyles(rarity);
+                        const isOwned = !!ownedCards[term];
+                        const count = ownedCards[term] || 0;
                         
                         return (
                           <motion.div 
                             key={term}
+                            ref={el => cardRefs.current[term] = el}
                             layout
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.05 }}
-                            whileHover={{ scale: 1.05, rotateY: 2 }}
+                            whileHover={isOwned ? { scale: 1.05, rotateY: 2 } : {}}
                             onClick={() => handleCardClick(term)}
-                            className={`relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer group ${styles.border} ${styles.glow} transition-all duration-300`}
+                            className={`relative aspect-[3/4] rounded-2xl overflow-hidden ${isOwned ? 'cursor-pointer' : 'cursor-not-allowed grayscale opacity-50'} group ${isOwned ? styles.border : 'border-2 border-dashed border-gray-300'} ${isOwned ? styles.glow : ''} transition-all duration-300`}
                           >
                             {/* Card Background */}
-                            <div className={`absolute inset-0 ${styles.bg} opacity-10 group-hover:opacity-20 transition-opacity`} />
+                            <div className={`absolute inset-0 ${isOwned ? styles.bg : 'bg-gray-100'} opacity-10 group-hover:opacity-20 transition-opacity`} />
                             
                             <div className="h-full flex flex-col bg-white">
                               {/* Card Header */}
-                              <div className={`px-4 py-3 flex justify-between items-center ${rarity !== 'C' ? styles.bg : 'bg-slate-50'} ${rarity !== 'C' ? 'text-white' : 'text-slate-600'}`}>
-                                <span className="text-[10px] font-bold tracking-widest uppercase">{styles.label}</span>
+                              <div className={`px-4 py-3 flex justify-between items-center ${isOwned && rarity !== 'C' ? styles.bg : 'bg-slate-50'} ${isOwned && rarity !== 'C' ? 'text-white' : 'text-slate-600'}`}>
+                                <span className="text-[10px] font-bold tracking-widest uppercase">{isOwned ? styles.label : 'LOCKED'}</span>
+                                {isOwned && count > 1 && (
+                                  <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">x{count}</span>
+                                )}
                               </div>
 
                               {/* Card Content */}
                               <div className="flex-1 p-6 flex flex-col items-center justify-center text-center space-y-4">
-                                <div className={`p-3 rounded-xl ${rarity !== 'C' ? 'bg-white/20' : 'bg-slate-100'} transition-transform group-hover:scale-110 duration-300`}>
-                                  {getTermIcon(term, 48)}
+                                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${isOwned ? styles.bg : 'bg-gray-100'} ${isOwned ? 'text-white' : 'text-gray-300'} shadow-inner`}>
+                                  {isOwned ? getTermIcon(term, 32) : <Lock size={32} />}
                                 </div>
-                                <h3 className={`text-xl font-bold leading-tight ${styles.text === 'text-white' ? 'text-slate-800' : styles.text}`}>
-                                  {term}
-                                </h3>
-                                <p className="text-xs text-slate-500 line-clamp-3">
-                                  {(termDescriptions[term] || ["説明がありません。"])[0]}
-                                </p>
-                              </div>
+                                
+                                <div className="space-y-1">
+                                  <h3 className={`text-lg font-bold leading-tight ${isOwned ? 'text-slate-800' : 'text-gray-400'}`}>{isOwned ? term : '???'}</h3>
+                                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{isOwned ? category.title : 'Unknown Category'}</p>
+                                </div>
 
-                              {/* Card Footer / Rarity indicator */}
-                              <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
-                                <span className="text-[10px] font-mono text-slate-400">ID: {termToId[term] || "000"}</span>
-                                <div className="flex gap-1">
-                                  {['C', 'R', 'SR', 'UR'].map(r => (
-                                    <div 
-                                      key={r} 
-                                      className={`w-2 h-2 rounded-full ${rarity === r ? styles.bg : 'bg-slate-200'}`} 
-                                    />
-                                  ))}
-                                </div>
+                                {isOwned && (
+                                  <motion.div 
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="pt-4 border-t border-gray-100 w-full"
+                                  >
+                                    <p className="text-[10px] text-slate-600 leading-relaxed italic line-clamp-2">
+                                      "{(termDescriptions[term] || ["説明がありません。"])[pickedCard?.term === term ? pickedCard.descriptionIndex : 0]}"
+                                    </p>
+                                    <div className="flex justify-center gap-1 mt-2">
+                                      {[...Array(Math.min(termDescriptions[term]?.length || 1, 3))].map((_, i) => (
+                                        <div 
+                                          key={i} 
+                                          className={`w-1.5 h-1.5 rounded-full ${
+                                            (pickedCard?.term === term ? i === pickedCard.descriptionIndex : i === 0)
+                                              ? (isOwned ? styles.bg : 'bg-gray-400') 
+                                              : (i < count ? 'bg-gray-200' : 'bg-gray-100')
+                                          }`} 
+                                        />
+                                      ))}
+                                    </div>
+                                  </motion.div>
+                                )}
                               </div>
                             </div>
-
-                            {/* Holo Effect for Rare+ */}
-                            {rarity !== 'C' && (
-                              <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-white/0 via-white/20 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 skew-x-12 translate-x-full group-hover:-translate-x-full" />
-                            )}
                           </motion.div>
                         );
                       })}
@@ -1045,13 +1204,17 @@ export default function App() {
                     }
                   }
 
+                  if (penaltyActive && !feedback) {
+                    buttonClass = 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed opacity-50';
+                  }
+
                   return (
                     <motion.button
                       key={`${currentQuestionIndex}-${idx}`}
-                      whileHover={!feedback ? { scale: 1.02 } : {}}
-                      whileTap={!feedback ? { scale: 0.98 } : {}}
-                      onClick={() => !feedback && handleAnswer(option)}
-                      disabled={!!feedback}
+                      whileHover={!feedback && !penaltyActive ? { scale: 1.02 } : {}}
+                      whileTap={!feedback && !penaltyActive ? { scale: 0.98 } : {}}
+                      onClick={() => !feedback && !penaltyActive && handleAnswer(option)}
+                      disabled={!!feedback || penaltyActive}
                       className={`
                         relative p-5 rounded-2xl text-left text-lg font-bold transition-all border-2
                         ${buttonClass}
@@ -1123,10 +1286,121 @@ export default function App() {
                   <RotateCcw size={24} /> もう一度挑戦
                 </button>
               </div>
+
+            {/* Gacha Section */}
+            <div className="mt-12 pt-12 border-t border-gray-100">
+              <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 text-center">
+                <h3 className="text-2xl font-serif font-bold mb-4">学習完了ボーナス</h3>
+                
+                {(correctCount / questions.length) >= 0.5 ? (
+                  <div className="space-y-6">
+                    <p className="text-gray-500">正解率50%以上達成！カードガチャを引くことができます。</p>
+                    <p className="text-sm text-[#5A5A40] font-bold">
+                      {questions.length === 20 ? '総合演習ボーナス：5枚引けます！' : 
+                       questions.length === 10 ? '単元演習ボーナス：2枚引けます！' : 
+                       '1枚引けます！'}
+                    </p>
+                    
+                    {gachaResults.length === 0 && (
+                      <button 
+                        onClick={pullGacha}
+                        disabled={isGachaRolling}
+                        className={`px-12 py-6 rounded-full text-xl font-bold shadow-xl transition-all ${
+                          isGachaRolling 
+                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                            : 'bg-gradient-to-r from-amber-400 to-orange-500 text-white hover:scale-105 active:scale-95'
+                        }`}
+                      >
+                        {isGachaRolling ? 'ガチャを回しています...' : 'ガチャを引く！'}
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="p-6 bg-gray-50 rounded-2xl text-gray-400 font-bold">
+                    <p>正解率が50%未満のため、ガチャは引けません。</p>
+                    <p className="text-sm font-normal mt-2">次はもっと頑張りましょう！</p>
+                  </div>
+                )}
+              </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+            {/* Full Screen Gacha Animation Overlay */}
+            <AnimatePresence>
+              {currentGachaIndex >= 0 && currentGachaIndex < gachaResults.length && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-6"
+                >
+                  <motion.div
+                    initial={{ scale: 0.5, opacity: 0, rotateY: 180 }}
+                    animate={{ scale: 1, opacity: 1, rotateY: 0 }}
+                    transition={{ type: "spring", damping: 15 }}
+                    className="relative w-full max-w-sm aspect-[3/4]"
+                  >
+                    {/* Card Display */}
+                    <div className={`w-full h-full bg-white rounded-[2.5rem] shadow-2xl border-8 ${getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').border} p-8 flex flex-col items-center justify-center space-y-8 relative overflow-hidden`}>
+                      <div className={`absolute inset-0 ${getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').bg} opacity-5`} />
+                      
+                      <div className="text-center space-y-2">
+                        <span className={`text-xs font-bold tracking-[0.3em] uppercase px-4 py-1.5 rounded-full ${getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').bg} text-white mb-4 inline-block shadow-lg`}>
+                          {getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').label}
+                        </span>
+                        <div className={`w-32 h-32 rounded-[2.5rem] flex items-center justify-center ${getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').bg} text-white shadow-2xl mx-auto mb-6`}>
+                          {getTermIcon(gachaResults[currentGachaIndex], 64)}
+                        </div>
+                        <h4 className="text-3xl font-black text-slate-800 tracking-tight">{gachaResults[currentGachaIndex]}</h4>
+                        <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">New Card Obtained!</p>
+                      </div>
+
+                      <div className="w-full pt-8 border-t border-slate-100 text-center">
+                        <p className="text-sm text-slate-600 italic line-clamp-3">
+                          "{(termDescriptions[gachaResults[currentGachaIndex]] || ["説明がありません。"])[0]}"
+                        </p>
+                      </div>
+
+                      {/* Sparkles for High Rarity */}
+                      {['SR', 'UR'].includes(termRarities[gachaResults[currentGachaIndex]] || 'C') && (
+                        <div className="absolute inset-0 pointer-events-none">
+                          <motion.div 
+                            animate={{ opacity: [0, 1, 0], scale: [0.8, 1.2, 0.8] }}
+                            transition={{ repeat: Infinity, duration: 2 }}
+                            className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/20 to-white/0"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+
+                  <div className="mt-12 flex flex-col items-center gap-6">
+                    <p className="text-white/60 font-bold tracking-widest">
+                      {currentGachaIndex + 1} / {gachaResults.length}
+                    </p>
+                    
+                    <div className="flex gap-4">
+                      <button 
+                        onClick={() => jumpToCollection(gachaResults[currentGachaIndex])}
+                        className="px-8 py-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold transition-all flex items-center gap-2 border border-white/20"
+                      >
+                        コレクションで見る <ArrowRight size={18} />
+                      </button>
+                      
+                      <button 
+                        onClick={() => setCurrentGachaIndex(prev => prev + 1)}
+                        className="px-12 py-4 bg-white text-black rounded-2xl font-bold hover:scale-105 active:scale-95 transition-all shadow-xl"
+                      >
+                        {currentGachaIndex === gachaResults.length - 1 ? '結果を閉じる' : '次へ'}
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
 
       {/* Loading Overlay */}
       <AnimatePresence>
