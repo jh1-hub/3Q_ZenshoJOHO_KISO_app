@@ -1,12 +1,100 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@400;700;900&display=swap');
 @import "tailwindcss";
+
+:root {
+  --theme-bg: #F5F5F0;
+  --theme-text: #141414;
+  --theme-accent: #5A5A40;
+  --theme-secondary: #FF6321;
+  --theme-card: #ffffff;
+  --theme-muted: #f8fafc; /* slate-50 */
+  --theme-border: #f1f5f9; /* slate-100 */
+  --theme-border-strong: #e2e8f0; /* slate-200 */
+  --theme-text-muted: #475569; /* slate-600 */
+  --theme-heading: "Cormorant Garamond", serif;
+}
+
+.theme-cyber {
+  --theme-bg: #e2e8f0; /* slate-200 */
+  --theme-text: #0f172a; /* slate-900 */
+  --theme-accent: #0f172a;
+  --theme-secondary: #ff00ff;
+  --theme-card: #f1f5f9; /* slate-100 */
+  --theme-muted: #cbd5e1; /* slate-300 */
+  --theme-border: #94a3b840;
+  --theme-border-strong: #64748b80;
+  --theme-text-muted: #334155; /* slate-700 */
+  --theme-heading: "Orbitron", sans-serif;
+  
+  font-family: "JetBrains Mono", monospace;
+  color: var(--theme-text);
+  background-color: var(--theme-bg);
+}
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Cormorant Garamond", serif;
   --font-mono: "JetBrains Mono", monospace;
+  
+  --color-theme-bg: var(--theme-bg);
+  --color-theme-text: var(--theme-text);
+  --color-theme-accent: var(--theme-accent);
+  --color-theme-secondary: var(--theme-secondary);
+  --color-theme-card: var(--theme-card);
+  --color-theme-muted: var(--theme-muted);
+  --color-theme-border: var(--theme-border);
+  --color-theme-border-strong: var(--theme-border-strong);
+  --color-theme-text-muted: var(--theme-text-muted);
+  --font-theme-heading: var(--theme-heading);
 }
 
 body {
   @apply antialiased;
+}
+
+/* Cyber Theme Overrides for specific elements */
+.theme-cyber .font-sans {
+  font-family: "JetBrains Mono", monospace !important;
+}
+
+.theme-cyber .shadow-sm, 
+.theme-cyber .shadow-md, 
+.theme-cyber .shadow-lg, 
+.theme-cyber .shadow-xl, 
+.theme-cyber .shadow-2xl {
+  box-shadow: 0 0 15px rgba(0, 255, 204, 0.1) !important;
+}
+
+/* Specific overrides for Gacha button gradient */
+.theme-cyber .bg-gradient-to-r.from-amber-400.to-orange-500 {
+  background: linear-gradient(to right, #00ffcc, #0088ff) !important;
+  color: #000 !important;
+  box-shadow: 0 0 20px rgba(0, 255, 204, 0.6) !important;
+}
+
+/* Specific overrides for comprehensive quiz button */
+.theme-cyber .bg-gradient-to-r.from-\[\#141414\].to-\[\#5A5A40\] {
+  background: linear-gradient(to right, #003322, #00ffcc) !important;
+  color: #000 !important;
+}
+
+/* Cyber grid background */
+.theme-cyber::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: 
+    linear-gradient(to right, rgba(0, 255, 204, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 255, 204, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.theme-cyber > :not(.fixed) {
+  position: relative;
+  z-index: 1;
 }
