@@ -83,7 +83,7 @@ import { termDescriptions } from './data/termDescriptions';
 import { flavorTexts } from './data/flavorTexts';
 import { termRarities, Rarity } from './data/rarities';
 
-type GameState = 'START' | 'CATEGORY_SELECT' | 'QUIZ' | 'RESULT' | 'COLLECTION';
+type GameState = 'START' | 'CATEGORY_SELECT' | 'QUIZ' | 'RESULT' | 'COLLECTION' | 'STATS';
 
 interface UnitStats {
   highScore: number;
@@ -321,23 +321,26 @@ export default function App() {
     
     let termsToPickFrom: string[] = [];
     let title = "";
+    let questionCount = 10;
     
     if ('subcategories' in item) {
-      // It's a Category
+      // It's a Category (Unit)
       termsToPickFrom = item.subcategories.flatMap(sub => sub.terms);
       title = `${item.title}（単元演習）`;
       setSelectedSubcategory({ id: item.id, title, terms: termsToPickFrom });
+      questionCount = 10;
     } else {
-      // It's a Subcategory
+      // It's a Subcategory (Sub-unit)
       termsToPickFrom = item.terms;
       title = item.title;
       setSelectedSubcategory(item);
+      questionCount = 5;
     }
     
-    // Select 10 random terms
+    // Select random terms
     const selectedTerms = [...termsToPickFrom]
       .sort(() => 0.5 - Math.random())
-      .slice(0, 10);
+      .slice(0, questionCount);
 
     try {
       const generatedQuestions = await Promise.all(
@@ -535,6 +538,15 @@ export default function App() {
                   カードコレクション <LayoutGrid size={24} />
                 </span>
               </button>
+
+              <button 
+                onClick={() => setGameState('STATS')}
+                className="group relative px-12 py-5 bg-white text-[#5A5A40] border-2 border-[#5A5A40]/20 rounded-full text-xl font-bold overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-lg"
+              >
+                <span className="relative z-10 flex items-center gap-3">
+                  学習成績 <BarChart size={24} />
+                </span>
+              </button>
             </div>
 
             {/* Statistics Section */}
@@ -551,92 +563,145 @@ export default function App() {
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+              <div className="space-y-6 mb-12">
                 {/* Comprehensive Stats */}
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-                    <Trophy size={48} />
+                <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 relative overflow-hidden group flex flex-col md:flex-row md:items-center justify-between gap-8">
+                  <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
+                    <Trophy size={120} />
                   </div>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">総合演習</p>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-end">
-                      <span className="text-sm text-gray-500">ハイスコア</span>
-                      <span className="text-xl font-mono font-bold">{getStatsFor('all').highScore.toLocaleString()}</span>
+                  
+                  <div className="relative z-10">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">総合演習（全単元）</p>
+                    <h3 className="text-3xl font-serif font-bold">現在の成績</h3>
+                  </div>
+
+                  <div className="relative z-10 flex flex-wrap gap-12">
+                    <div className="space-y-1">
+                      <p className="text-sm text-gray-500">ハイスコア</p>
+                      <p className="text-3xl font-mono font-bold">{getStatsFor('all').highScore.toLocaleString()}</p>
                     </div>
-                    <div className="flex justify-between items-end">
-                      <span className="text-sm text-gray-500">演習回数</span>
-                      <span className="text-xl font-mono font-bold">{getStatsFor('all').attempts}回</span>
-                    </div>
-                    <div className="flex justify-between items-end">
-                      <span className="text-sm text-gray-500">平均スコア</span>
-                      <span className="text-xl font-mono font-bold">
-                        {getStatsFor('all').attempts > 0 
-                          ? Math.floor(getStatsFor('all').totalScore / getStatsFor('all').attempts).toLocaleString() 
-                          : 0}
-                      </span>
+                    <div className="space-y-1">
+                      <p className="text-sm text-gray-500">演習回数</p>
+                      <p className="text-3xl font-mono font-bold">{getStatsFor('all').attempts}回</p>
                     </div>
                   </div>
                 </div>
 
-                {/* Category Stats Summary */}
-                {quizCategories.map(cat => (
-                  <div key={cat.id} className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden group">
-                    <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform ${getCategoryColor(cat.id).text}`}>
-                      <Database size={48} />
+                {/* Main Category Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {quizCategories.map(cat => (
+                    <div key={cat.id} className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden group">
+                      <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform ${getCategoryColor(cat.id).text}`}>
+                        <Database size={48} />
+                      </div>
+                      <p className={`text-xs font-bold uppercase tracking-widest mb-4 ${getCategoryColor(cat.id).text}`}>{cat.title}</p>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-end">
+                          <span className="text-sm text-gray-500">ハイスコア</span>
+                          <span className="text-xl font-mono font-bold">{getStatsFor(cat.id).highScore.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between items-end">
+                          <span className="text-sm text-gray-500">演習回数</span>
+                          <span className="text-xl font-mono font-bold">{getStatsFor(cat.id).attempts}回</span>
+                        </div>
+                      </div>
                     </div>
-                    <p className={`text-xs font-bold uppercase tracking-widest mb-4 ${getCategoryColor(cat.id).text}`}>{cat.title}</p>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-end">
-                        <span className="text-sm text-gray-500">ハイスコア</span>
-                        <span className="text-xl font-mono font-bold">{getStatsFor(cat.id).highScore.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between items-end">
-                        <span className="text-sm text-gray-500">演習回数</span>
-                        <span className="text-xl font-mono font-bold">{getStatsFor(cat.id).attempts}回</span>
-                      </div>
-                      <div className="flex justify-between items-end">
-                        <span className="text-sm text-gray-500">平均スコア</span>
-                        <span className="text-xl font-mono font-bold">
-                          {getStatsFor(cat.id).attempts > 0 
-                            ? Math.floor(getStatsFor(cat.id).totalScore / getStatsFor(cat.id).attempts).toLocaleString() 
-                            : 0}
-                        </span>
-                      </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {gameState === 'STATS' && (
+          <motion.div 
+            key="stats"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="max-w-4xl mx-auto p-6 py-12"
+          >
+            <div className="flex items-center justify-between mb-12">
+              <h2 className="text-4xl font-serif font-bold">学習成績</h2>
+              <button 
+                onClick={() => setGameState('START')}
+                className="flex items-center gap-2 text-gray-500 hover:text-black transition-colors font-bold"
+              >
+                <ArrowLeft size={20} /> 戻る
+              </button>
+            </div>
+
+            <div className="space-y-16">
+              {/* Comprehensive Summary */}
+              <section className="space-y-6">
+                <h3 className="text-xl font-bold flex items-center gap-2 text-[#5A5A40]">
+                  <Trophy size={24} /> 総合演習
+                </h3>
+                <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <div className="space-y-1">
+                    <p className="text-sm text-gray-400 font-bold uppercase tracking-wider">ハイスコア</p>
+                    <p className="text-3xl font-mono font-bold">{getStatsFor('all').highScore.toLocaleString()}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-gray-400 font-bold uppercase tracking-wider">演習回数</p>
+                    <p className="text-3xl font-mono font-bold">{getStatsFor('all').attempts}回</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-gray-400 font-bold uppercase tracking-wider">平均スコア</p>
+                    <p className="text-3xl font-mono font-bold">
+                      {getStatsFor('all').attempts > 0 
+                        ? Math.floor(getStatsFor('all').totalScore / getStatsFor('all').attempts).toLocaleString() 
+                        : 0}
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Category Breakdown */}
+              {quizCategories.map(category => (
+                <section key={category.id} className="space-y-6">
+                  <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+                    <h3 className="text-xl font-bold text-[#5A5A40]">
+                      {category.title}
+                    </h3>
+                    <div className="flex gap-6 text-sm">
+                      <span className="text-gray-400">単元ハイスコア: <span className="text-black font-mono font-bold">{getStatsFor(category.id).highScore.toLocaleString()}</span></span>
+                      <span className="text-gray-400">演習回数: <span className="text-black font-mono font-bold">{getStatsFor(category.id).attempts}回</span></span>
+                      <span className="text-gray-400">平均スコア: <span className="text-black font-mono font-bold">
+                        {getStatsFor(category.id).attempts > 0 
+                          ? Math.floor(getStatsFor(category.id).totalScore / getStatsFor(category.id).attempts).toLocaleString() 
+                          : 0}
+                      </span></span>
                     </div>
                   </div>
-                ))}
-              </div>
-
-              {/* Detailed Subcategory Stats */}
-              <div className="space-y-12">
-                {quizCategories.map(category => (
-                  <div key={category.id} className="space-y-4">
-                    <h3 className={`text-lg font-bold border-l-4 pl-3 ${getCategoryColor(category.id).border} ${getCategoryColor(category.id).text}`}>
-                      {category.title} 詳細
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {category.subcategories.map(sub => {
-                        const s = getStatsFor(sub.id);
-                        return (
-                          <div key={sub.id} className="bg-white/50 p-4 rounded-2xl border border-gray-100">
-                            <p className="text-sm font-bold mb-3 truncate">{sub.title}</p>
-                            <div className="grid grid-cols-2 gap-2 text-[10px] font-bold text-gray-400 uppercase">
-                              <div>High Score</div>
-                              <div className="text-right text-gray-700 font-mono">{s.highScore.toLocaleString()}</div>
-                              <div>Attempts</div>
-                              <div className="text-right text-gray-700 font-mono">{s.attempts}</div>
-                              <div>Avg</div>
-                              <div className="text-right text-gray-700 font-mono">
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {category.subcategories.map(sub => {
+                      const s = getStatsFor(sub.id);
+                      return (
+                        <div key={sub.id} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+                          <div className="space-y-1">
+                            <p className="font-bold">{sub.title}</p>
+                            <p className="text-xs text-gray-400">演習回数: {s.attempts}回</p>
+                          </div>
+                          <div className="flex gap-8">
+                            <div className="text-right">
+                              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">Avg Score</p>
+                              <p className="text-lg font-mono font-bold text-gray-500">
                                 {s.attempts > 0 ? Math.floor(s.totalScore / s.attempts).toLocaleString() : 0}
-                              </div>
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">High Score</p>
+                              <p className="text-xl font-mono font-bold">{s.highScore.toLocaleString()}</p>
                             </div>
                           </div>
-                        );
-                      })}
-                    </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
+                </section>
+              ))}
             </div>
           </motion.div>
         )}
@@ -846,9 +911,15 @@ export default function App() {
               {quizCategories.map((category) => (
                 <div key={category.id} className="space-y-4">
                   <div className="flex items-center justify-between border-b border-gray-200 pb-2">
-                    <h3 className="text-xl font-bold text-[#5A5A40]">
-                      {category.title}
-                    </h3>
+                    <div className="flex items-center gap-4">
+                      <h3 className="text-xl font-bold text-[#5A5A40]">
+                        {category.title}
+                      </h3>
+                      <div className="flex gap-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        <span>Best: {getStatsFor(category.id).highScore.toLocaleString()}</span>
+                        <span>Cleared: {getStatsFor(category.id).attempts}</span>
+                      </div>
+                    </div>
                     <button
                       onClick={() => startQuiz(category)}
                       className="text-sm font-bold bg-[#5A5A40] text-white px-4 py-1 rounded-full hover:bg-black transition-colors"
@@ -870,7 +941,10 @@ export default function App() {
                           </div>
                           <div>
                             <p className="font-bold">{sub.title}</p>
-                            <p className="text-xs text-gray-400 mt-1">{sub.terms.length} 用語収録</p>
+                            <div className="flex gap-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-1">
+                              <span>Best: {getStatsFor(sub.id).highScore.toLocaleString()}</span>
+                              <span>Cleared: {getStatsFor(sub.id).attempts}</span>
+                            </div>
                           </div>
                         </div>
                         <ChevronRight size={20} className="text-gray-300 group-hover:text-[#5A5A40] transition-colors" />
