@@ -513,7 +513,7 @@ export default function App() {
               IT Quiz <span className="italic text-[#5A5A40]">Master</span>
             </h1>
             <p className="text-xl text-gray-600 mb-12 max-w-md">
-              企業活動からネットワーク、統計まで。ITパスポート範囲の知識を5択クイズで極めよう。
+              【情報基礎】の知識を極めよう
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4">
