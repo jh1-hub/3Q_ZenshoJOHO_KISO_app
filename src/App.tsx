@@ -84,7 +84,7 @@ import {
   X
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 import CryptoJS from 'crypto-js';
 import { quizCategories, Category, Subcategory } from './data/quizData';
 import { generateQuestion, Question, QuestionType } from './services/geminiService';
@@ -451,28 +451,63 @@ export default function App() {
   };
 
   useEffect(() => {
-    let scanner: Html5QrcodeScanner | null = null;
+    let html5QrCode: Html5Qrcode | null = null;
+    
     if (isScanning && showMigrationModal) {
-      // Small delay to ensure the element is in the DOM
-      const timer = setTimeout(() => {
-        scanner = new Html5QrcodeScanner(
-          "qr-reader",
-          { fps: 10, qrbox: { width: 250, height: 250 } },
-          /* verbose= */ false
-        );
-        scanner.render((decodedText) => {
-          processMigrationData(decodedText);
+      const startScanner = async () => {
+        try {
+          // Check for mediaDevices support
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            setMigrationError("このブラウザはカメラアクセスをサポートしていないか、安全な接続（HTTPS）ではありません。");
+            setIsScanning(false);
+            return;
+          }
+
+          // Small delay to ensure the element is in the DOM
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          const element = document.getElementById("qr-reader");
+          if (!element) {
+            setMigrationError("スキャナーの準備ができていません。");
+            return;
+          }
+
+          html5QrCode = new Html5Qrcode("qr-reader");
+          const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+          await html5QrCode.start(
+            { facingMode: "environment" },
+            config,
+            (decodedText) => {
+              processMigrationData(decodedText);
+              setIsScanning(false);
+              if (html5QrCode) {
+                html5QrCode.stop().catch(err => console.error("Stop error", err));
+              }
+            },
+            (errorMessage) => {
+              // Ignore constant scanning errors
+            }
+          );
+        } catch (err: any) {
+          console.error("Camera start error:", err);
+          let message = "カメラの起動に失敗しました。";
+          if (err.name === 'NotAllowedError') {
+            message = "カメラの使用が許可されていません。設定を確認してください。";
+          } else if (err.name === 'NotFoundError') {
+            message = "カメラが見つかりません。";
+          }
+          setMigrationError(message);
           setIsScanning(false);
-          if (scanner) scanner.clear();
-        }, (error) => {
-          // console.warn(error);
-        });
-      }, 100);
-      return () => clearTimeout(timer);
+        }
+      };
+
+      startScanner();
     }
+
     return () => {
-      if (scanner) {
-        scanner.clear().catch(error => console.error("Failed to clear scanner", error));
+      if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().catch(err => console.error("Cleanup stop error", err));
       }
     };
   }, [isScanning, showMigrationModal]);
@@ -2395,7 +2430,7 @@ export default function App() {
 
               {isScanning && (
                 <div className="space-y-6">
-                  <div id="qr-reader" className="overflow-hidden rounded-3xl border-2 border-theme-accent shadow-lg"></div>
+                  <div id="qr-reader" className="overflow-hidden rounded-3xl border-2 border-theme-accent shadow-lg min-h-[300px] bg-black"></div>
                   <div className="text-center space-y-2">
                     <p className="font-bold">スキャン中...</p>
                     <p className="text-xs text-theme-text-muted">移行元のQRコードをカメラにかざしてください。</p>
