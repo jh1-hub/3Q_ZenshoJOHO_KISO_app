@@ -1243,6 +1243,36 @@ export default function App() {
               </button>
             </div>
 
+            {/* User Profile Summary */}
+            <div className="bg-theme-accent/5 border border-theme-accent/20 rounded-3xl p-6 mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-theme-accent text-white rounded-2xl flex items-center justify-center shadow-lg shadow-theme-accent/20">
+                  <UserCheck size={32} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-bold text-theme-accent bg-theme-accent/10 px-2 py-0.5 rounded-full uppercase tracking-wider">User Profile</span>
+                    <span className="text-xs font-bold text-theme-text-muted">Lv.{userLevel}</span>
+                  </div>
+                  <h3 className="text-2xl font-bold">{userName}</h3>
+                </div>
+              </div>
+              <div className="flex gap-8 md:gap-12">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold text-theme-text-muted uppercase tracking-widest">学年</p>
+                  <p className="text-xl font-bold">{userProfile?.grade}年</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold text-theme-text-muted uppercase tracking-widest">クラス</p>
+                  <p className="text-xl font-bold">{userProfile?.classNum}組</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold text-theme-text-muted uppercase tracking-widest">出席番号</p>
+                  <p className="text-xl font-bold">{userProfile?.attendanceNum}番</p>
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-16">
               {/* Comprehensive Summary */}
               <section className="space-y-6">
