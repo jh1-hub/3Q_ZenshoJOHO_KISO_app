@@ -78,8 +78,14 @@ import {
   Network,
   Server,
   Terminal,
-  MousePointerClick
+  MousePointerClick,
+  QrCode,
+  Scan,
+  X
 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
+import { Html5QrcodeScanner } from 'html5-qrcode';
+import CryptoJS from 'crypto-js';
 import { quizCategories, Category, Subcategory } from './data/quizData';
 import { generateQuestion, Question, QuestionType } from './services/geminiService';
 import { termDescriptions } from './data/termDescriptions';
@@ -271,6 +277,14 @@ const GachaRollingOverlay = () => {
 
 export default function App() {
   const [gameState, setGameState] = useState<GameState>('START');
+  const [userName, setUserName] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<{ grade: string; classNum: string; attendanceNum: string } | null>(null);
+  const [showLevelUp, setShowLevelUp] = useState<number | null>(null);
+  const [showMigrationModal, setShowMigrationModal] = useState(false);
+  const [migrationQR, setMigrationQR] = useState<string | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const [migrationError, setMigrationError] = useState<string | null>(null);
+  const [pendingMigrationData, setPendingMigrationData] = useState<any | null>(null);
   const [theme, setTheme] = useState<'classic' | 'cyber'>(() => {
     const saved = localStorage.getItem('it-quiz-theme');
     return (saved === 'cyber' || saved === 'classic') ? saved : 'classic';
@@ -305,8 +319,13 @@ export default function App() {
     localStorage.setItem('it-quiz-theme', theme);
   }, [theme]);
 
-  // Load stats and collection from localStorage
+  // Load user data, stats and collection from localStorage
   useEffect(() => {
+    const savedName = localStorage.getItem('it_quiz_username');
+    const savedProfile = localStorage.getItem('it_quiz_user_profile');
+    if (savedName) setUserName(savedName);
+    if (savedProfile) setUserProfile(JSON.parse(savedProfile));
+
     const savedStats = localStorage.getItem('it_quiz_stats');
     if (savedStats) {
       try {
@@ -338,6 +357,25 @@ export default function App() {
     localStorage.setItem('it_quiz_stats', JSON.stringify(newStats));
   };
 
+  const saveUserProfile = (profile: { grade: string; classNum: string; attendanceNum: string; userName: string }) => {
+    setUserName(profile.userName);
+    setUserProfile({ grade: profile.grade, classNum: profile.classNum, attendanceNum: profile.attendanceNum });
+    localStorage.setItem('it_quiz_username', profile.userName);
+    localStorage.setItem('it_quiz_user_profile', JSON.stringify({ grade: profile.grade, classNum: profile.classNum, attendanceNum: profile.attendanceNum }));
+  };
+
+  const calculateLevel = (collection: Record<string, number>) => {
+    const totalPoints = Object.values(collection).reduce((sum, count) => sum + Math.min(3, count), 0);
+    // Max points = 262 * 3 = 786
+    // Level = 1 + floor(98 * (points / 786)^0.68)
+    // Exponent 0.68 ensures 1 point = Level 2
+    if (totalPoints === 0) return 1;
+    const level = 1 + Math.floor(98 * Math.pow(totalPoints / 786, 0.68));
+    return Math.min(99, level);
+  };
+
+  const userLevel = useMemo(() => calculateLevel(ownedCards), [ownedCards]);
+
   const updateStats = (id: string, newScore: number) => {
     const currentStats = { ...stats };
     const unitStats = currentStats[id] || { highScore: 0, attempts: 0, totalScore: 0 };
@@ -353,8 +391,91 @@ export default function App() {
 
   const resetAllStats = () => {
     saveStats({});
+    saveCollection({});
+    setUserName(null);
+    setUserProfile(null);
+    localStorage.removeItem('it_quiz_username');
+    localStorage.removeItem('it_quiz_user_profile');
     setResetStep(0);
   };
+
+  const exportData = () => {
+    const data = {
+      userName,
+      userProfile,
+      stats,
+      ownedCards,
+      theme,
+      timestamp: Date.now()
+    };
+    const jsonString = JSON.stringify(data);
+    const encrypted = CryptoJS.AES.encrypt(jsonString, 'it-quiz-master-secret-key').toString();
+    setMigrationQR(encrypted);
+  };
+
+  const processMigrationData = (encryptedData: string) => {
+    try {
+      const bytes = CryptoJS.AES.decrypt(encryptedData, 'it-quiz-master-secret-key');
+      const decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+      
+      if (decryptedData.userName && decryptedData.stats && decryptedData.ownedCards) {
+        setPendingMigrationData(decryptedData);
+        setMigrationError(null);
+      } else {
+        setMigrationError("無効なデータ形式です。");
+      }
+    } catch (e) {
+      setMigrationError("データの復号に失敗しました。正しいQRコードか確認してください。");
+    }
+  };
+
+  const confirmMigration = () => {
+    if (pendingMigrationData) {
+      setUserName(pendingMigrationData.userName);
+      setUserProfile(pendingMigrationData.userProfile);
+      setStats(pendingMigrationData.stats);
+      setOwnedCards(pendingMigrationData.ownedCards);
+      if (pendingMigrationData.theme) setTheme(pendingMigrationData.theme);
+      
+      // Save to localStorage
+      localStorage.setItem('it_quiz_username', pendingMigrationData.userName || '');
+      localStorage.setItem('it_quiz_user_profile', JSON.stringify(pendingMigrationData.userProfile));
+      localStorage.setItem('it_quiz_stats', JSON.stringify(pendingMigrationData.stats));
+      localStorage.setItem('it_quiz_collection', JSON.stringify(pendingMigrationData.ownedCards));
+      if (pendingMigrationData.theme) localStorage.setItem('it-quiz-theme', pendingMigrationData.theme);
+      
+      setPendingMigrationData(null);
+      setShowMigrationModal(false);
+      alert("データの移行が完了しました！");
+    }
+  };
+
+  useEffect(() => {
+    let scanner: Html5QrcodeScanner | null = null;
+    if (isScanning && showMigrationModal) {
+      // Small delay to ensure the element is in the DOM
+      const timer = setTimeout(() => {
+        scanner = new Html5QrcodeScanner(
+          "qr-reader",
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          /* verbose= */ false
+        );
+        scanner.render((decodedText) => {
+          processMigrationData(decodedText);
+          setIsScanning(false);
+          if (scanner) scanner.clear();
+        }, (error) => {
+          // console.warn(error);
+        });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+    return () => {
+      if (scanner) {
+        scanner.clear().catch(error => console.error("Failed to clear scanner", error));
+      }
+    };
+  }, [isScanning, showMigrationModal]);
 
   const getStatsFor = (id: string) => {
     return stats[id] || { highScore: 0, attempts: 0, totalScore: 0 };
@@ -419,6 +540,7 @@ export default function App() {
 
     const results: string[] = [];
     const newCollection = { ...ownedCards };
+    const oldLevel = calculateLevel(ownedCards);
 
     for (let i = 0; i < pullCount; i++) {
       // Rarity weights based on score
@@ -478,6 +600,13 @@ export default function App() {
       setGachaResults(results);
       setCurrentGachaIndex(0);
       setIsGachaRolling(false);
+
+      const newLevel = calculateLevel(newCollection);
+      if (newLevel > oldLevel) {
+        setTimeout(() => {
+          setShowLevelUp(newLevel);
+        }, 1500);
+      }
     }, 2000);
   };
 
@@ -833,6 +962,36 @@ export default function App() {
 
   return (
     <div className={`min-h-screen ${theme === 'cyber' ? 'theme-cyber' : 'bg-theme-bg text-theme-text font-sans'} selection:bg-theme-accent selection:text-white transition-colors duration-500`}>
+      {/* Global Header */}
+      {userName && gameState !== 'QUIZ' && (
+        <header className="sticky top-0 z-40 bg-theme-bg/80 backdrop-blur-md border-b border-theme-border">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 md:h-20 flex items-center justify-between">
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-theme-accent text-white rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg shadow-theme-accent/20">
+                <BrainCircuit size={24} className="md:w-7 md:h-7" />
+              </div>
+              <div>
+                <h1 className="text-lg md:text-2xl font-theme-heading font-bold tracking-tight">IT Quiz Master</h1>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[10px] md:text-xs font-bold text-theme-accent bg-theme-accent/10 px-2 py-0.5 rounded-full">Lv.{userLevel}</span>
+                  <span className="text-[10px] md:text-xs font-bold text-theme-text-muted truncate max-w-[100px]">{userName}</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setShowMigrationModal(true)}
+                className="p-2 md:px-4 md:py-2 bg-theme-card rounded-xl border border-theme-border hover:bg-theme-muted transition-all flex items-center gap-2 group"
+                title="データ移行"
+              >
+                <RefreshCw size={18} className="text-theme-accent group-hover:rotate-180 transition-transform duration-500" />
+                <span className="font-bold text-sm hidden md:inline">データ移行</span>
+              </button>
+            </div>
+          </div>
+        </header>
+      )}
+
       <AnimatePresence mode="wait">
         {gameState === 'START' && (
           <motion.div 
@@ -1409,8 +1568,9 @@ export default function App() {
                 >
                   <ArrowLeft size={24} />
                 </button>
-                <div className="bg-theme-card px-4 py-2 rounded-full shadow-sm border border-theme-border font-bold">
-                  Q {currentQuestionIndex + 1} / {questions.length}
+                <div className="bg-theme-card px-4 py-2 rounded-full shadow-sm border border-theme-border font-bold flex items-center gap-3">
+                  <span className="text-xs text-theme-accent bg-theme-accent/10 px-2 py-0.5 rounded-full">Lv.{userLevel}</span>
+                  <span>Q {currentQuestionIndex + 1} / {questions.length}</span>
                 </div>
                 {combo > 1 && (
                   <motion.div 
@@ -1949,24 +2109,24 @@ export default function App() {
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              className="bg-theme-card w-full max-w-md rounded-[2.5rem] p-10 text-center shadow-2xl"
+              className="bg-theme-card w-full max-w-md rounded-[2.5rem] p-10 space-y-8 text-center shadow-2xl border border-theme-border"
             >
-              <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                <AlertTriangle size={40} />
+              <div className="space-y-4">
+                <div className="w-20 h-20 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center mx-auto mb-2">
+                  <AlertTriangle size={40} />
+                </div>
+                <h2 className="text-2xl font-bold">データの初期化</h2>
+                <p className="text-theme-text-muted text-sm">
+                  ユーザーデータ、カードコレクション、学習成績をすべて消去します。
+                  この操作は取り消せません。
+                </p>
               </div>
-              
-              <h3 className="text-2xl font-bold mb-4">
-                {resetStep === 1 && "学習状況のリセット"}
-                {resetStep === 2 && "本当によろしいですか？"}
-                {resetStep === 3 && "ホントに？"}
-                {resetStep === 4 && "こうかいしませんね？"}
-              </h3>
-              
-              <p className="text-theme-text-muted mb-10 leading-relaxed">
-                {resetStep === 1 && "これまでの学習成績、ハイスコア、演習回数がすべて消去されます。"}
-                {resetStep === 2 && "(元に戻せません！)"}
+
+              <p className="text-center text-red-500 font-bold text-sm bg-red-50 py-2 rounded-lg">
+                {resetStep === 1 && "本当によろしいですか？"}
+                {resetStep === 2 && "もとに戻せませんよ？"}
                 {resetStep === 3 && "(もどせないったら！)"}
-                {resetStep === 4 && "(戻せませんよ！)"}
+                {resetStep === 4 && "(こうかいしませんね？)"}
               </p>
 
               <div className="flex flex-col gap-3">
@@ -2002,6 +2162,291 @@ export default function App() {
                   </>
                 )}
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Level Up Overlay */}
+      <AnimatePresence>
+        {showLevelUp && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[500] flex items-center justify-center bg-black/80 backdrop-blur-md"
+            onClick={() => setShowLevelUp(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.5, y: 50 }}
+              animate={{ scale: 1, y: 0 }}
+              className="text-center space-y-8 p-12"
+            >
+              <div className="relative inline-block">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-0 bg-gradient-to-r from-amber-400 via-yellow-300 to-orange-500 rounded-full blur-3xl opacity-50"
+                />
+                <div className="relative bg-gradient-to-b from-amber-300 to-amber-600 p-1 rounded-full shadow-2xl">
+                  <div className="bg-theme-card rounded-full p-8">
+                    <Trophy size={80} className="text-amber-500" />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <motion.h2 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-5xl font-theme-heading font-bold text-white"
+                >
+                  LEVEL UP!
+                </motion.h2>
+                <motion.p 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-amber-400 text-2xl font-bold tracking-widest"
+                >
+                  Lv.{showLevelUp - 1} → <span className="text-white text-4xl">{showLevelUp}</span>
+                </motion.p>
+              </div>
+
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                className="text-white/60 text-sm font-bold animate-bounce"
+              >
+                タップして閉じる
+              </motion.p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Username Modal */}
+      <AnimatePresence>
+        {!userName && gameState === 'START' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 z-[600] flex items-center justify-center bg-black/90 backdrop-blur-xl p-6"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-theme-card w-full max-w-md p-8 rounded-[2.5rem] shadow-2xl border border-theme-border space-y-8"
+            >
+              <div className="text-center space-y-2">
+                <div className="w-16 h-16 bg-theme-accent/10 text-theme-accent rounded-3xl flex items-center justify-center mx-auto mb-2">
+                  <UserCheck size={32} />
+                </div>
+                <h2 className="text-2xl font-bold">ユーザー登録</h2>
+                <p className="text-theme-text-muted text-xs">情報を入力して冒険を始めましょう。</p>
+              </div>
+
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.currentTarget);
+                  const grade = formData.get('grade') as string;
+                  const classNum = formData.get('classNum') as string;
+                  const attendanceNum = formData.get('attendanceNum') as string;
+                  const userNameInput = (formData.get('username') as string).trim();
+                  
+                  if (!grade || !classNum || !attendanceNum || !userNameInput) {
+                    alert("すべての項目を入力してください。");
+                    return;
+                  }
+                  if (userNameInput.length > 12) {
+                    alert("名前は12文字以内で入力してください。");
+                    return;
+                  }
+                  if (/[<>/\\;]/.test(userNameInput)) {
+                    alert("名前に使用できない文字が含まれています。");
+                    return;
+                  }
+                  saveUserProfile({ grade, classNum, attendanceNum, userName: userNameInput });
+                }}
+                className="space-y-4"
+              >
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-theme-text-muted ml-2 uppercase tracking-wider">学年</label>
+                    <select name="grade" className="w-full px-4 py-3 bg-theme-muted border-2 border-theme-border rounded-xl focus:border-theme-accent outline-none font-bold transition-all">
+                      <option value="">選択</option>
+                      <option value="1">1年</option>
+                      <option value="2">2年</option>
+                      <option value="3">3年</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-theme-text-muted ml-2 uppercase tracking-wider">クラス</label>
+                    <input name="classNum" type="number" placeholder="組" className="w-full px-4 py-3 bg-theme-muted border-2 border-theme-border rounded-xl focus:border-theme-accent outline-none font-bold transition-all" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-theme-text-muted ml-2 uppercase tracking-wider">出席番号</label>
+                    <input name="attendanceNum" type="number" placeholder="番" className="w-full px-4 py-3 bg-theme-muted border-2 border-theme-border rounded-xl focus:border-theme-accent outline-none font-bold transition-all" />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-theme-text-muted ml-2 uppercase tracking-wider">ユーザーネーム（ハンドルネーム可）</label>
+                  <input 
+                    name="username"
+                    type="text"
+                    placeholder="最大12文字"
+                    className="w-full px-4 py-3 bg-theme-muted border-2 border-theme-border rounded-xl focus:border-theme-accent outline-none font-bold transition-all"
+                  />
+                </div>
+
+                <button 
+                  type="submit"
+                  className="w-full py-4 bg-theme-accent text-white rounded-2xl font-bold text-lg shadow-lg shadow-theme-accent/30 hover:scale-[1.02] active:scale-[0.98] transition-all mt-4"
+                >
+                  冒険を始める
+                </button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Migration Modal */}
+      <AnimatePresence>
+        {showMigrationModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[600] flex items-center justify-center bg-black/80 backdrop-blur-md p-6"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-theme-card w-full max-w-lg p-8 rounded-[2.5rem] shadow-2xl border border-theme-border space-y-6 relative overflow-hidden"
+            >
+              <button 
+                onClick={() => {
+                  setShowMigrationModal(false);
+                  setMigrationQR(null);
+                  setIsScanning(false);
+                  setMigrationError(null);
+                  setPendingMigrationData(null);
+                }}
+                className="absolute top-6 right-6 p-2 hover:bg-theme-muted rounded-full transition-colors"
+              >
+                <X size={24} />
+              </button>
+
+              <div className="text-center space-y-2">
+                <div className="w-16 h-16 bg-theme-accent/10 text-theme-accent rounded-3xl flex items-center justify-center mx-auto mb-2">
+                  <RefreshCw size={32} />
+                </div>
+                <h2 className="text-2xl font-bold">データ移行</h2>
+                <p className="text-theme-text-muted text-sm">他のデバイスへデータを引き継いだり、読み込んだりできます。</p>
+              </div>
+
+              {!migrationQR && !isScanning && !pendingMigrationData && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <button 
+                    onClick={exportData}
+                    className="p-6 bg-theme-muted border-2 border-theme-border rounded-3xl hover:border-theme-accent transition-all group text-center space-y-3"
+                  >
+                    <div className="w-12 h-12 bg-theme-accent/10 text-theme-accent rounded-2xl flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                      <QrCode size={24} />
+                    </div>
+                    <div className="font-bold">QRコード発行</div>
+                    <div className="text-xs text-theme-text-muted">現在のデータをQRコードとして出力します。</div>
+                  </button>
+                  <button 
+                    onClick={() => setIsScanning(true)}
+                    className="p-6 bg-theme-muted border-2 border-theme-border rounded-3xl hover:border-theme-accent transition-all group text-center space-y-3"
+                  >
+                    <div className="w-12 h-12 bg-theme-accent/10 text-theme-accent rounded-2xl flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                      <Scan size={24} />
+                    </div>
+                    <div className="font-bold">QRコード読み取り</div>
+                    <div className="text-xs text-theme-text-muted">他のデバイスのQRコードを読み込みます。</div>
+                  </button>
+                </div>
+              )}
+
+              {migrationQR && (
+                <div className="space-y-6 text-center">
+                  <div className="bg-white p-6 rounded-3xl inline-block shadow-inner border-4 border-theme-accent/20">
+                    <QRCodeSVG value={migrationQR} size={256} level="L" includeMargin={true} />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="font-bold text-theme-accent">QRコードが発行されました</p>
+                    <p className="text-xs text-theme-text-muted">このQRコードを移行先のデバイスで読み取ってください。</p>
+                  </div>
+                  <button 
+                    onClick={() => setMigrationQR(null)}
+                    className="w-full py-4 bg-theme-border text-theme-text rounded-2xl font-bold hover:bg-theme-border-strong transition-all"
+                  >
+                    戻る
+                  </button>
+                </div>
+              )}
+
+              {isScanning && (
+                <div className="space-y-6">
+                  <div id="qr-reader" className="overflow-hidden rounded-3xl border-2 border-theme-accent shadow-lg"></div>
+                  <div className="text-center space-y-2">
+                    <p className="font-bold">スキャン中...</p>
+                    <p className="text-xs text-theme-text-muted">移行元のQRコードをカメラにかざしてください。</p>
+                  </div>
+                  <button 
+                    onClick={() => setIsScanning(false)}
+                    className="w-full py-4 bg-theme-border text-theme-text rounded-2xl font-bold hover:bg-theme-border-strong transition-all"
+                  >
+                    キャンセル
+                  </button>
+                </div>
+              )}
+
+              {pendingMigrationData && (
+                <div className="space-y-6">
+                  <div className="p-6 bg-red-50 border-2 border-red-100 rounded-3xl space-y-4">
+                    <div className="flex items-center gap-3 text-red-600 font-bold">
+                      <AlertTriangle size={24} />
+                      <span>データの書き換え警告</span>
+                    </div>
+                    <p className="text-sm text-red-500 leading-relaxed">
+                      読み取ったデータで現在の学習状況を上書きしますか？<br />
+                      <span className="font-bold">現在のデータは完全に消去され、元に戻すことはできません。</span>
+                    </p>
+                    <div className="p-4 bg-white/50 rounded-xl space-y-1 text-xs text-theme-text-muted">
+                      <p>移行されるユーザー: <span className="font-bold text-theme-text">{pendingMigrationData.userName}</span></p>
+                      <p>移行されるレベル: <span className="font-bold text-theme-text">Lv.{calculateLevel(pendingMigrationData.ownedCards)}</span></p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    <button 
+                      onClick={confirmMigration}
+                      className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold shadow-lg shadow-red-600/20 hover:bg-red-700 transition-all"
+                    >
+                      データを上書きして移行する
+                    </button>
+                    <button 
+                      onClick={() => setPendingMigrationData(null)}
+                      className="w-full py-4 bg-theme-border text-theme-text rounded-2xl font-bold hover:bg-theme-border-strong transition-all"
+                    >
+                      キャンセル
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {migrationError && (
+                <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-sm font-bold text-center border border-red-100">
+                  {migrationError}
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}
