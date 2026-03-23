@@ -212,16 +212,78 @@ const HaloEffect = ({ rarity }: { rarity: Rarity }) => {
   );
 };
 
+const Burst = ({ color, count }: { color: string, count: number }) => (
+  <div className="absolute inset-0 pointer-events-none overflow-hidden">
+    {[...Array(count)].map((_, i) => (
+      <motion.div
+        key={i}
+        initial={{ 
+          x: "50%", 
+          y: "50%", 
+          scale: 0,
+          opacity: 1,
+          left: 0,
+          top: 0
+        }}
+        animate={{ 
+          x: `${50 + (Math.random() - 0.5) * 200}%`,
+          y: `${50 + (Math.random() - 0.5) * 200}%`,
+          scale: [0, 1, 0],
+          opacity: [1, 1, 0]
+        }}
+        transition={{ 
+          duration: 1, 
+          ease: "easeOut",
+          delay: 0.1
+        }}
+        className={`absolute w-2 h-2 rounded-full ${color} blur-[1px]`}
+      />
+    ))}
+  </div>
+);
+
+const SpeedLines = () => (
+  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    {[...Array(40)].map((_, i) => (
+      <motion.div
+        key={i}
+        initial={{ 
+          rotate: (i * 360) / 40,
+          scaleX: 0,
+          opacity: 0,
+          x: "-50%",
+          y: "-50%",
+          left: "50%",
+          top: "50%"
+        }}
+        animate={{ 
+          scaleX: [0, 1.5, 0],
+          opacity: [0, 0.5, 0],
+        }}
+        transition={{ 
+          duration: 0.8, 
+          repeat: Infinity, 
+          delay: Math.random() * 0.5,
+          ease: "easeInOut"
+        }}
+        className="absolute h-[2px] w-[1000px] bg-gradient-to-r from-transparent via-white/40 to-transparent origin-left"
+      />
+    ))}
+  </div>
+);
+
 const GachaRollingOverlay = () => {
   return (
-    <motion.div
+    <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[700] flex flex-col items-center justify-center bg-black/95 backdrop-blur-2xl overflow-hidden"
+      className="fixed inset-0 z-[700] bg-black flex flex-col items-center justify-center overflow-hidden"
     >
+      <SpeedLines />
+      
       {/* Background Particles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="absolute inset-0 overflow-hidden">
         {[...Array(30)].map((_, i) => (
           <motion.div
             key={i}
@@ -232,48 +294,63 @@ const GachaRollingOverlay = () => {
               opacity: 0
             }}
             animate={{ 
-              scale: [0, 1, 0],
-              opacity: [0, 0.5, 0],
-              y: [null, '-20vh']
+              y: [null, '-20vh'],
+              scale: [0, Math.random() * 1.5, 0],
+              opacity: [0, 0.8, 0]
             }}
             transition={{ 
               duration: 2 + Math.random() * 2, 
-              repeat: Infinity, 
-              delay: Math.random() * 2 
+              repeat: Infinity,
+              ease: "easeInOut"
             }}
-            className="absolute w-1 h-1 bg-amber-400 rounded-full"
+            className="absolute w-2 h-2 bg-amber-400 rounded-full blur-[1px]"
           />
         ))}
       </div>
 
       <motion.div
-        initial={{ scale: 0, rotate: -180 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{ type: "spring", damping: 15, stiffness: 100 }}
+        initial={{ scale: 0.5, rotate: -20 }}
+        animate={{ 
+          scale: [0.5, 1.1, 1],
+          rotate: [0, 5, -5, 0],
+          y: [0, -20, 0]
+        }}
+        transition={{ 
+          duration: 0.6,
+          repeat: Infinity,
+          repeatType: "reverse"
+        }}
         className="relative mb-12"
       >
-        {/* Outer Rings */}
+        {/* Energy Rings */}
         <motion.div 
-          animate={{ rotate: 360 }}
-          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-          className="absolute inset-[-40px] border-2 border-dashed border-amber-400/30 rounded-full"
+          animate={{ rotate: 360, scale: [1, 1.2, 1] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          className="absolute inset-[-60px] border-4 border-dashed border-amber-400/40 rounded-full"
         />
         <motion.div 
-          animate={{ rotate: -360 }}
-          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-          className="absolute inset-[-80px] border border-theme-accent/20 rounded-full"
+          animate={{ rotate: -360, scale: [1, 1.3, 1] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+          className="absolute inset-[-100px] border-2 border-theme-accent/30 rounded-full"
         />
 
-        <div className="w-48 h-48 md:w-64 md:h-64 bg-gradient-to-br from-amber-400 via-orange-500 to-red-600 rounded-full shadow-[0_0_100px_rgba(251,191,36,0.4)] flex items-center justify-center border-4 border-white/30 relative z-10">
-          <motion.div
-            animate={{ 
-              scale: [1, 1.1, 1],
-              rotate: [0, 5, -5, 0]
-            }}
-            transition={{ duration: 0.5, repeat: Infinity }}
-          >
-            <Sparkles size={80} className="text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]" />
-          </motion.div>
+        {/* The Capsule */}
+        <div className="w-40 h-56 md:w-48 md:h-64 bg-gradient-to-b from-white/20 to-white/5 backdrop-blur-md rounded-full shadow-[0_0_80px_rgba(251,191,36,0.5)] flex flex-col items-center justify-center border-4 border-white/40 relative z-10 overflow-hidden">
+          {/* Top Half */}
+          <div className="flex-1 w-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center border-b-4 border-white/50">
+            <Sparkles size={60} className="text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]" />
+          </div>
+          {/* Bottom Half */}
+          <div className="flex-1 w-full bg-gradient-to-br from-slate-200 to-slate-400 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-white/30 border-2 border-white/50 shadow-inner" />
+          </div>
+          
+          {/* Internal Glow */}
+          <motion.div 
+            animate={{ opacity: [0.3, 0.7, 0.3] }}
+            transition={{ duration: 1, repeat: Infinity }}
+            className="absolute inset-0 bg-white/10 pointer-events-none"
+          />
         </div>
       </motion.div>
       
@@ -282,23 +359,32 @@ const GachaRollingOverlay = () => {
         animate={{ opacity: 1, y: 0 }}
         className="text-center relative z-10"
       >
-        <h2 className="text-white text-2xl md:text-4xl font-black tracking-[0.4em] uppercase mb-6 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
-          Summoning...
+        <h2 className="text-white text-3xl md:text-5xl font-black tracking-[0.6em] uppercase mb-8 drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">
+          Summoning
         </h2>
-        <div className="flex justify-center gap-3">
-          {[0, 1, 2, 3, 4].map(i => (
+        <div className="flex justify-center gap-4">
+          {[0, 1, 2, 3].map(i => (
             <motion.div
               key={i}
               animate={{ 
-                y: [0, -10, 0],
+                scale: [1, 1.5, 1],
+                opacity: [0.3, 1, 0.3],
                 backgroundColor: ["#fbbf24", "#ffffff", "#fbbf24"]
               }}
-              transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }}
-              className="w-2 h-2 rounded-full"
+              transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
+              className="w-3 h-3 rounded-full shadow-[0_0_10px_rgba(251,191,36,0.8)]"
             />
           ))}
         </div>
       </motion.div>
+
+      {/* Final Flash Trigger */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0, 0, 1] }}
+        transition={{ duration: 3, times: [0, 0.9, 1] }}
+        className="absolute inset-0 bg-white z-[800] pointer-events-none"
+      />
     </motion.div>
   );
 };
@@ -688,7 +774,7 @@ export default function App() {
           setShowLevelUp(newLevel);
         }, 1500);
       }
-    }, 2000);
+    }, 3000);
   };
 
   const jumpToCollection = (term: string) => {
@@ -751,7 +837,9 @@ export default function App() {
           label: 'Ultra Rare',
           accent: 'bg-theme-card/20',
           glow: 'shadow-[0_0_30px_rgba(236,72,153,0.8)]',
-          pulse: 'animate-pulse'
+          pulse: 'animate-pulse',
+          flash: 'bg-purple-400',
+          particles: 40
         };
       case 'SR':
         return {
@@ -762,7 +850,9 @@ export default function App() {
           label: 'Super Rare',
           accent: 'bg-theme-card/20',
           glow: 'shadow-[0_0_20px_rgba(250,204,21,0.6)]',
-          pulse: 'animate-pulse'
+          pulse: 'animate-pulse',
+          flash: 'bg-yellow-300',
+          particles: 25
         };
       case 'R':
         return {
@@ -773,7 +863,9 @@ export default function App() {
           label: 'Rare',
           accent: 'bg-theme-card/20',
           glow: 'shadow-[0_0_10px_rgba(59,130,246,0.4)]',
-          pulse: ''
+          pulse: '',
+          flash: 'bg-blue-300',
+          particles: 15
         };
       default:
         return {
@@ -784,7 +876,9 @@ export default function App() {
           label: 'Common',
           accent: 'bg-theme-border',
           glow: '',
-          pulse: ''
+          pulse: '',
+          flash: 'bg-white',
+          particles: 0
         };
     }
   };
@@ -1058,12 +1152,17 @@ export default function App() {
                   <span className="text-[10px] md:text-xs font-bold text-theme-text-muted truncate max-w-[100px]">{userName}</span>
                 </div>
                 {/* Level Progress Bar */}
-                <div className="mt-1.5 w-full max-w-[150px] h-1 bg-theme-muted rounded-full overflow-hidden">
+                <div className="mt-2 w-full max-w-[180px] h-2 bg-theme-muted rounded-full overflow-hidden border border-theme-border/30 shadow-inner relative">
                   <motion.div 
                     initial={{ width: 0 }}
                     animate={{ width: `${userLevelProgress * 100}%` }}
-                    className="h-full bg-theme-accent shadow-[0_0_8px_rgba(var(--theme-accent-rgb),0.5)]"
-                  />
+                    transition={{ type: "spring", damping: 20, stiffness: 50 }}
+                    className="h-full bg-gradient-to-r from-theme-accent to-amber-400 relative"
+                  >
+                    {/* Progress Glow */}
+                    <div className="absolute inset-0 bg-white/20 animate-pulse" />
+                    <div className="absolute right-0 top-0 bottom-0 w-4 bg-white/40 blur-sm" />
+                  </motion.div>
                 </div>
               </div>
             </div>
@@ -1904,18 +2003,45 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-6"
+            className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6"
           >
+            <SpeedLines />
+            
+            {/* Reveal Flash */}
+            <motion.div
+              key={`flash-${currentGachaIndex}`}
+              initial={{ opacity: 1 }}
+              animate={{ opacity: 0 }}
+              transition={{ duration: 0.8 }}
+              className={`absolute inset-0 z-[250] pointer-events-none ${getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').flash}`}
+            />
+
             <HaloEffect rarity={termRarities[gachaResults[currentGachaIndex]] || 'C'} />
+            
+            {/* Burst Effect */}
+            <Burst 
+              color={getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').flash} 
+              count={getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').particles} 
+            />
+
             <motion.div
               key={currentGachaIndex}
-                    initial={{ scale: 0.5, opacity: 0, rotateY: 180 }}
-                    animate={{ scale: 1, opacity: 1, rotateY: 0 }}
-                    transition={{ type: "spring", damping: 15 }}
-                    className="relative w-full max-w-[260px] md:max-w-sm aspect-[2/3] md:aspect-[3/4]"
-                  >
-                    {/* Card Display */}
-                    <div className={`relative w-full h-full rounded-2xl md:rounded-[2rem] overflow-hidden group ${getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').border} ${getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').glow} transition-all duration-300 flex flex-col shadow-2xl border-4`}>
+              initial={{ scale: 0.2, opacity: 0, rotateY: 180, rotate: -15 }}
+              animate={{ 
+                scale: [0.2, 1.1, 1],
+                opacity: 1, 
+                rotateY: 0, 
+                rotate: 0,
+                x: [0, -10, 10, -5, 5, 0]
+              }}
+              transition={{ 
+                scale: { type: "spring", damping: 12, stiffness: 100, delay: 0.1 },
+                x: { duration: 0.4, delay: 0.2 }
+              }}
+              className="relative w-full max-w-[280px] md:max-w-sm aspect-[2/3] md:aspect-[3/4] z-10"
+            >
+              {/* Card Display */}
+              <div className={`relative w-full h-full rounded-2xl md:rounded-[2.5rem] overflow-hidden group ${getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').border} ${getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').glow} transition-all duration-300 flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.5)] border-4`}>
                       {/* Card Backgrounds */}
                       <div className="absolute inset-0 bg-theme-card" />
                       <div className={`absolute inset-0 ${getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').bg} opacity-10`} />
@@ -2293,53 +2419,63 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[500] flex items-center justify-center bg-black/80 backdrop-blur-md"
+            className="fixed inset-0 z-[500] flex items-center justify-center bg-black/90 backdrop-blur-xl overflow-hidden"
             onClick={() => setShowLevelUp(null)}
           >
+            <SpeedLines />
+            <Burst color="bg-amber-400" count={50} />
+            
             <motion.div
-              initial={{ scale: 0.5, y: 50 }}
-              animate={{ scale: 1, y: 0 }}
-              className="text-center space-y-8 p-12"
+              initial={{ scale: 0.5, y: 100, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              transition={{ type: "spring", damping: 12, stiffness: 100 }}
+              className="text-center space-y-10 p-12 relative z-10"
             >
               <div className="relative inline-block">
                 <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                  className="absolute inset-0 bg-gradient-to-r from-amber-400 via-yellow-300 to-orange-500 rounded-full blur-3xl opacity-50"
+                  animate={{ rotate: 360, scale: [1, 1.2, 1] }}
+                  transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-[-40px] bg-gradient-to-r from-amber-400 via-yellow-300 to-orange-500 rounded-full blur-3xl opacity-40"
                 />
-                <div className="relative bg-gradient-to-b from-amber-300 to-amber-600 p-1 rounded-full shadow-2xl">
-                  <div className="bg-theme-card rounded-full p-8">
-                    <Trophy size={80} className="text-amber-500" />
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="relative bg-gradient-to-b from-amber-300 to-amber-600 p-1.5 rounded-full shadow-[0_0_50px_rgba(251,191,36,0.6)]"
+                >
+                  <div className="bg-theme-card rounded-full p-10">
+                    <Trophy size={100} className="text-amber-500 drop-shadow-[0_0_15px_rgba(251,191,36,0.5)]" />
                   </div>
-                </div>
+                </motion.div>
               </div>
               
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <motion.h2 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="text-5xl font-theme-heading font-bold text-white"
+                  initial={{ opacity: 0, scale: 2 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2, type: "spring" }}
+                  className="text-6xl md:text-8xl font-theme-heading font-black text-white tracking-tighter drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]"
                 >
                   LEVEL UP!
                 </motion.h2>
-                <motion.p 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
+                <motion.div 
+                  initial={{ opacity: 0, x: -50 }}
+                  animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.4 }}
-                  className="text-amber-400 text-2xl font-bold tracking-widest"
+                  className="flex items-center justify-center gap-6 text-amber-400 font-bold"
                 >
-                  Lv.{showLevelUp - 1} → <span className="text-white text-4xl">{showLevelUp}</span>
-                </motion.p>
+                  <span className="text-3xl opacity-60">Lv.{showLevelUp - 1}</span>
+                  <ArrowRight size={32} className="text-white/40" />
+                  <span className="text-white text-6xl md:text-7xl drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]">{showLevelUp}</span>
+                </motion.div>
               </div>
 
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
-                className="text-white/60 text-sm font-bold animate-bounce"
+                transition={{ delay: 1, duration: 1 }}
+                className="text-white/40 text-lg font-bold tracking-[0.3em] uppercase animate-pulse"
               >
-                タップして閉じる
+                Tap to continue
               </motion.p>
             </motion.div>
           </motion.div>
