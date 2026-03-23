@@ -17,13 +17,14 @@ export async function generateQuestion(
   term: string, 
   relatedTerms: string[], 
   fallbackTerms?: string[],
-  forcedType?: QuestionType
+  forcedType?: QuestionType,
+  optionCount: number = 5
 ): Promise<Question> {
   // Try to get distractors from related terms first
   let distractorPool = relatedTerms.filter(t => t !== term);
   
   // If not enough related terms, use fallback terms
-  if (distractorPool.length < 4 && fallbackTerms) {
+  if (distractorPool.length < optionCount && fallbackTerms) {
     const additionalTerms = fallbackTerms.filter(t => t !== term && !distractorPool.includes(t));
     distractorPool = [...distractorPool, ...additionalTerms];
   }
@@ -36,10 +37,10 @@ export async function generateQuestion(
     const patterns = termDescriptions[term];
     const correctDescription = patterns[Math.floor(Math.random() * patterns.length)];
     
-    // Get 3 distractors (descriptions of other terms)
+    // Get distractors (descriptions of other terms)
     const distractors = distractorPool
       .sort(() => 0.5 - Math.random())
-      .slice(0, 3)
+      .slice(0, optionCount - 1)
       .map(t => {
         const descPatterns = termDescriptions[t] || ["説明がありません。"];
         return descPatterns[Math.floor(Math.random() * descPatterns.length)];
@@ -55,10 +56,10 @@ export async function generateQuestion(
     };
   }
 
-  // Standard pattern: Question is Description, Options are Terms (5 choices)
+  // Standard pattern: Question is Description, Options are Terms
   const otherOptions = distractorPool
     .sort(() => 0.5 - Math.random())
-    .slice(0, 4); // 4 distractors + 1 correct = 5 options
+    .slice(0, optionCount - 1); 
 
   const options = [term, ...otherOptions].sort(() => 0.5 - Math.random());
 

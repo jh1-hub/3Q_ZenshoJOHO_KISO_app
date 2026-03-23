@@ -92,7 +92,7 @@ import { termDescriptions } from './data/termDescriptions';
 import { flavorTexts } from './data/flavorTexts';
 import { termRarities, Rarity } from './data/rarities';
 
-type GameState = 'START' | 'CATEGORY_SELECT' | 'QUIZ' | 'RESULT' | 'COLLECTION' | 'STATS';
+type GameState = 'START' | 'CATEGORY_SELECT' | 'QUIZ' | 'RESULT' | 'COLLECTION' | 'STATS' | 'SPEED_STAR';
 
 interface UnitStats {
   highScore: number;
@@ -426,6 +426,14 @@ export default function App() {
   const [currentGachaIndex, setCurrentGachaIndex] = useState(-1);
   const [targetCardId, setTargetCardId] = useState<string | null>(null);
   const [resetStep, setResetStep] = useState(0);
+  const [hasBonusTicket, setHasBonusTicket] = useState(false);
+  const [quizCount, setQuizCount] = useState(0);
+  const [speedStarCorrectCount, setSpeedStarCorrectCount] = useState(0);
+  const [speedStarRequiredForNext, setSpeedStarRequiredForNext] = useState(3);
+  const [speedStarNextIncrement, setSpeedStarNextIncrement] = useState(4);
+  const [speedStarMaxCombo, setSpeedStarMaxCombo] = useState(0);
+  const [speedStarMaxCorrect, setSpeedStarMaxCorrect] = useState(0);
+  const [speedStarChallenges, setSpeedStarChallenges] = useState(0);
 
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -446,6 +454,24 @@ export default function App() {
         setStats(JSON.parse(savedStats));
       } catch (e) {
         console.error("Failed to parse stats", e);
+      }
+    }
+
+    const savedTicket = localStorage.getItem('it_quiz_bonus_ticket');
+    if (savedTicket) setHasBonusTicket(savedTicket === 'true');
+
+    const savedQuizCount = localStorage.getItem('it_quiz_count');
+    if (savedQuizCount) setQuizCount(parseInt(savedQuizCount, 10));
+
+    const savedSpeedStarStats = localStorage.getItem('it_quiz_speed_star_stats');
+    if (savedSpeedStarStats) {
+      try {
+        const parsed = JSON.parse(savedSpeedStarStats);
+        setSpeedStarMaxCombo(parsed.maxCombo || 0);
+        setSpeedStarMaxCorrect(parsed.maxCorrect || 0);
+        setSpeedStarChallenges(parsed.challenges || 0);
+      } catch (e) {
+        console.error("Failed to parse speed star stats", e);
       }
     }
 
@@ -477,6 +503,15 @@ export default function App() {
     localStorage.setItem('it_quiz_username', profile.userName);
     localStorage.setItem('it_quiz_user_profile', JSON.stringify({ grade: profile.grade, classNum: profile.classNum, attendanceNum: profile.attendanceNum }));
   };
+
+  useEffect(() => {
+    const stats = {
+      maxCombo: speedStarMaxCombo,
+      maxCorrect: speedStarMaxCorrect,
+      challenges: speedStarChallenges
+    };
+    localStorage.setItem('it_quiz_speed_star_stats', JSON.stringify(stats));
+  }, [speedStarMaxCombo, speedStarMaxCorrect, speedStarChallenges]);
 
   const calculateLevel = (collection: Record<string, number>) => {
     const totalPoints = Object.values(collection).reduce((sum: number, count: number) => sum + Math.min(3, count), 0);
@@ -519,6 +554,18 @@ export default function App() {
     };
     
     saveStats(currentStats);
+
+    // Ticket logic
+    if (gameState !== 'SPEED_STAR') {
+      const newQuizCount = quizCount + 1;
+      setQuizCount(newQuizCount);
+      localStorage.setItem('it_quiz_count', newQuizCount.toString());
+      
+      if (newQuizCount % 3 === 0 && !hasBonusTicket) {
+        setHasBonusTicket(true);
+        localStorage.setItem('it_quiz_bonus_ticket', 'true');
+      }
+    }
   };
 
   const resetAllStats = () => {
@@ -693,17 +740,40 @@ export default function App() {
     }
   };
 
+  const getGachaPullCount = () => {
+    if (!selectedSubcategory && questions.length === 100) {
+      // Speed Star Mode
+      if (speedStarCorrectCount === 0) return 0;
+      let count = 1; // Base 1 pull for 1+ correct
+      let tempCorrect = speedStarCorrectCount;
+      let currentRequired = 3;
+      let nextInc = 4;
+      while (tempCorrect >= currentRequired) {
+        count++;
+        tempCorrect -= currentRequired;
+        currentRequired = nextInc;
+        nextInc++;
+      }
+      return count;
+    }
+    
+    // Regular Quiz Modes
+    if (questions.length === 20) return 5;
+    if (questions.length === 10) return 2;
+    if (questions.length === 5) return 1;
+    return 0;
+  };
+
   // Gacha Logic
   const pullGacha = () => {
     if (isGachaRolling) return;
+    
+    const pullCount = getGachaPullCount();
+    if (pullCount === 0) return;
+
     setIsGachaRolling(true);
     setGachaResults([]);
     setCurrentGachaIndex(-1);
-
-    // Determine number of pulls
-    let pullCount = 1;
-    if (questions.length === 20) pullCount = 5;
-    else if (questions.length === 10) pullCount = 2;
 
     const results: string[] = [];
     const newCollection = { ...ownedCards };
@@ -994,6 +1064,45 @@ export default function App() {
     }
   };
 
+  const startSpeedStar = async () => {
+    setIsLoading(true);
+    resetQuizState();
+    setSelectedSubcategory(null);
+    setSpeedStarCorrectCount(0);
+    setSpeedStarRequiredForNext(3);
+    setSpeedStarNextIncrement(4);
+    setSpeedStarChallenges(prev => prev + 1);
+    
+    try {
+      // Flatten all subcategories to pick from
+      const allSubcategories = quizCategories.flatMap(cat => cat.subcategories);
+      const allTerms = allSubcategories.flatMap(sub => sub.terms);
+      
+      // Pick 100 random questions with dummy options from the same category
+      const selectedQuestionsData = [];
+      for (let i = 0; i < 100; i++) {
+        const randomSub = allSubcategories[Math.floor(Math.random() * allSubcategories.length)];
+        const randomTerm = randomSub.terms[Math.floor(Math.random() * randomSub.terms.length)];
+        selectedQuestionsData.push({ term: randomTerm, subTerms: randomSub.terms });
+      }
+      
+      const ssQuestions = await Promise.all(
+        selectedQuestionsData.map(data => generateQuestion(data.term, data.subTerms, allTerms, 'DESC_TO_TERM', 4))
+      );
+      
+      setQuestions(ssQuestions);
+      setTimeLeft(30);
+      setGameState('SPEED_STAR');
+      // Ticket is consumed upon starting
+      setHasBonusTicket(false);
+      localStorage.setItem('it_quiz_bonus_ticket', 'false');
+    } catch (error) {
+      console.error("Failed to start Speed Star:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const resetQuizState = () => {
     setScore(0);
     setCombo(0);
@@ -1021,15 +1130,22 @@ export default function App() {
   // Timer logic
   useEffect(() => {
     let timer: number;
-    if (gameState === 'QUIZ' && timeLeft > 0 && !feedback) {
+    if ((gameState === 'QUIZ' || gameState === 'SPEED_STAR') && timeLeft > 0 && !feedback) {
       timer = window.setInterval(() => {
         setTimeLeft(prev => Math.max(0, prev - 0.1));
       }, 100);
-    } else if (timeLeft === 0 && gameState === 'QUIZ' && !feedback) {
-      handleAnswer(''); // Time out
+    } else if (timeLeft === 0 && (gameState === 'QUIZ' || gameState === 'SPEED_STAR') && !feedback) {
+      if (gameState === 'SPEED_STAR') {
+        // Update Speed Star high scores immediately on timeout
+        setSpeedStarMaxCombo(prev => Math.max(prev, combo));
+        setSpeedStarMaxCorrect(prev => Math.max(prev, speedStarCorrectCount));
+        setGameState('RESULT');
+      } else {
+        handleAnswer(''); // Time out for regular quiz
+      }
     }
     return () => clearInterval(timer);
-  }, [gameState, timeLeft, feedback]);
+  }, [gameState, timeLeft, feedback, combo, speedStarCorrectCount]);
 
   // Penalty timer logic
   useEffect(() => {
@@ -1051,6 +1167,35 @@ export default function App() {
     const isCorrect = answer === currentQuestion.correctAnswer;
     setUserAnswer(answer);
     
+    if (gameState === 'SPEED_STAR') {
+      if (isCorrect) {
+        setScore(prev => prev + 200);
+        setSpeedStarCorrectCount(prev => prev + 1);
+        setCombo(prev => prev + 1);
+        setMaxCombo(prev => Math.max(prev, combo + 1));
+        setTimeLeft(prev => Math.min(30, prev + 2));
+        setFeedback('CORRECT');
+      } else {
+        setCombo(0);
+        setTimeLeft(prev => Math.max(0, prev - 5));
+        setFeedback('WRONG');
+      }
+      
+      setTimeout(() => {
+        setFeedback(null);
+        setUserAnswer(null);
+        if (currentQuestionIndex < questions.length - 1 && timeLeft > 0) {
+          setCurrentQuestionIndex(prev => prev + 1);
+        } else {
+          // Update Speed Star high scores
+          setSpeedStarMaxCombo(prev => Math.max(prev, combo + (isCorrect ? 1 : 0)));
+          setSpeedStarMaxCorrect(prev => Math.max(prev, speedStarCorrectCount + (isCorrect ? 1 : 0)));
+          setGameState('RESULT');
+        }
+      }, 500);
+      return;
+    }
+
     if (isCorrect) {
       // Score based on time: Base 100 + (remaining time * 10)
       const timeBonus = Math.floor(timeLeft * 10);
@@ -1167,6 +1312,12 @@ export default function App() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {hasBonusTicket && (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-black rounded-xl border border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.2)] animate-pulse">
+                  <Zap size={16} className="text-amber-400" />
+                  <span className="text-[10px] md:text-xs font-black text-amber-400 tracking-tighter uppercase">Bonus Ticket</span>
+                </div>
+              )}
               <button 
                 onClick={() => setShowMigrationModal(true)}
                 className="p-2 md:px-4 md:py-2 bg-theme-card rounded-xl border border-theme-border hover:bg-theme-muted transition-all flex items-center gap-2 group"
@@ -1233,6 +1384,18 @@ export default function App() {
             </h1>
             
             <div className="flex flex-col sm:flex-row gap-4">
+              {hasBonusTicket && (
+                <button 
+                  onClick={startSpeedStar}
+                  className="group relative px-12 py-5 bg-black text-amber-400 border-2 border-amber-400 rounded-full text-xl font-bold overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-2xl"
+                >
+                  <span className="relative z-10 flex items-center gap-3">
+                    <Zap size={24} className="animate-pulse" /> SPEED STAR <ChevronRight className="group-hover:translate-x-1 transition-transform" />
+                  </span>
+                  <div className="absolute inset-0 bg-amber-400/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                </button>
+              )}
+
               <button 
                 onClick={() => setGameState('CATEGORY_SELECT')}
                 className="group relative px-12 py-5 bg-theme-text text-theme-bg text-white rounded-full text-xl font-bold overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-2xl"
@@ -1448,6 +1611,30 @@ export default function App() {
                         ? Math.floor(getStatsFor('all').totalScore / getStatsFor('all').attempts).toLocaleString() 
                         : 0}
                     </p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Speed Star Stats */}
+              <section className="space-y-6">
+                <h3 className="text-xl font-bold flex items-center gap-2 text-amber-500">
+                  <Zap size={24} /> SPEED STAR
+                </h3>
+                <div className="bg-black p-8 rounded-[2rem] shadow-xl border border-amber-400/30 grid grid-cols-1 md:grid-cols-3 gap-8 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-8 opacity-5">
+                    <Zap size={120} className="text-amber-400" />
+                  </div>
+                  <div className="space-y-1 relative z-10">
+                    <p className="text-sm text-amber-400/60 font-bold uppercase tracking-wider">最高正答数</p>
+                    <p className="text-3xl font-mono font-bold text-amber-400">{speedStarMaxCorrect}回</p>
+                  </div>
+                  <div className="space-y-1 relative z-10">
+                    <p className="text-sm text-amber-400/60 font-bold uppercase tracking-wider">最大コンボ</p>
+                    <p className="text-3xl font-mono font-bold text-amber-400">{speedStarMaxCombo} COMBO</p>
+                  </div>
+                  <div className="space-y-1 relative z-10">
+                    <p className="text-sm text-amber-400/60 font-bold uppercase tracking-wider">挑戦回数</p>
+                    <p className="text-3xl font-mono font-bold text-amber-400">{speedStarChallenges}回</p>
                   </div>
                 </div>
               </section>
@@ -1688,6 +1875,45 @@ export default function App() {
               </button>
             </div>
 
+            {/* Speed Star Mode Button */}
+            {hasBonusTicket && (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={startSpeedStar}
+                disabled={isLoading}
+                className="w-full mb-6 p-6 md:p-8 bg-black text-amber-400 rounded-[2rem] shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0 group overflow-hidden relative border-2 border-amber-400"
+              >
+                <div className="relative z-10 flex items-center gap-4 md:gap-6">
+                  <div className="p-3 md:p-4 bg-amber-400/10 rounded-2xl backdrop-blur-md">
+                    <Zap size={28} className="text-amber-400 md:w-8 md:h-8 animate-pulse" />
+                  </div>
+                  <div className="text-left">
+                    <div className="flex items-center gap-3 mb-1">
+                      <h3 className="text-xl md:text-2xl font-bold">SPEED STAR</h3>
+                      <span className="text-[10px] bg-amber-400 text-black px-2 py-0.5 rounded-full font-black uppercase">Bonus Game</span>
+                    </div>
+                    <p className="text-sm md:text-base text-amber-400/60">全単元からランダムに出題。スピード勝負！</p>
+                    <div className="flex gap-4 mt-2 text-[10px] font-bold uppercase tracking-wider text-amber-400/40">
+                      <span>Best Correct: {speedStarMaxCorrect}</span>
+                      <span>Max Combo: {speedStarMaxCombo}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="relative z-10 flex items-center gap-2 font-bold text-base md:text-lg self-end md:self-auto">
+                  挑戦する <ChevronRight className="group-hover:translate-x-2 transition-transform" />
+                </div>
+                <motion.div 
+                  animate={{ 
+                    scale: [1, 1.2, 1],
+                    opacity: [0.05, 0.1, 0.05]
+                  }}
+                  transition={{ repeat: Infinity, duration: 4 }}
+                  className="absolute -right-10 -bottom-10 w-64 h-64 bg-amber-400 rounded-full blur-3xl"
+                />
+              </motion.button>
+            )}
+
             {/* Comprehensive Mode Button */}
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -1764,6 +1990,96 @@ export default function App() {
                   </div>
                 </div>
               ))}
+            </div>
+          </motion.div>
+        )}
+
+        {gameState === 'SPEED_STAR' && questions.length > 0 && (
+          <motion.div 
+            key="speed-star"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black text-white flex flex-col"
+          >
+            <SpeedLines />
+            
+            {/* Sticky Header & Timer */}
+            <div className="p-6 pb-4 relative z-20 bg-black/80 backdrop-blur-md border-b border-white/10">
+              <div className="max-w-3xl mx-auto w-full flex items-center justify-between mb-4">
+                <div className="flex items-center gap-4">
+                  <div className="bg-white/10 px-4 py-2 rounded-full border border-white/20 font-bold flex items-center gap-3">
+                    <Zap size={20} className="text-amber-400" />
+                    <span className="text-amber-400">SPEED STAR</span>
+                    <span className="text-white/60">|</span>
+                    <span>Correct: {speedStarCorrectCount}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-2xl md:text-3xl font-mono font-bold">
+                  <Timer size={28} className={timeLeft < 5 ? 'text-red-500 animate-pulse' : 'text-amber-400'} />
+                  <span className={timeLeft < 5 ? 'text-red-500' : 'text-amber-400'}>{Math.ceil(timeLeft)}s</span>
+                </div>
+              </div>
+
+              {/* Visual Timer Bar */}
+              <div className="max-w-3xl mx-auto w-full h-3 bg-white/10 rounded-full overflow-hidden relative">
+                <motion.div 
+                  className={`h-full ${timeLeft < 5 ? 'bg-red-500' : 'bg-amber-400'}`}
+                  initial={{ width: '100%' }}
+                  animate={{ width: `${Math.min(100, (timeLeft / 30) * 100)}%` }}
+                  transition={{ duration: 0.1, ease: "linear" }}
+                />
+              </div>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="flex-grow overflow-y-auto p-6 relative z-10">
+              <div className="max-w-3xl mx-auto w-full py-8">
+                {/* Question */}
+                <motion.div
+                  key={currentQuestionIndex}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-white/5 p-8 md:p-12 rounded-[2rem] border border-white/10 mb-8 relative overflow-hidden backdrop-blur-sm"
+                >
+                  <div className="absolute top-0 left-0 w-2 h-full bg-amber-400" />
+                  <h3 className="text-xl md:text-3xl font-theme-heading leading-relaxed mb-0">
+                    {questions[currentQuestionIndex].description}
+                  </h3>
+                </motion.div>
+
+                {/* Options */}
+                <div className="grid grid-cols-1 gap-4">
+                  {questions[currentQuestionIndex].options.map((option, idx) => {
+                    const isCorrect = option === questions[currentQuestionIndex].correctAnswer;
+                    const isSelected = option === userAnswer;
+                    
+                    let buttonClass = 'bg-white/5 border-white/10 hover:border-amber-400 hover:bg-white/10';
+                    if (feedback === 'CORRECT' && isCorrect) {
+                      buttonClass = 'bg-green-500/20 border-green-500 text-green-400';
+                    } else if (feedback === 'WRONG' && isSelected) {
+                      buttonClass = 'bg-red-500/20 border-red-500 text-red-400';
+                    }
+
+                    return (
+                      <motion.button
+                        key={`${currentQuestionIndex}-${idx}`}
+                        whileHover={!feedback ? { scale: 1.02, x: 10 } : {}}
+                        whileTap={!feedback ? { scale: 0.98 } : {}}
+                        onClick={() => !feedback && handleAnswer(option)}
+                        disabled={!!feedback}
+                        className={`
+                          relative p-5 rounded-2xl text-left transition-all border-2 text-lg font-bold
+                          ${buttonClass}
+                        `}
+                      >
+                        <span className="mr-4 text-white/40">{idx + 1}.</span>
+                        {option}
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </motion.div>
         )}
@@ -1916,19 +2232,30 @@ export default function App() {
                 <Trophy size={48} className="text-theme-secondary md:w-16 md:h-16" />
               </motion.div>
               
-              <h2 className="text-3xl md:text-4xl font-theme-heading font-bold mb-2">Quiz Complete!</h2>
-              <p className="text-sm md:text-base text-theme-text-muted mb-6 md:mb-8">{selectedSubcategory?.title}</p>
+              <h2 className="text-3xl md:text-4xl font-theme-heading font-bold mb-2">
+                {speedStarCorrectCount > 0 && !selectedSubcategory ? 'Speed Star Result!' : 'Quiz Complete!'}
+              </h2>
+              <p className="text-sm md:text-base text-theme-text-muted mb-6 md:mb-8">
+                {speedStarCorrectCount > 0 && !selectedSubcategory ? `Correct Answers: ${speedStarCorrectCount}` : selectedSubcategory?.title}
+              </p>
               
               {/* Gacha Section */}
               <div className="mb-8 md:mb-12">
                 <div className="bg-theme-bg p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-sm text-center">
-                  <h3 className="text-xl md:text-2xl font-theme-heading font-bold mb-3 md:mb-4">学習完了ボーナス</h3>
+                  <h3 className="text-xl md:text-2xl font-theme-heading font-bold mb-3 md:mb-4">
+                    {speedStarCorrectCount > 0 && !selectedSubcategory ? 'Speed Star Bonus' : '学習完了ボーナス'}
+                  </h3>
                   
-                  {questions.length > 0 && (correctCount / questions.length) >= 0.5 ? (
+                  {getGachaPullCount() > 0 && ((speedStarCorrectCount > 0 && !selectedSubcategory) || (questions.length > 0 && (correctCount / questions.length) >= 0.5)) ? (
                     <div className="space-y-4 md:space-y-6">
-                      <p className="text-sm md:text-base text-theme-text-muted">正解率50%以上達成！カードガチャを引くことができます。</p>
+                      <p className="text-sm md:text-base text-theme-text-muted">
+                        {speedStarCorrectCount > 0 && !selectedSubcategory 
+                          ? 'スピードスター達成！結果に応じてガチャを引けます。' 
+                          : '正解率50%以上達成！カードガチャを引くことができます。'}
+                      </p>
                       <p className="text-xs md:text-sm text-theme-accent font-bold">
-                        {questions.length === 20 ? '総合演習ボーナス：5枚引けます！' : 
+                        {speedStarCorrectCount > 0 && !selectedSubcategory ? `スピードスターボーナス：${getGachaPullCount()}枚引けます！` :
+                         questions.length === 20 ? '総合演習ボーナス：5枚引けます！' : 
                          questions.length === 10 ? '単元演習ボーナス：2枚引けます！' : 
                          '1枚引けます！'}
                       </p>
@@ -1968,6 +2295,14 @@ export default function App() {
               </div>
 
               <div className="space-y-3 md:space-y-4">
+                {hasBonusTicket && (
+                  <button 
+                    onClick={startSpeedStar}
+                    className="w-full py-4 md:py-5 bg-black text-amber-400 border-2 border-amber-400 rounded-2xl text-lg md:text-xl font-bold flex items-center justify-center gap-3 hover:bg-amber-400/10 transition-colors"
+                  >
+                    <Zap size={24} className="animate-pulse" /> SPEED STAR に挑戦
+                  </button>
+                )}
                 <button 
                   onClick={() => {
                     resetQuizState();
@@ -2028,7 +2363,7 @@ export default function App() {
               key={currentGachaIndex}
               initial={{ scale: 0.2, opacity: 0, rotateY: 180, rotate: -15 }}
               animate={{ 
-                scale: [0.2, 1.1, 1],
+                scale: 1,
                 opacity: 1, 
                 rotateY: 0, 
                 rotate: 0,
