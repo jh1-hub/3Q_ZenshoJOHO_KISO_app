@@ -218,55 +218,83 @@ const GachaRollingOverlay = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[300] bg-black flex flex-col justify-center items-center overflow-hidden"
+      className="fixed inset-0 z-[700] flex flex-col items-center justify-center bg-black/95 backdrop-blur-2xl overflow-hidden"
     >
-      {/* Hyper-speed lines */}
-      {[...Array(30)].map((_, i) => (
-        <motion.div
-          key={i}
-          initial={{ x: '-100vw', y: `${Math.random() * 100}vh`, opacity: 0 }}
-          animate={{ 
-            x: '200vw', 
-            opacity: [0, 1, 0],
-          }}
-          transition={{ 
-            duration: 0.4 + Math.random() * 0.4, 
-            repeat: Infinity, 
-            delay: Math.random() * 1,
-            ease: "linear"
-          }}
-          className="absolute h-[1px] w-[300px] bg-gradient-to-r from-transparent via-white to-transparent"
-        />
-      ))}
-      
+      {/* Background Particles */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {[...Array(30)].map((_, i) => (
+          <motion.div
+            key={i}
+            initial={{ 
+              x: Math.random() * 100 + 'vw', 
+              y: Math.random() * 100 + 'vh',
+              scale: 0,
+              opacity: 0
+            }}
+            animate={{ 
+              scale: [0, 1, 0],
+              opacity: [0, 0.5, 0],
+              y: [null, '-20vh']
+            }}
+            transition={{ 
+              duration: 2 + Math.random() * 2, 
+              repeat: Infinity, 
+              delay: Math.random() * 2 
+            }}
+            className="absolute w-1 h-1 bg-amber-400 rounded-full"
+          />
+        ))}
+      </div>
+
       <motion.div
-        animate={{ 
-          scale: [1, 1.1, 1],
-          rotate: [0, 5, -5, 0]
-        }}
-        transition={{ duration: 0.2, repeat: Infinity }}
-        className="relative z-10 mb-12"
+        initial={{ scale: 0, rotate: -180 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{ type: "spring", damping: 15, stiffness: 100 }}
+        className="relative mb-12"
       >
-        <div className="w-40 h-40 md:w-56 md:h-56 bg-gradient-to-br from-amber-400 via-orange-500 to-red-600 rounded-full shadow-[0_0_80px_rgba(251,191,36,0.6)] flex items-center justify-center border-4 border-white/20">
-          <Sparkles size={80} className="text-white animate-pulse" />
+        {/* Outer Rings */}
+        <motion.div 
+          animate={{ rotate: 360 }}
+          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+          className="absolute inset-[-40px] border-2 border-dashed border-amber-400/30 rounded-full"
+        />
+        <motion.div 
+          animate={{ rotate: -360 }}
+          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+          className="absolute inset-[-80px] border border-theme-accent/20 rounded-full"
+        />
+
+        <div className="w-48 h-48 md:w-64 md:h-64 bg-gradient-to-br from-amber-400 via-orange-500 to-red-600 rounded-full shadow-[0_0_100px_rgba(251,191,36,0.4)] flex items-center justify-center border-4 border-white/30 relative z-10">
+          <motion.div
+            animate={{ 
+              scale: [1, 1.1, 1],
+              rotate: [0, 5, -5, 0]
+            }}
+            transition={{ duration: 0.5, repeat: Infinity }}
+          >
+            <Sparkles size={80} className="text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]" />
+          </motion.div>
         </div>
       </motion.div>
       
       <motion.div
-        animate={{ opacity: [0.4, 1, 0.4], y: [0, -5, 0] }}
-        transition={{ duration: 0.8, repeat: Infinity }}
-        className="text-center"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center relative z-10"
       >
-        <h2 className="text-white text-3xl md:text-5xl font-black tracking-[0.8em] uppercase mb-4 drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">
-          Rolling
+        <h2 className="text-white text-2xl md:text-4xl font-black tracking-[0.4em] uppercase mb-6 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+          Summoning...
         </h2>
-        <div className="flex justify-center gap-2">
-          {[0, 1, 2].map(i => (
+        <div className="flex justify-center gap-3">
+          {[0, 1, 2, 3, 4].map(i => (
             <motion.div
               key={i}
-              animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }}
-              transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.2 }}
-              className="w-3 h-3 bg-white rounded-full"
+              animate={{ 
+                y: [0, -10, 0],
+                backgroundColor: ["#fbbf24", "#ffffff", "#fbbf24"]
+              }}
+              transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }}
+              className="w-2 h-2 rounded-full"
             />
           ))}
         </div>
@@ -365,7 +393,7 @@ export default function App() {
   };
 
   const calculateLevel = (collection: Record<string, number>) => {
-    const totalPoints = Object.values(collection).reduce((sum, count) => sum + Math.min(3, count), 0);
+    const totalPoints = Object.values(collection).reduce((sum: number, count: number) => sum + Math.min(3, count), 0);
     // Max points = 262 * 3 = 786
     // Level = 1 + floor(98 * (points / 786)^0.68)
     // Exponent 0.68 ensures 1 point = Level 2
@@ -375,6 +403,24 @@ export default function App() {
   };
 
   const userLevel = useMemo(() => calculateLevel(ownedCards), [ownedCards]);
+
+  const userLevelProgress = useMemo(() => {
+    const values = Object.values(ownedCards) as number[];
+    const totalPoints = values.reduce((sum: number, count: number) => sum + Math.min(3, count), 0);
+    if (totalPoints === 0) return 0;
+    if (userLevel >= 99) return 1;
+
+    const getPointsForLevel = (L: number): number => {
+      if (L <= 1) return 0;
+      return Math.ceil(786 * Math.pow((L - 1) / 98, 1 / 0.68));
+    };
+
+    const currentLevelPoints: number = getPointsForLevel(userLevel);
+    const nextLevelPoints: number = getPointsForLevel(userLevel + 1);
+    
+    const progress = (totalPoints - currentLevelPoints) / (nextLevelPoints - currentLevelPoints);
+    return Math.max(0, Math.min(1, progress));
+  }, [ownedCards, userLevel]);
 
   const updateStats = (id: string, newScore: number) => {
     const currentStats = { ...stats };
@@ -1010,6 +1056,14 @@ export default function App() {
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-[10px] md:text-xs font-bold text-theme-accent bg-theme-accent/10 px-2 py-0.5 rounded-full">Lv.{userLevel}</span>
                   <span className="text-[10px] md:text-xs font-bold text-theme-text-muted truncate max-w-[100px]">{userName}</span>
+                </div>
+                {/* Level Progress Bar */}
+                <div className="mt-1.5 w-full max-w-[150px] h-1 bg-theme-muted rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${userLevelProgress * 100}%` }}
+                    className="h-full bg-theme-accent shadow-[0_0_8px_rgba(var(--theme-accent-rgb),0.5)]"
+                  />
                 </div>
               </div>
             </div>
