@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import domtoimage from 'dom-to-image-more';
 import { 
   Trophy, 
   Timer, 
@@ -82,7 +83,8 @@ import {
   QrCode,
   Scan,
   X,
-  List
+  List,
+  Camera
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Html5Qrcode } from 'html5-qrcode';
@@ -388,6 +390,7 @@ const GachaRollingOverlay = () => {
 };
 
 export default function App() {
+  const statsRef = useRef<HTMLDivElement>(null);
   const [gameState, setGameState] = useState<GameState>('START');
   const [userName, setUserName] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<{ grade: string; classNum: string; attendanceNum: string } | null>(null);
@@ -429,6 +432,7 @@ export default function App() {
   } | null>(null);
   const [gachaHistory, setGachaHistory] = useState<string[]>([]);
   const [targetCardId, setTargetCardId] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [resetStep, setResetStep] = useState(0);
   const [hasBonusTicket, setHasBonusTicket] = useState(false);
   const [quizCount, setQuizCount] = useState(0);
@@ -487,12 +491,117 @@ export default function App() {
         console.error("Failed to parse collection", e);
       }
     }
+    setIsLoaded(true);
   }, []);
 
   // Save collection to localStorage
   const saveCollection = (newCollection: Record<string, number>) => {
     setOwnedCards(newCollection);
     localStorage.setItem('it_quiz_collection', JSON.stringify(newCollection));
+  };
+
+  const takeScreenshot = () => {
+    console.log('Screenshot button clicked');
+    const fileNameInput = prompt('ファイル名を入力してください（拡張子は不要です）', `${userProfile?.grade || '0'}${userProfile?.classNum || '0'}${userProfile?.attendanceNum || '00'}stats`);
+    if (fileNameInput === null) return;
+    const fileName = `${fileNameInput}.png`;
+
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1920;
+      canvas.height = 1080;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Canvas context not found');
+
+      console.log('Canvas created');
+
+      // 背景（テンプレート）
+      ctx.fillStyle = '#f3f4f6';
+      ctx.fillRect(0, 0, 1920, 1080);
+
+      // 格子状の透かし
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
+      ctx.lineWidth = 2;
+      for (let x = 0; x < 1920; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, 1080);
+        ctx.stroke();
+      }
+      for (let y = 0; y < 1080; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(1920, y);
+        ctx.stroke();
+      }
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
+      ctx.font = 'bold 100px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('IT QUIZ STATS', 960, 540);
+
+      // テキスト描画
+      ctx.fillStyle = '#1f2937';
+      ctx.textAlign = 'left';
+      ctx.font = 'bold 48px Arial';
+      ctx.fillText('学習成績レポート', 100, 80);
+
+      ctx.font = '32px Arial';
+      ctx.fillText(`ユーザー: ${userName || '未設定'}`, 100, 140);
+      ctx.fillText(`学年: ${userProfile?.grade || '0'}年 ${userProfile?.classNum || '0'}組 ${userProfile?.attendanceNum || '0'}番`, 100, 180);
+
+      // 成績データ
+      let y = 250;
+      ctx.font = 'bold 36px Arial';
+      ctx.fillText('【総合演習】', 100, y);
+      y += 40;
+      ctx.font = '32px Arial';
+      ctx.fillText(`ハイスコア: ${getStatsFor('all').highScore.toLocaleString()}`, 150, y);
+      y += 40;
+      ctx.fillText(`演習回数: ${getStatsFor('all').attempts}回`, 150, y);
+      y += 60;
+
+      ctx.font = 'bold 36px Arial';
+      ctx.fillText('【SPEED STAR】', 100, y);
+      y += 40;
+      ctx.font = '32px Arial';
+      ctx.fillText(`最高正答数: ${speedStarMaxCorrect}回`, 150, y);
+      y += 40;
+      ctx.fillText(`最大コンボ: ${speedStarMaxCombo} COMBO`, 150, y);
+      y += 40;
+      ctx.fillText(`挑戦回数: ${speedStarChallenges}回`, 150, y);
+      y += 60;
+
+      ctx.font = 'bold 36px Arial';
+      ctx.fillText('【カテゴリ・小カテゴリ別成績】', 100, y);
+      y += 40;
+      
+      quizCategories.forEach((category) => {
+        if (y > 1000) return;
+        ctx.font = 'bold 28px Arial';
+        ctx.fillText(`■ ${category.title}`, 150, y);
+        y += 35;
+        
+        category.subcategories.forEach((subcategory) => {
+          if (y > 1000) return;
+          const stats = getStatsFor(subcategory.id);
+          ctx.font = '24px Arial';
+          ctx.fillText(`・${subcategory.title}: スコア ${stats.highScore.toLocaleString()} / 回数 ${stats.attempts}回`, 200, y);
+          y += 30;
+        });
+        y += 10;
+      });
+      
+      console.log('Drawing completed');
+      
+      const link = document.createElement('a');
+      link.download = fileName;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      console.log('Download triggered');
+    } catch (error) {
+      console.error('Screenshot failed:', error);
+      alert('スクリーンショットの生成に失敗しました。コンソールを確認してください。');
+    }
   };
 
   // Save stats to localStorage
@@ -509,13 +618,14 @@ export default function App() {
   };
 
   useEffect(() => {
+    if (!isLoaded) return;
     const stats = {
       maxCombo: speedStarMaxCombo,
       maxCorrect: speedStarMaxCorrect,
       challenges: speedStarChallenges
     };
     localStorage.setItem('it_quiz_speed_star_stats', JSON.stringify(stats));
-  }, [speedStarMaxCombo, speedStarMaxCorrect, speedStarChallenges]);
+  }, [speedStarMaxCombo, speedStarMaxCorrect, speedStarChallenges, isLoaded]);
 
   const calculateLevel = (collection: Record<string, number>) => {
     const totalPoints = Object.values(collection).reduce((sum: number, count: number) => sum + Math.min(3, count), 0);
@@ -1665,11 +1775,17 @@ export default function App() {
         {gameState === 'STATS' && (
           <motion.div 
             key="stats"
+            ref={statsRef}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="max-w-4xl mx-auto p-6 py-12"
+            className="max-w-4xl mx-auto p-6 py-12 relative"
           >
+            {/* Watermark */}
+            <div className="absolute inset-0 pointer-events-none opacity-5 flex items-center justify-center rotate-[-20deg]">
+              <span className="text-9xl font-bold text-theme-text select-none">CONFIDENTIAL</span>
+            </div>
+
             <div className="flex items-center justify-between mb-12">
               <div className="flex items-center gap-6">
                 <h2 className="text-4xl font-theme-heading font-bold">学習成績</h2>
@@ -1680,6 +1796,12 @@ export default function App() {
                   <RotateCcw size={16} /> データをリセット
                 </button>
               </div>
+              <button 
+                onClick={takeScreenshot}
+                className="text-sm font-bold text-theme-accent hover:text-white hover:bg-theme-accent transition-all duration-300 flex items-center gap-2 bg-theme-accent/10 px-6 py-3 rounded-full border border-theme-accent/20 hover:shadow-lg"
+              >
+                <Camera size={16} /> スクリーンショット
+              </button>
             </div>
 
             {/* User Profile Summary */}
