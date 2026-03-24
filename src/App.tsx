@@ -2833,7 +2833,6 @@ export default function App() {
             )}
 
             <motion.div
-              key={pickedCard.descriptionIndex}
               layoutId={`card-${pickedCard.term}`}
               style={{ perspective: 1000 }}
               initial={{ scale: 0.8, y: 50, rotateY: 180 }}
@@ -2885,7 +2884,14 @@ export default function App() {
                     </p>
                   </div>
 
-                  <div className="pt-3 md:pt-4 border-t border-theme-border w-full shrink-0">
+                  <motion.div 
+                    key={pickedCard.descriptionIndex}
+                    initial={{ rotateY: 90, opacity: 0 }}
+                    animate={{ rotateY: 0, opacity: 1 }}
+                    exit={{ rotateY: -90, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="pt-3 md:pt-4 border-t border-theme-border w-full shrink-0"
+                  >
                     <div className="flex items-center justify-center gap-1.5 md:gap-2 text-theme-text-muted mb-2">
                       <Info size={12} className="md:w-3 md:h-3" />
                       <span className="text-[8px] md:text-[10px] font-bold uppercase tracking-widest">Pattern {pickedCard.descriptionIndex + 1}</span>
@@ -2903,7 +2909,7 @@ export default function App() {
                         return flavor;
                       })()}
                     </p>
-                  </div>
+                  </motion.div>
                 </div>
 
                 {/* Footer */}
