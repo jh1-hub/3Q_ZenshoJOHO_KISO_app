@@ -1908,7 +1908,7 @@ export default function App() {
                           const count = ownedCards[term] || 0;
                           
                           return (
-                            <div key={term} className="relative h-full">
+                            <div key={term} className="relative h-full" style={{ isolation: 'isolate' }}>
                               {/* Stacked copies effect */}
                               {isOwned && count > 1 && (
                                 <div className={`absolute inset-0 rounded-2xl border-2 ${styles.border} bg-theme-card translate-x-1.5 -translate-y-1.5 rotate-2 -z-10 opacity-60`} />
@@ -1925,7 +1925,7 @@ export default function App() {
                                 transition={{ delay: index * 0.05 }}
                                 whileHover={isOwned ? { scale: 1.05, rotateY: 2 } : {}}
                                 onClick={() => handleCardClick(term)}
-                                className={`relative h-full flex flex-col rounded-2xl overflow-hidden ${isOwned ? 'cursor-pointer' : 'cursor-not-allowed grayscale opacity-50'} group ${isOwned ? styles.border : 'border-2 border-dashed border-theme-border-strong'} ${isOwned ? styles.glow : ''} transition-all duration-300 bg-theme-card`}
+                                className={`relative h-full flex flex-col rounded-2xl overflow-hidden ${isOwned ? 'cursor-pointer' : 'cursor-not-allowed grayscale opacity-50'} group ${isOwned ? styles.border : 'border-2 border-dashed border-theme-border-strong'} ${isOwned ? styles.glow : ''} bg-theme-card`}
                               >
                                 {/* Card Backgrounds */}
                                 <div className={`absolute inset-0 ${isOwned ? styles.bg : 'bg-theme-border'} opacity-10 group-hover:opacity-20 transition-opacity`} />
@@ -2001,10 +2001,10 @@ export default function App() {
                         <table className="w-full text-left text-sm md:text-base min-w-[600px]">
                           <thead className="bg-theme-muted text-theme-text-muted">
                             <tr>
-                              <th className="p-4 font-bold w-16 text-center">Rarity</th>
                               <th className="p-4 font-bold w-48">Term</th>
                               <th className="p-4 font-bold">Description</th>
                               <th className="p-4 font-bold">Flavor Text</th>
+                              <th className="p-4 font-bold w-16 text-center">Rarity</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-theme-border">
@@ -2031,15 +2031,6 @@ export default function App() {
                                   onClick={handleRowClick}
                                   className={`${isOwned ? 'hover:bg-theme-muted/50 cursor-pointer' : 'opacity-50'} transition-colors`}
                                 >
-                                  <td className="p-4 text-center">
-                                    {isOwned ? (
-                                      <span className={`inline-block px-2 py-1 rounded text-[10px] font-bold tracking-widest uppercase ${styles.bg} ${rarity === 'C' ? 'text-theme-text' : 'text-white'}`}>
-                                        {styles.label}
-                                      </span>
-                                    ) : (
-                                      <span className="text-theme-text-muted"><Lock size={16} className="mx-auto" /></span>
-                                    )}
-                                  </td>
                                   <td className="p-4 font-bold">
                                     {isOwned ? (
                                       <div className="flex items-center gap-2">
@@ -2077,6 +2068,15 @@ export default function App() {
                                         return flavor;
                                       })()
                                     ) : '???'}
+                                  </td>
+                                  <td className="p-4 text-center">
+                                    {isOwned ? (
+                                      <span className={`inline-block px-2 py-1 rounded text-[10px] font-bold tracking-widest uppercase ${styles.bg} ${rarity === 'C' ? 'text-theme-text' : 'text-white'}`}>
+                                        {styles.label}
+                                      </span>
+                                    ) : (
+                                      <span className="text-theme-text-muted"><Lock size={16} className="mx-auto" /></span>
+                                    )}
                                   </td>
                                 </tr>
                               );
