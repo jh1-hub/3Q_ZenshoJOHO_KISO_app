@@ -33,6 +33,9 @@ export async function generateQuestion(
   // Or forced by parameter
   const isTermQuestion = forcedType ? forcedType === 'TERM_TO_DESC' : Math.random() < 0.33;
 
+  // If options are descriptions, limit to 4 choices. Otherwise use the requested optionCount.
+  const actualOptionCount = isTermQuestion ? Math.min(4, optionCount) : optionCount;
+
   const termData = allTermsMap[term];
 
   if (isTermQuestion && termData) {
@@ -42,7 +45,7 @@ export async function generateQuestion(
     // Get distractors (descriptions of other terms)
     const distractors = distractorPool
       .sort(() => 0.5 - Math.random())
-      .slice(0, optionCount - 1)
+      .slice(0, actualOptionCount - 1)
       .map(t => {
         const tData = allTermsMap[t];
         const descPatterns = tData ? tData.descriptions : ["説明がありません。"];
@@ -62,7 +65,7 @@ export async function generateQuestion(
   // Standard pattern: Question is Description, Options are Terms
   const otherOptions = distractorPool
     .sort(() => 0.5 - Math.random())
-    .slice(0, optionCount - 1); 
+    .slice(0, actualOptionCount - 1); 
 
   const options = [term, ...otherOptions].sort(() => 0.5 - Math.random());
 

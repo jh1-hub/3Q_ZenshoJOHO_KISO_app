@@ -81,7 +81,8 @@ import {
   MousePointerClick,
   QrCode,
   Scan,
-  X
+  X,
+  List
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Html5Qrcode } from 'html5-qrcode';
@@ -416,11 +417,17 @@ export default function App() {
   const [penaltyActive, setPenaltyActive] = useState(false);
   const [penaltyTime, setPenaltyTime] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
-  const [showGacha, setShowGacha] = useState(false);
-  const [gachaResult, setGachaResult] = useState<string | null>(null);
   const [isGachaRolling, setIsGachaRolling] = useState(false);
   const [gachaResults, setGachaResults] = useState<string[]>([]);
-  const [currentGachaIndex, setCurrentGachaIndex] = useState(-1);
+  const [gachaQueue, setGachaQueue] = useState<number>(0);
+  const [currentGachaCard, setCurrentGachaCard] = useState<{
+    term: string;
+    initialRarity: Rarity;
+    redrawsUsed: number;
+    maxRedraws: number;
+    isDuplicate: boolean;
+  } | null>(null);
+  const [gachaHistory, setGachaHistory] = useState<string[]>([]);
   const [targetCardId, setTargetCardId] = useState<string | null>(null);
   const [resetStep, setResetStep] = useState(0);
   const [hasBonusTicket, setHasBonusTicket] = useState(false);
@@ -713,6 +720,8 @@ export default function App() {
   const [activeCollectionTab, setActiveCollectionTab] = useState<string>(quizCategories[0].id);
   const [activeSubcollectionTab, setActiveSubcollectionTab] = useState<string | null>(null);
   const [pickedCard, setPickedCard] = useState<PickedCard | null>(null);
+  const [collectionMode, setCollectionMode] = useState<'card' | 'word'>('card');
+  const [wordModeIndexes, setWordModeIndexes] = useState<Record<string, number>>({});
 
   // Reset subcategory tab when main category tab changes, unless the current subcategory is already valid for the new category
   useEffect(() => {
@@ -761,86 +770,148 @@ export default function App() {
     return 0;
   };
 
-  // Gacha Logic
+  const drawSingleCard = (currentCollection: Record<string, number>) => {
+    // Rarity weights based on score
+    let weights = { UR: 1, SR: 5, R: 20, C: 74 };
+    if (score > 3000) weights = { UR: 10, SR: 25, R: 40, C: 25 };
+    else if (score > 2000) weights = { UR: 5, SR: 15, R: 40, C: 40 };
+    else if (score > 1000) weights = { UR: 2, SR: 10, R: 30, C: 58 };
+
+    const allTermsList = allTerms;
+    
+    // Determine rarity first
+    const rand = Math.random() * 100;
+    let selectedRarity: Rarity = 'C';
+    let cumulative = 0;
+    for (const [rarity, weight] of Object.entries(weights)) {
+      cumulative += weight;
+      if (rand <= cumulative) {
+        selectedRarity = rarity as Rarity;
+        break;
+      }
+    }
+
+    // Filter terms by rarity
+    let possibleTerms = allTermsList.filter(term => (allTermsMap[term]?.rarity || 'C') === selectedRarity);
+    
+    // Bias: 70% chance to pick from unowned if available in this rarity
+    const unownedInRarity = possibleTerms.filter(term => !currentCollection[term]);
+    if (unownedInRarity.length > 0 && Math.random() < 0.7) {
+      possibleTerms = unownedInRarity;
+    }
+
+    // Apply 1.3x weight to terms in the current category/subcategory
+    const currentTerms = selectedSubcategory?.terms || [];
+    const weightedTerms = possibleTerms.map(term => ({
+      term,
+      weight: currentTerms.includes(term) ? 1.3 : 1.0
+    }));
+
+    const totalWeight = weightedTerms.reduce((sum, item) => sum + item.weight, 0);
+    let randWeight = Math.random() * totalWeight;
+    let resultTerm = possibleTerms[0];
+
+    for (const item of weightedTerms) {
+      randWeight -= item.weight;
+      if (randWeight <= 0) {
+        resultTerm = item.term;
+        break;
+      }
+    }
+    
+    return { term: resultTerm, rarity: selectedRarity };
+  };
+
   const pullGacha = () => {
     if (isGachaRolling) return;
     
     const pullCount = getGachaPullCount();
     if (pullCount === 0) return;
 
+    setGachaQueue(pullCount - 1);
+    setGachaHistory([]);
     setIsGachaRolling(true);
-    setGachaResults([]);
-    setCurrentGachaIndex(-1);
 
-    const results: string[] = [];
-    const newCollection = { ...ownedCards };
-    const oldLevel = calculateLevel(ownedCards);
-
-    for (let i = 0; i < pullCount; i++) {
-      // Rarity weights based on score
-      let weights = { UR: 1, SR: 5, R: 20, C: 74 };
-      if (score > 3000) weights = { UR: 10, SR: 25, R: 40, C: 25 };
-      else if (score > 2000) weights = { UR: 5, SR: 15, R: 40, C: 40 };
-      else if (score > 1000) weights = { UR: 2, SR: 10, R: 30, C: 58 };
-
-      const allTermsList = allTerms;
-      
-      // Determine rarity first
-      const rand = Math.random() * 100;
-      let selectedRarity: Rarity = 'C';
-      let cumulative = 0;
-      for (const [rarity, weight] of Object.entries(weights)) {
-        cumulative += weight;
-        if (rand <= cumulative) {
-          selectedRarity = rarity as Rarity;
-          break;
-        }
-      }
-
-      // Filter terms by rarity
-      let possibleTerms = allTermsList.filter(term => (allTermsMap[term]?.rarity || 'C') === selectedRarity);
-      
-      // Bias: 70% chance to pick from unowned if available in this rarity
-      const unownedInRarity = possibleTerms.filter(term => !newCollection[term]);
-      if (unownedInRarity.length > 0 && Math.random() < 0.7) {
-        possibleTerms = unownedInRarity;
-      }
-
-      // Apply 1.3x weight to terms in the current category/subcategory
-      const currentTerms = selectedSubcategory?.terms || [];
-      const weightedTerms = possibleTerms.map(term => ({
-        term,
-        weight: currentTerms.includes(term) ? 1.3 : 1.0
-      }));
-
-      const totalWeight = weightedTerms.reduce((sum, item) => sum + item.weight, 0);
-      let randWeight = Math.random() * totalWeight;
-      let resultTerm = possibleTerms[0];
-
-      for (const item of weightedTerms) {
-        randWeight -= item.weight;
-        if (randWeight <= 0) {
-          resultTerm = item.term;
-          break;
-        }
-      }
-
-      results.push(resultTerm);
-      newCollection[resultTerm] = (newCollection[resultTerm] || 0) + 1;
-    }
+    const firstDraw = drawSingleCard(ownedCards);
+    const isDuplicate = (ownedCards[firstDraw.term] || 0) > 0;
+    const maxRedraws = firstDraw.rarity === 'UR' ? 3 : firstDraw.rarity === 'SR' ? 2 : 1;
 
     setTimeout(() => {
-      saveCollection(newCollection);
-      setGachaResults(results);
-      setCurrentGachaIndex(0);
+      setCurrentGachaCard({
+        term: firstDraw.term,
+        initialRarity: firstDraw.rarity,
+        redrawsUsed: 0,
+        maxRedraws,
+        isDuplicate
+      });
       setIsGachaRolling(false);
+    }, 3000);
+  };
 
-      const newLevel = calculateLevel(newCollection);
-      if (newLevel > oldLevel) {
-        setTimeout(() => {
-          setShowLevelUp(newLevel);
-        }, 1500);
+  const handleKeepCard = (action: 'next' | 'close' | 'collection' = 'next') => {
+    if (!currentGachaCard) return;
+    
+    const newCollection = { ...ownedCards, [currentGachaCard.term]: (ownedCards[currentGachaCard.term] || 0) + 1 };
+    saveCollection(newCollection);
+    
+    const oldLevel = calculateLevel(ownedCards);
+    const newLevel = calculateLevel(newCollection);
+    if (newLevel > oldLevel) {
+      setTimeout(() => {
+        setShowLevelUp(newLevel);
+      }, 500);
+    }
+
+    const newHistory = [...gachaHistory, currentGachaCard.term];
+    setGachaHistory(newHistory);
+
+    if (gachaQueue > 0) {
+      setGachaQueue(prev => prev - 1);
+      setIsGachaRolling(true);
+      setCurrentGachaCard(null);
+
+      const nextDraw = drawSingleCard(newCollection);
+      const isDuplicate = (newCollection[nextDraw.term] || 0) > 0;
+      const maxRedraws = nextDraw.rarity === 'UR' ? 3 : nextDraw.rarity === 'SR' ? 2 : 1;
+
+      setTimeout(() => {
+        setCurrentGachaCard({
+          term: nextDraw.term,
+          initialRarity: nextDraw.rarity,
+          redrawsUsed: 0,
+          maxRedraws,
+          isDuplicate
+        });
+        setIsGachaRolling(false);
+      }, 3000);
+    } else {
+      setGachaResults(newHistory);
+      setCurrentGachaCard(null);
+      setGachaHistory([]);
+      if (action === 'collection') {
+        jumpToCollection(currentGachaCard.term);
       }
+    }
+  };
+
+  const handleRedraw = () => {
+    if (!currentGachaCard || currentGachaCard.redrawsUsed >= currentGachaCard.maxRedraws) return;
+
+    setIsGachaRolling(true);
+    setCurrentGachaCard(null);
+
+    const redraw = drawSingleCard(ownedCards);
+    const isDuplicate = (ownedCards[redraw.term] || 0) > 0;
+
+    setTimeout(() => {
+      setCurrentGachaCard({
+        term: redraw.term,
+        initialRarity: currentGachaCard.initialRarity,
+        redrawsUsed: currentGachaCard.redrawsUsed + 1,
+        maxRedraws: currentGachaCard.maxRedraws,
+        isDuplicate
+      });
+      setIsGachaRolling(false);
     }, 3000);
   };
 
@@ -1109,10 +1180,10 @@ export default function App() {
     setCorrectCount(0);
     setPenaltyActive(false);
     setPenaltyTime(0);
-    setShowGacha(false);
-    setGachaResult(null);
     setGachaResults([]);
-    setCurrentGachaIndex(-1);
+    setCurrentGachaCard(null);
+    setGachaQueue(0);
+    setGachaHistory([]);
     setIsGachaRolling(false);
     setQuestions([]);
   };
@@ -1132,7 +1203,7 @@ export default function App() {
     } else if (timeLeft === 0 && (gameState === 'QUIZ' || gameState === 'SPEED_STAR') && !feedback) {
       if (gameState === 'SPEED_STAR') {
         // Update Speed Star high scores immediately on timeout
-        setSpeedStarMaxCombo(prev => Math.max(prev, combo));
+        setSpeedStarMaxCombo(prev => Math.max(prev, maxCombo));
         setSpeedStarMaxCorrect(prev => Math.max(prev, speedStarCorrectCount));
         setGameState('RESULT');
       } else {
@@ -1140,7 +1211,7 @@ export default function App() {
       }
     }
     return () => clearInterval(timer);
-  }, [gameState, timeLeft, feedback, combo, speedStarCorrectCount]);
+  }, [gameState, timeLeft, feedback, maxCombo, speedStarCorrectCount]);
 
   // Penalty timer logic
   useEffect(() => {
@@ -1183,7 +1254,7 @@ export default function App() {
           setCurrentQuestionIndex(prev => prev + 1);
         } else {
           // Update Speed Star high scores
-          setSpeedStarMaxCombo(prev => Math.max(prev, combo + (isCorrect ? 1 : 0)));
+          setSpeedStarMaxCombo(prev => Math.max(prev, Math.max(maxCombo, combo + (isCorrect ? 1 : 0))));
           setSpeedStarMaxCorrect(prev => Math.max(prev, speedStarCorrectCount + (isCorrect ? 1 : 0)));
           setGameState('RESULT');
         }
@@ -1258,15 +1329,25 @@ export default function App() {
     return terms;
   }, [searchTerm, activeCollectionTab, activeSubcollectionTab]);
 
-  const { rarityOwned, rarityTotals } = useMemo(() => {
+  const { rarityOwned, rarityTotals, rarityOwnedCopies, rarityTotalCopies, hasAnyDuplicate } = useMemo(() => {
     const totals = { UR: 0, SR: 0, R: 0, C: 0 };
     const owned = { UR: 0, SR: 0, R: 0, C: 0 };
+    const totalCopies = { UR: 0, SR: 0, R: 0, C: 0 };
+    const ownedCopies = { UR: 0, SR: 0, R: 0, C: 0 };
+    let hasDup = false;
     allTerms.forEach(term => {
       const r = (allTermsMap[term]?.rarity || 'C') as 'UR'|'SR'|'R'|'C';
-      if (totals[r] !== undefined) totals[r]++;
-      if (ownedCards[term]) owned[r]++;
+      if (totals[r] !== undefined) {
+        totals[r]++;
+        totalCopies[r] += 3;
+      }
+      if (ownedCards[term]) {
+        owned[r]++;
+        ownedCopies[r] += Math.min(ownedCards[term], 3);
+        if (ownedCards[term] > 1) hasDup = true;
+      }
     });
-    return { rarityOwned: owned, rarityTotals: totals };
+    return { rarityOwned: owned, rarityTotals: totals, rarityOwnedCopies: ownedCopies, rarityTotalCopies: totalCopies, hasAnyDuplicate: hasDup };
   }, [ownedCards]);
 
   const showThemeToggle = useMemo(() => {
@@ -1307,6 +1388,19 @@ export default function App() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {gameState !== 'START' && gameState !== 'SPEED_STAR' && (
+                <button 
+                  onClick={() => {
+                    if (gameState === 'RESULT') resetQuizState();
+                    setGameState('START');
+                  }}
+                  className="p-2 md:px-4 md:py-2 bg-theme-card rounded-xl border border-theme-border hover:bg-theme-muted transition-all flex items-center gap-2 group"
+                  title="トップに戻る"
+                >
+                  <Home size={18} className="text-theme-text-muted group-hover:text-theme-accent transition-colors" />
+                  <span className="font-bold text-sm hidden md:inline">トップに戻る</span>
+                </button>
+              )}
               {hasBonusTicket && (
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-black rounded-xl border border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.2)] animate-pulse">
                   <Zap size={16} className="text-amber-400" />
@@ -1442,7 +1536,10 @@ export default function App() {
                   const styles = getRarityStyles(r);
                   const total = rarityTotals[r];
                   const owned = rarityOwned[r];
+                  const totalCopies = rarityTotalCopies[r];
+                  const ownedCopies = rarityOwnedCopies[r];
                   const percentage = total > 0 ? Math.round((owned / total) * 100) : 0;
+                  const copiesPercentage = totalCopies > 0 ? Math.round((ownedCopies / totalCopies) * 100) : 0;
                   return (
                     <div key={r} className="flex flex-col p-3 md:p-4 rounded-2xl bg-theme-muted border border-theme-border relative overflow-hidden">
                       <div className={`absolute -right-4 -bottom-4 opacity-5 ${styles.textColor}`}>
@@ -1450,20 +1547,57 @@ export default function App() {
                       </div>
                       <div className="flex justify-between items-end mb-3 relative z-10">
                         <span className={`text-lg md:text-xl font-black tracking-wider ${styles.textColor} drop-shadow-sm`}>{r}</span>
-                        <div className="text-right">
-                          <span className="text-sm md:text-base font-bold text-theme-text">{owned}</span>
-                          <span className="text-[10px] md:text-xs text-theme-text-muted font-medium ml-1">/ {total}</span>
-                        </div>
                       </div>
-                      <div className="w-full bg-theme-border-strong rounded-full h-2 relative z-10 overflow-hidden">
-                        <motion.div 
-                          initial={{ width: 0 }}
-                          animate={{ width: `${percentage}%` }}
-                          transition={{ duration: 1, delay: 0.2 }}
-                          className={`h-full rounded-full ${styles.bg}`} 
-                        />
+                      <div className="space-y-3 relative z-10">
+                        {hasAnyDuplicate ? (
+                          <>
+                            <div>
+                              <div className="flex justify-between text-[10px] md:text-xs mb-1">
+                                <span className="text-theme-text-muted font-bold">種類</span>
+                                <span><span className="font-bold text-theme-text">{owned}</span> <span className="text-theme-text-muted">/ {total}</span></span>
+                              </div>
+                              <div className="w-full bg-theme-border-strong rounded-full h-1.5 overflow-hidden">
+                                <motion.div 
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${percentage}%` }}
+                                  transition={{ duration: 1, delay: 0.2 }}
+                                  className={`h-full rounded-full ${styles.bg}`} 
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <div className="flex justify-between text-[10px] md:text-xs mb-1">
+                                <span className="text-theme-text-muted font-bold">枚数(最大3)</span>
+                                <span><span className="font-bold text-theme-text">{ownedCopies}</span> <span className="text-theme-text-muted">/ {totalCopies}</span></span>
+                              </div>
+                              <div className="w-full bg-theme-border-strong rounded-full h-1.5 overflow-hidden">
+                                <motion.div 
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${copiesPercentage}%` }}
+                                  transition={{ duration: 1, delay: 0.3 }}
+                                  className={`h-full rounded-full ${styles.bg} opacity-70`} 
+                                />
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <div>
+                            <div className="flex justify-between text-[10px] md:text-xs mb-1">
+                              <span className="text-theme-text-muted font-bold">種類</span>
+                              <span><span className="font-bold text-theme-text">{owned}</span> <span className="text-theme-text-muted">/ {total}</span></span>
+                            </div>
+                            <div className="w-full bg-theme-border-strong rounded-full h-2 overflow-hidden">
+                              <motion.div 
+                                initial={{ width: 0 }}
+                                animate={{ width: `${percentage}%` }}
+                                transition={{ duration: 1, delay: 0.2 }}
+                                className={`h-full rounded-full ${styles.bg}`} 
+                              />
+                            </div>
+                            <p className="text-[10px] text-right mt-1.5 text-theme-text-muted font-bold">{percentage}%</p>
+                          </div>
+                        )}
                       </div>
-                      <p className="text-[10px] text-right mt-1.5 text-theme-text-muted font-bold relative z-10">{percentage}%</p>
                     </div>
                   );
                 })}
@@ -1546,12 +1680,6 @@ export default function App() {
                   <RotateCcw size={16} /> データをリセット
                 </button>
               </div>
-              <button 
-                onClick={() => setGameState('START')}
-                className="flex items-center gap-2 text-theme-text-muted hover:text-black transition-colors font-bold"
-              >
-                <ArrowLeft size={20} /> 戻る
-              </button>
             </div>
 
             {/* User Profile Summary */}
@@ -1561,9 +1689,9 @@ export default function App() {
                   <UserCheck size={32} />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-3 mb-1">
                     <span className="text-xs font-bold text-theme-accent bg-theme-accent/10 px-2 py-0.5 rounded-full uppercase tracking-wider">User Profile</span>
-                    <span className="text-xs font-bold text-theme-text-muted">Lv.{userLevel}</span>
+                    <span className="text-lg md:text-xl font-bold text-theme-accent bg-theme-accent/10 px-3 py-0.5 rounded-full shadow-sm">Lv.{userLevel}</span>
                   </div>
                   <h3 className="text-2xl font-bold">{userName}</h3>
                 </div>
@@ -1696,12 +1824,20 @@ export default function App() {
                 <h2 className="text-4xl font-theme-heading font-bold mb-2">IT Card Collection</h2>
                 <p className="text-theme-text-muted">知識をカードとして集めよう。{allTerms.length}枚のカードを収録。</p>
               </div>
-              <button 
-                onClick={() => setGameState('START')}
-                className="flex items-center gap-2 px-6 py-3 bg-theme-card rounded-full shadow-sm border border-theme-border-strong hover:bg-theme-muted transition-colors font-bold"
-              >
-                <ArrowLeft size={20} /> トップに戻る
-              </button>
+              <div className="flex bg-theme-bg p-1 rounded-xl w-fit">
+                <button
+                  onClick={() => setCollectionMode('card')}
+                  className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${collectionMode === 'card' ? 'bg-theme-card text-theme-text shadow-sm' : 'text-theme-text-muted hover:text-theme-text'}`}
+                >
+                  <LayoutGrid size={16} /> カード表示
+                </button>
+                <button
+                  onClick={() => setCollectionMode('word')}
+                  className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${collectionMode === 'word' ? 'bg-theme-card text-theme-text shadow-sm' : 'text-theme-text-muted hover:text-theme-text'}`}
+                >
+                  <List size={16} /> 単語表示
+                </button>
+              </div>
             </div>
 
             {/* Search & Tabs */}
@@ -1763,94 +1899,192 @@ export default function App() {
 
                 return (
                   <div key={category.id} className="space-y-8">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8">
-                      {categoryTerms.map(({ term }, index) => {
-                        const rarity = allTermsMap[term]?.rarity || 'C';
-                        const styles = getRarityStyles(rarity);
-                        const isOwned = !!ownedCards[term];
-                        const count = ownedCards[term] || 0;
-                        
-                        return (
-                          <motion.div 
-                            key={term}
-                            ref={el => cardRefs.current[term] = el}
-                            layout
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            whileHover={isOwned ? { scale: 1.05, rotateY: 2 } : {}}
-                            onClick={() => handleCardClick(term)}
-                            className={`relative h-full flex flex-col rounded-2xl overflow-hidden ${isOwned ? 'cursor-pointer' : 'cursor-not-allowed grayscale opacity-50'} group ${isOwned ? styles.border : 'border-2 border-dashed border-theme-border-strong'} ${isOwned ? styles.glow : ''} transition-all duration-300`}
-                          >
-                            {/* Card Backgrounds */}
-                            <div className="absolute inset-0 bg-theme-card" />
-                            <div className={`absolute inset-0 ${isOwned ? styles.bg : 'bg-theme-border'} opacity-10 group-hover:opacity-20 transition-opacity`} />
-                            
-                            {/* Pulse Effect (Behind Content) */}
-                            {isOwned && styles.pulse && (
-                              <div className={`absolute inset-0 ${styles.bg} opacity-15 ${styles.pulse} z-0`} />
-                            )}
+                    {collectionMode === 'card' ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8">
+                        {categoryTerms.map(({ term }, index) => {
+                          const rarity = allTermsMap[term]?.rarity || 'C';
+                          const styles = getRarityStyles(rarity);
+                          const isOwned = !!ownedCards[term];
+                          const count = ownedCards[term] || 0;
+                          
+                          return (
+                            <div key={term} className="relative h-full">
+                              {/* Stacked copies effect */}
+                              {isOwned && count > 1 && (
+                                <div className={`absolute inset-0 rounded-2xl border-2 ${styles.border} bg-theme-card translate-x-1.5 -translate-y-1.5 rotate-2 -z-10 opacity-60`} />
+                              )}
+                              {isOwned && count > 2 && (
+                                <div className={`absolute inset-0 rounded-2xl border-2 ${styles.border} bg-theme-card translate-x-3 -translate-y-3 rotate-6 -z-20 opacity-30`} />
+                              )}
+                              
+                              <motion.div 
+                                ref={el => cardRefs.current[term] = el}
+                                layout
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.05 }}
+                                whileHover={isOwned ? { scale: 1.05, rotateY: 2 } : {}}
+                                onClick={() => handleCardClick(term)}
+                                className={`relative h-full flex flex-col rounded-2xl overflow-hidden ${isOwned ? 'cursor-pointer' : 'cursor-not-allowed grayscale opacity-50'} group ${isOwned ? styles.border : 'border-2 border-dashed border-theme-border-strong'} ${isOwned ? styles.glow : ''} transition-all duration-300 bg-theme-card`}
+                              >
+                                {/* Card Backgrounds */}
+                                <div className={`absolute inset-0 ${isOwned ? styles.bg : 'bg-theme-border'} opacity-10 group-hover:opacity-20 transition-opacity`} />
+                              
+                              {/* Pulse Effect (Behind Content) */}
+                              {isOwned && styles.pulse && (
+                                <div className={`absolute inset-0 ${styles.bg} opacity-15 ${styles.pulse} z-0`} />
+                              )}
 
-                            <div className="flex-1 flex flex-col bg-transparent relative z-10">
-                              {/* Card Header */}
-                              <div className={`px-2 py-1.5 md:px-3 md:py-2 flex justify-between items-center shrink-0 ${isOwned && rarity !== 'C' ? styles.bg : 'bg-theme-muted'} ${isOwned && rarity !== 'C' ? 'text-white' : 'text-theme-text-muted'}`}>
-                                <span className="text-[8px] md:text-[10px] font-bold tracking-widest uppercase drop-shadow-sm">{isOwned ? styles.label : 'LOCKED'}</span>
-                                {isOwned && count > 1 && (
-                                  <span className="text-[8px] md:text-[10px] font-bold bg-theme-card/20 px-1.5 py-0.5 rounded-full">x{count}</span>
-                                )}
-                              </div>
-
-                              {/* Card Content */}
-                              <div className="flex-1 p-3 md:p-4 flex flex-col items-center justify-start text-center space-y-2 md:space-y-3">
-                                <div className={`hidden md:flex w-12 h-12 shrink-0 rounded-xl items-center justify-center ${isOwned ? styles.bg : 'bg-theme-border'} ${isOwned ? (rarity === 'C' ? 'text-theme-text' : 'text-white') : 'text-theme-text-muted'} shadow-inner`}>
-                                  {isOwned ? getTermIcon(term, 20) : <Lock size={20} />}
-                                </div>
-                                
-                                <div className="space-y-0.5 w-full shrink-0">
-                                  <h3 className={`text-sm md:text-base font-bold leading-tight ${isOwned ? 'text-theme-text' : 'text-theme-text-muted'} break-words drop-shadow-sm`}>{isOwned ? term : '???'}</h3>
+                              <div className="flex-1 flex flex-col bg-transparent relative z-10">
+                                {/* Card Header */}
+                                <div className={`px-2 py-1.5 md:px-3 md:py-2 flex justify-between items-center shrink-0 ${isOwned && rarity !== 'C' ? styles.bg : 'bg-theme-muted'} ${isOwned && rarity !== 'C' ? 'text-white' : 'text-theme-text-muted'}`}>
+                                  <span className="text-[8px] md:text-[10px] font-bold tracking-widest uppercase drop-shadow-sm">{isOwned ? styles.label : 'LOCKED'}</span>
+                                  {isOwned && count > 1 && (
+                                    <span className="text-[8px] md:text-[10px] font-bold bg-theme-card/20 px-1.5 py-0.5 rounded-full">x{count}</span>
+                                  )}
                                 </div>
 
-                                {isOwned && (
-                                  <motion.div 
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    className="pt-2 md:pt-3 border-t border-theme-border w-full flex-1 flex flex-col justify-between"
-                                  >
-                                    <p className="text-[10px] md:text-xs text-theme-text leading-relaxed text-left mb-1 drop-shadow-sm font-bold">
-                                      {(allTermsMap[term]?.descriptions || ["説明がありません。"])[pickedCard?.term === term ? pickedCard.descriptionIndex : 0]}
-                                    </p>
-                                    {allTermsMap[term]?.flavorTexts && (
-                                      <p className="text-[8px] md:text-[10px] text-theme-text-muted leading-relaxed text-left mb-2 italic">
-                                        {(() => {
-                                          const flavor = allTermsMap[term]?.flavorTexts;
-                                          const idx = pickedCard?.term === term ? pickedCard.descriptionIndex : 0;
-                                          if (Array.isArray(flavor)) {
-                                            return flavor[idx % flavor.length];
-                                          }
-                                          return flavor;
-                                        })()}
+                                {/* Card Content */}
+                                <div className="flex-1 p-3 md:p-4 flex flex-col items-center justify-start text-center space-y-2 md:space-y-3">
+                                  <div className={`hidden md:flex w-12 h-12 shrink-0 rounded-xl items-center justify-center ${isOwned ? styles.bg : 'bg-theme-border'} ${isOwned ? (rarity === 'C' ? 'text-theme-text' : 'text-white') : 'text-theme-text-muted'} shadow-inner`}>
+                                    {isOwned ? getTermIcon(term, 20) : <Lock size={20} />}
+                                  </div>
+                                  
+                                  <div className="space-y-0.5 w-full shrink-0">
+                                    <h3 className={`text-sm md:text-base font-bold leading-tight ${isOwned ? 'text-theme-text' : 'text-theme-text-muted'} break-words drop-shadow-sm`}>{isOwned ? term : '???'}</h3>
+                                  </div>
+
+                                  {isOwned && (
+                                    <motion.div 
+                                      initial={{ opacity: 0 }}
+                                      animate={{ opacity: 1 }}
+                                      className="pt-2 md:pt-3 border-t border-theme-border w-full flex-1 flex flex-col justify-between"
+                                    >
+                                      <p className="text-[10px] md:text-xs text-theme-text leading-relaxed text-left mb-1 drop-shadow-sm font-bold">
+                                        {(allTermsMap[term]?.descriptions || ["説明がありません。"])[pickedCard?.term === term ? pickedCard.descriptionIndex : 0]}
                                       </p>
-                                    )}
-                                    <div className="flex justify-center gap-1 mt-auto pb-1">
-                                      {[...Array(Math.min(allTermsMap[term]?.descriptions?.length || 1, 3))].map((_, i) => (
-                                        <div 
-                                          key={i} 
-                                          className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${
-                                            (pickedCard?.term === term ? i === pickedCard.descriptionIndex : i === 0)
-                                              ? (isOwned ? styles.bg : 'bg-theme-text-muted') 
-                                              : (i < count ? 'bg-theme-border-strong' : 'bg-theme-border')
-                                          }`} 
-                                        />
-                                      ))}
-                                    </div>
-                                  </motion.div>
-                                )}
+                                      {allTermsMap[term]?.flavorTexts && (
+                                        <p className="text-[8px] md:text-[10px] text-theme-text-muted leading-relaxed text-left mb-2 italic">
+                                          {(() => {
+                                            const flavor = allTermsMap[term]?.flavorTexts;
+                                            const idx = pickedCard?.term === term ? pickedCard.descriptionIndex : 0;
+                                            if (Array.isArray(flavor)) {
+                                              return flavor[idx % flavor.length];
+                                            }
+                                            return flavor;
+                                          })()}
+                                        </p>
+                                      )}
+                                      <div className="flex justify-center gap-1 mt-auto pb-1">
+                                        {[...Array(Math.min(allTermsMap[term]?.descriptions?.length || 1, 3))].map((_, i) => (
+                                          <div 
+                                            key={i} 
+                                            className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${
+                                              (pickedCard?.term === term ? i === pickedCard.descriptionIndex : i === 0)
+                                                ? (isOwned ? styles.bg : 'bg-theme-text-muted') 
+                                                : (i < count ? 'bg-theme-border-strong' : 'bg-theme-border')
+                                            }`} 
+                                          />
+                                        ))}
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          </motion.div>
-                        );
-                      })}
-                    </div>
+                            </motion.div>
+                          </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="bg-theme-card rounded-2xl border border-theme-border overflow-x-auto">
+                        <table className="w-full text-left text-sm md:text-base min-w-[600px]">
+                          <thead className="bg-theme-muted text-theme-text-muted">
+                            <tr>
+                              <th className="p-4 font-bold w-16 text-center">Rarity</th>
+                              <th className="p-4 font-bold w-48">Term</th>
+                              <th className="p-4 font-bold">Description</th>
+                              <th className="p-4 font-bold">Flavor Text</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-theme-border">
+                            {categoryTerms.map(({ term }, index) => {
+                              const rarity = allTermsMap[term]?.rarity || 'C';
+                              const styles = getRarityStyles(rarity);
+                              const isOwned = !!ownedCards[term];
+                              const count = ownedCards[term] || 0;
+                              const currentIndex = wordModeIndexes[term] || 0;
+                              
+                              const handleRowClick = () => {
+                                const maxDescriptions = Math.min(allTermsMap[term]?.descriptions?.length || 1, 3);
+                                if (isOwned && count > 1 && maxDescriptions > 1) {
+                                  setWordModeIndexes(prev => ({
+                                    ...prev,
+                                    [term]: (currentIndex + 1) % Math.min(count, maxDescriptions)
+                                  }));
+                                }
+                              };
+
+                              return (
+                                <tr 
+                                  key={term} 
+                                  onClick={handleRowClick}
+                                  className={`${isOwned ? 'hover:bg-theme-muted/50 cursor-pointer' : 'opacity-50'} transition-colors`}
+                                >
+                                  <td className="p-4 text-center">
+                                    {isOwned ? (
+                                      <span className={`inline-block px-2 py-1 rounded text-[10px] font-bold tracking-widest uppercase ${styles.bg} ${rarity === 'C' ? 'text-theme-text' : 'text-white'}`}>
+                                        {styles.label}
+                                      </span>
+                                    ) : (
+                                      <span className="text-theme-text-muted"><Lock size={16} className="mx-auto" /></span>
+                                    )}
+                                  </td>
+                                  <td className="p-4 font-bold">
+                                    {isOwned ? (
+                                      <div className="flex items-center gap-2">
+                                        {term}
+                                        {count > 1 && (
+                                          <span className="text-[10px] bg-theme-border px-1.5 py-0.5 rounded-full text-theme-text-muted">x{count}</span>
+                                        )}
+                                      </div>
+                                    ) : '???'}
+                                  </td>
+                                  <td className="p-4">
+                                    {isOwned ? (
+                                      <div className="flex flex-col gap-1">
+                                        <span>{(allTermsMap[term]?.descriptions || ["説明がありません。"])[currentIndex]}</span>
+                                        {Math.min(count, allTermsMap[term]?.descriptions?.length || 1, 3) > 1 && (
+                                          <div className="flex gap-1 mt-1">
+                                            {[...Array(Math.min(count, allTermsMap[term]?.descriptions?.length || 1, 3))].map((_, i) => (
+                                              <div 
+                                                key={i} 
+                                                className={`w-1.5 h-1.5 rounded-full ${i === currentIndex ? styles.bg : 'bg-theme-border-strong'}`} 
+                                              />
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    ) : '???'}
+                                  </td>
+                                  <td className="p-4 text-theme-text-muted italic text-xs md:text-sm">
+                                    {isOwned ? (
+                                      (() => {
+                                        const flavor = allTermsMap[term]?.flavorTexts;
+                                        if (Array.isArray(flavor)) {
+                                          return flavor[currentIndex % flavor.length];
+                                        }
+                                        return flavor;
+                                      })()
+                                    ) : '???'}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -1874,12 +2108,6 @@ export default function App() {
           >
             <div className="flex items-center justify-between mb-12">
               <h2 className="text-3xl font-theme-heading font-bold">単元を選択</h2>
-              <button 
-                onClick={() => setGameState('START')}
-                className="text-theme-text-muted hover:text-black transition-colors"
-              >
-                戻る
-              </button>
             </div>
 
             {/* Speed Star Mode Button */}
@@ -2340,7 +2568,7 @@ export default function App() {
 
       {/* Full Screen Gacha Animation Overlay */}
       <AnimatePresence>
-        {currentGachaIndex >= 0 && currentGachaIndex < gachaResults.length && (
+        {currentGachaCard && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -2351,23 +2579,23 @@ export default function App() {
             
             {/* Reveal Flash */}
             <motion.div
-              key={`flash-${currentGachaIndex}`}
+              key={`flash-${currentGachaCard.term}-${currentGachaCard.redrawsUsed}`}
               initial={{ opacity: 1 }}
               animate={{ opacity: 0 }}
               transition={{ duration: 0.8 }}
-              className={`absolute inset-0 z-[250] pointer-events-none ${getRarityStyles(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C').flash}`}
+              className={`absolute inset-0 z-[250] pointer-events-none ${getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').flash}`}
             />
 
-            <HaloEffect rarity={allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C'} />
+            <HaloEffect rarity={allTermsMap[currentGachaCard.term]?.rarity || 'C'} />
             
             {/* Burst Effect */}
             <Burst 
-              color={getRarityStyles(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C').flash} 
-              count={getRarityStyles(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C').particles} 
+              color={getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').flash} 
+              count={getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').particles} 
             />
 
             <motion.div
-              key={currentGachaIndex}
+              key={`${currentGachaCard.term}-${currentGachaCard.redrawsUsed}`}
               initial={{ scale: 0.2, opacity: 0, rotateY: 180, rotate: -15 }}
               animate={{ 
                 scale: 1,
@@ -2383,18 +2611,18 @@ export default function App() {
               className="relative w-full max-w-[280px] md:max-w-sm aspect-[2/3] md:aspect-[3/4] z-10"
             >
               {/* Card Display */}
-              <div className={`relative w-full h-full rounded-2xl md:rounded-[2.5rem] overflow-hidden group ${getRarityStyles(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C').border} ${getRarityStyles(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C').glow} transition-all duration-300 flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.5)] border-4`}>
+              <div className={`relative w-full h-full rounded-2xl md:rounded-[2.5rem] overflow-hidden group ${getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').border} ${getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').glow} transition-all duration-300 flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.5)] border-4`}>
                       {/* Card Backgrounds */}
                       <div className="absolute inset-0 bg-theme-card" />
-                      <div className={`absolute inset-0 ${getRarityStyles(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C').bg} opacity-10`} />
+                      <div className={`absolute inset-0 ${getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').bg} opacity-10`} />
                       
                       {/* Pulse Effect (Behind Content) */}
-                      {getRarityStyles(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C').pulse && (
-                        <div className={`absolute inset-0 ${getRarityStyles(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C').bg} opacity-15 ${getRarityStyles(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C').pulse} z-0`} />
+                      {getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').pulse && (
+                        <div className={`absolute inset-0 ${getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').bg} opacity-15 ${getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').pulse} z-0`} />
                       )}
 
                       {/* Sparkles for High Rarity (Behind Content) */}
-                      {['SR', 'UR'].includes(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C') && (
+                      {['SR', 'UR'].includes(allTermsMap[currentGachaCard.term]?.rarity || 'C') && (
                         <div className="absolute inset-0 pointer-events-none z-0">
                           <motion.div 
                             animate={{ opacity: [0, 1, 0], scale: [0.8, 1.2, 0.8] }}
@@ -2406,34 +2634,34 @@ export default function App() {
 
                       <div className="h-full flex flex-col bg-transparent relative z-10">
                         {/* Card Header */}
-                        <div className={`px-3 py-2 md:px-4 md:py-3 flex justify-between items-center relative z-10 ${allTermsMap[gachaResults[currentGachaIndex]]?.rarity !== 'C' ? getRarityStyles(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C').bg : 'bg-theme-muted'} ${allTermsMap[gachaResults[currentGachaIndex]]?.rarity !== 'C' ? 'text-white' : 'text-theme-text-muted'}`}>
-                          <span className="text-[10px] md:text-xs font-bold tracking-widest uppercase drop-shadow-sm">{getRarityStyles(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C').label}</span>
+                        <div className={`px-3 py-2 md:px-4 md:py-3 flex justify-between items-center relative z-10 ${allTermsMap[currentGachaCard.term]?.rarity !== 'C' ? getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').bg : 'bg-theme-muted'} ${allTermsMap[currentGachaCard.term]?.rarity !== 'C' ? 'text-white' : 'text-theme-text-muted'}`}>
+                          <span className="text-[10px] md:text-xs font-bold tracking-widest uppercase drop-shadow-sm">{getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').label}</span>
                           <span className="text-[8px] md:text-[10px] font-bold bg-theme-card/20 px-2 py-0.5 rounded-full">NEW!</span>
                         </div>
 
                         {/* Card Content */}
                         <div className="flex-1 p-4 md:p-6 flex flex-col items-center justify-center text-center space-y-3 md:space-y-4 relative z-10">
-                          <div className={`w-16 h-16 md:w-24 md:h-24 rounded-xl md:rounded-2xl flex items-center justify-center ${getRarityStyles(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C').bg} ${allTermsMap[gachaResults[currentGachaIndex]]?.rarity === 'C' || !allTermsMap[gachaResults[currentGachaIndex]] ? 'text-theme-text' : 'text-white'} shadow-inner`}>
-                            <div className="hidden md:block">{getTermIcon(gachaResults[currentGachaIndex], 48)}</div>
-                            <div className="block md:hidden">{getTermIcon(gachaResults[currentGachaIndex], 32)}</div>
+                          <div className={`w-16 h-16 md:w-24 md:h-24 rounded-xl md:rounded-2xl flex items-center justify-center ${getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').bg} ${allTermsMap[currentGachaCard.term]?.rarity === 'C' || !allTermsMap[currentGachaCard.term] ? 'text-theme-text' : 'text-white'} shadow-inner`}>
+                            <div className="hidden md:block">{getTermIcon(currentGachaCard.term, 48)}</div>
+                            <div className="block md:hidden">{getTermIcon(currentGachaCard.term, 32)}</div>
                           </div>
                           
                           <div className="space-y-1">
-                            <h3 className="text-xl md:text-2xl font-bold leading-tight text-theme-text drop-shadow-sm">{gachaResults[currentGachaIndex]}</h3>
+                            <h3 className="text-xl md:text-2xl font-bold leading-tight text-theme-text drop-shadow-sm">{currentGachaCard.term}</h3>
                             <p className="text-[9px] md:text-xs text-theme-text-muted font-bold uppercase tracking-widest">
-                              {quizCategories.find(c => c.subcategories.some(s => s.terms.some(t => t.name === gachaResults[currentGachaIndex])))?.title || 'Unknown Category'}
+                              {quizCategories.find(c => c.subcategories.some(s => s.terms.some(t => t.name === currentGachaCard.term)))?.title || 'Unknown Category'}
                             </p>
                           </div>
 
                           <div className="pt-3 md:pt-4 border-t border-theme-border w-full">
                             <p className="text-sm md:text-lg text-theme-text leading-relaxed font-bold mb-2 drop-shadow-sm">
-                              "{(allTermsMap[gachaResults[currentGachaIndex]]?.descriptions || ["説明がありません。"])[0]}"
+                              "{(allTermsMap[currentGachaCard.term]?.descriptions || ["説明がありません。"])[0]}"
                             </p>
-                            {allTermsMap[gachaResults[currentGachaIndex]]?.flavorTexts && (
+                            {allTermsMap[currentGachaCard.term]?.flavorTexts && (
                               <p className="text-[10px] md:text-sm text-theme-text-muted leading-relaxed italic">
-                                {Array.isArray(allTermsMap[gachaResults[currentGachaIndex]]?.flavorTexts) 
-                                  ? (allTermsMap[gachaResults[currentGachaIndex]]?.flavorTexts as string[])[0] 
-                                  : allTermsMap[gachaResults[currentGachaIndex]]?.flavorTexts}
+                                {Array.isArray(allTermsMap[currentGachaCard.term]?.flavorTexts) 
+                                  ? (allTermsMap[currentGachaCard.term]?.flavorTexts as string[])[0] 
+                                  : allTermsMap[currentGachaCard.term]?.flavorTexts}
                               </p>
                             )}
                           </div>
@@ -2444,14 +2672,35 @@ export default function App() {
 
                   <div className="mt-6 md:mt-12 flex flex-col items-center gap-4 md:gap-6 w-full max-w-[280px] md:max-w-sm">
                     <p className="text-white/60 font-bold tracking-widest text-sm md:text-base">
-                      {currentGachaIndex + 1} / {gachaResults.length}
+                      {gachaHistory.length + 1} / {gachaHistory.length + gachaQueue + 1}
                     </p>
                     
-                    <div className="flex flex-col md:flex-row gap-3 md:gap-4 w-full">
-                      {currentGachaIndex < gachaResults.length - 1 ? (
+                    {currentGachaCard.isDuplicate && currentGachaCard.redrawsUsed < currentGachaCard.maxRedraws && (
+                      <div className="text-amber-400 font-bold text-sm mb-2">
+                        ダブり発生！再抽選可能です（残り {currentGachaCard.maxRedraws - currentGachaCard.redrawsUsed} 回）
+                      </div>
+                    )}
+
+                    <div className="flex flex-col md:flex-row justify-center gap-3 md:gap-4 w-full">
+                      {currentGachaCard.isDuplicate && currentGachaCard.redrawsUsed < currentGachaCard.maxRedraws ? (
                         <>
                           <button 
-                            onClick={() => setCurrentGachaIndex(prev => prev + 1)}
+                            onClick={handleRedraw}
+                            className="w-full md:w-auto px-4 py-3 md:px-8 md:py-4 bg-gradient-to-r from-amber-400 to-orange-500 text-white rounded-xl md:rounded-2xl font-bold hover:scale-105 active:scale-95 transition-all shadow-lg shadow-amber-500/40 text-sm md:text-base whitespace-nowrap"
+                          >
+                            再抽選する
+                          </button>
+                          <button 
+                            onClick={() => handleKeepCard('next')}
+                            className="w-full md:w-auto px-4 py-3 md:px-8 md:py-4 bg-theme-card/20 text-white rounded-xl md:rounded-2xl font-bold hover:bg-theme-card/30 transition-all text-sm md:text-base whitespace-nowrap"
+                          >
+                            このまま獲得
+                          </button>
+                        </>
+                      ) : gachaQueue > 0 ? (
+                        <>
+                          <button 
+                            onClick={() => handleKeepCard('next')}
                             className="w-full md:w-auto px-4 py-3 md:px-12 md:py-4 bg-theme-accent text-white rounded-xl md:rounded-2xl font-bold hover:scale-105 active:scale-95 transition-all shadow-lg shadow-theme-accent/40 text-sm md:text-base whitespace-nowrap order-first md:order-last"
                           >
                             続けて引く
@@ -2466,13 +2715,13 @@ export default function App() {
                       ) : (
                         <>
                           <button 
-                            onClick={() => setCurrentGachaIndex(prev => prev + 1)}
+                            onClick={() => handleKeepCard('close')}
                             className="w-full md:w-auto px-4 py-3 md:px-12 md:py-4 bg-theme-card text-black rounded-xl md:rounded-2xl font-bold hover:scale-105 active:scale-95 transition-all shadow-xl text-sm md:text-base whitespace-nowrap"
                           >
                             結果を閉じる
                           </button>
                           <button 
-                            onClick={() => jumpToCollection(gachaResults[currentGachaIndex])}
+                            onClick={() => handleKeepCard('collection')}
                             className="w-full md:w-auto px-4 py-3 md:px-8 md:py-4 bg-theme-card/10 hover:bg-theme-card/20 text-white rounded-xl md:rounded-2xl font-bold transition-all flex items-center justify-center gap-2 border border-white/20 text-sm md:text-base whitespace-nowrap"
                           >
                             コレクションで見る <ArrowRight size={16} className="md:w-[18px] md:h-[18px] shrink-0" />
