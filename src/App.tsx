@@ -501,107 +501,102 @@ export default function App() {
   };
 
   const takeScreenshot = () => {
-    console.log('Screenshot button clicked');
-    const fileNameInput = prompt('ファイル名を入力してください（拡張子は不要です）', `${userProfile?.grade || '0'}${userProfile?.classNum || '0'}${userProfile?.attendanceNum || '00'}stats`);
-    if (fileNameInput === null) return;
-    const fileName = `${fileNameInput}.png`;
+    const fileName = `${userProfile?.grade || '0'}${userProfile?.classNum || '0'}${userProfile?.attendanceNum || '00'}stats.png`;
 
-    try {
-      const canvas = document.createElement('canvas');
-      canvas.width = 1920;
-      canvas.height = 1080;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error('Canvas context not found');
+    const canvas = document.createElement('canvas');
+    canvas.width = 1920;
+    canvas.height = 1080;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-      console.log('Canvas created');
+    // 背景（クールなダークグラデーション）
+    const gradient = ctx.createLinearGradient(0, 0, 1920, 1080);
+    gradient.addColorStop(0, '#1e1b4b'); // 深い紺
+    gradient.addColorStop(1, '#4c1d95'); // 深い紫
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 1920, 1080);
 
-      // 背景（テンプレート）
-      ctx.fillStyle = '#f3f4f6';
-      ctx.fillRect(0, 0, 1920, 1080);
-
-      // 格子状の透かし
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
-      ctx.lineWidth = 2;
-      for (let x = 0; x < 1920; x += 40) {
+    // 装飾的な幾何学模様
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 10; i++) {
         ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, 1080);
+        ctx.arc(960, 540, 100 + i * 100, 0, Math.PI * 2);
         ctx.stroke();
-      }
-      for (let y = 0; y < 1080; y += 40) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(1920, y);
-        ctx.stroke();
-      }
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
-      ctx.font = 'bold 100px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText('IT QUIZ STATS', 960, 540);
-
-      // テキスト描画
-      ctx.fillStyle = '#1f2937';
-      ctx.textAlign = 'left';
-      ctx.font = 'bold 48px Arial';
-      ctx.fillText('学習成績レポート', 100, 80);
-
-      ctx.font = '32px Arial';
-      ctx.fillText(`ユーザー: ${userName || '未設定'}`, 100, 140);
-      ctx.fillText(`学年: ${userProfile?.grade || '0'}年 ${userProfile?.classNum || '0'}組 ${userProfile?.attendanceNum || '0'}番`, 100, 180);
-
-      // 成績データ
-      let y = 250;
-      ctx.font = 'bold 36px Arial';
-      ctx.fillText('【総合演習】', 100, y);
-      y += 40;
-      ctx.font = '32px Arial';
-      ctx.fillText(`ハイスコア: ${getStatsFor('all').highScore.toLocaleString()}`, 150, y);
-      y += 40;
-      ctx.fillText(`演習回数: ${getStatsFor('all').attempts}回`, 150, y);
-      y += 60;
-
-      ctx.font = 'bold 36px Arial';
-      ctx.fillText('【SPEED STAR】', 100, y);
-      y += 40;
-      ctx.font = '32px Arial';
-      ctx.fillText(`最高正答数: ${speedStarMaxCorrect}回`, 150, y);
-      y += 40;
-      ctx.fillText(`最大コンボ: ${speedStarMaxCombo} COMBO`, 150, y);
-      y += 40;
-      ctx.fillText(`挑戦回数: ${speedStarChallenges}回`, 150, y);
-      y += 60;
-
-      ctx.font = 'bold 36px Arial';
-      ctx.fillText('【カテゴリ・小カテゴリ別成績】', 100, y);
-      y += 40;
-      
-      quizCategories.forEach((category) => {
-        if (y > 1000) return;
-        ctx.font = 'bold 28px Arial';
-        ctx.fillText(`■ ${category.title}`, 150, y);
-        y += 35;
-        
-        category.subcategories.forEach((subcategory) => {
-          if (y > 1000) return;
-          const stats = getStatsFor(subcategory.id);
-          ctx.font = '24px Arial';
-          ctx.fillText(`・${subcategory.title}: スコア ${stats.highScore.toLocaleString()} / 回数 ${stats.attempts}回`, 200, y);
-          y += 30;
-        });
-        y += 10;
-      });
-      
-      console.log('Drawing completed');
-      
-      const link = document.createElement('a');
-      link.download = fileName;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-      console.log('Download triggered');
-    } catch (error) {
-      console.error('Screenshot failed:', error);
-      alert('スクリーンショットの生成に失敗しました。コンソールを確認してください。');
     }
+
+    // 透かし
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+    ctx.font = 'bold 150px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('IT QUIZ STATS', 960, 580);
+
+    // ヘッダー
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 64px Arial';
+    ctx.fillText('学習成績レポート', 100, 100);
+
+    // ユーザー情報（右側）
+    ctx.font = '36px Arial';
+    ctx.fillText(`ユーザー: ${userName || '未設定'}`, 1300, 100);
+    ctx.fillText(`学年: ${userProfile?.grade || '0'}年 ${userProfile?.classNum || '0'}組 ${userProfile?.attendanceNum || '0'}番`, 1300, 150);
+    
+    // レベルとカード収集状況（右側に追加）
+    const level = Math.floor(quizCount / 10) + 1;
+    const collectionRate = allTerms.length > 0 ? Math.floor((Object.keys(ownedCards).length / allTerms.length) * 100) : 0;
+    ctx.fillStyle = '#fbbf24'; // ゴールド
+    ctx.font = 'bold 40px Arial';
+    ctx.fillText(`Lv. ${level}`, 1300, 220);
+    ctx.fillText(`カード収集率: ${collectionRate}%`, 1300, 270);
+
+    // 成績データ
+    let y = 300;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 40px Arial';
+    ctx.fillText('【総合成績】', 100, y);
+    y += 50;
+    ctx.font = '32px Arial';
+    ctx.fillText(`ハイスコア: ${getStatsFor('all').highScore.toLocaleString()}`, 150, y);
+    y += 40;
+    ctx.fillText(`演習回数: ${getStatsFor('all').attempts}回`, 150, y);
+    y += 60;
+
+    ctx.font = 'bold 40px Arial';
+    ctx.fillText('【SPEED STAR】', 100, y);
+    y += 50;
+    ctx.font = '32px Arial';
+    ctx.fillText(`最高正答数: ${speedStarMaxCorrect}回`, 150, y);
+    y += 40;
+    ctx.fillText(`最大コンボ: ${speedStarMaxCombo} COMBO`, 150, y);
+    y += 60;
+
+    // 新規追加：単元演習（中単元）と「問題の発見と解決の方法」
+    ctx.font = 'bold 40px Arial';
+    ctx.fillText('【詳細成績】', 100, y);
+    y += 50;
+    ctx.font = '28px Arial';
+    
+    quizCategories.forEach((category) => {
+      if (y > 1000) return;
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillText(`■ ${category.title}`, 150, y);
+      y += 40;
+      
+      category.subcategories.forEach((subcategory) => {
+        if (y > 1000) return;
+        ctx.fillStyle = '#ffffff';
+        const stats = getStatsFor(subcategory.id);
+        ctx.fillText(`・${subcategory.title}: スコア ${stats.highScore.toLocaleString()} / 回数 ${stats.attempts}回`, 200, y);
+        y += 35;
+      });
+      y += 20;
+    });
+    
+    const link = document.createElement('a');
+    link.download = fileName;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
   };
 
   // Save stats to localStorage
