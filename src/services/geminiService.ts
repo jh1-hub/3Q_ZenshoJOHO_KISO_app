@@ -1,4 +1,4 @@
-import { termDescriptions } from "../data/termDescriptions";
+import { allTermsMap } from "../data/quizData";
 
 export type QuestionType = 'TERM_TO_DESC' | 'DESC_TO_TERM';
 
@@ -33,8 +33,10 @@ export async function generateQuestion(
   // Or forced by parameter
   const isTermQuestion = forcedType ? forcedType === 'TERM_TO_DESC' : Math.random() < 0.33;
 
-  if (isTermQuestion && termDescriptions[term]) {
-    const patterns = termDescriptions[term];
+  const termData = allTermsMap[term];
+
+  if (isTermQuestion && termData) {
+    const patterns = termData.descriptions;
     const correctDescription = patterns[Math.floor(Math.random() * patterns.length)];
     
     // Get distractors (descriptions of other terms)
@@ -42,7 +44,8 @@ export async function generateQuestion(
       .sort(() => 0.5 - Math.random())
       .slice(0, optionCount - 1)
       .map(t => {
-        const descPatterns = termDescriptions[t] || ["説明がありません。"];
+        const tData = allTermsMap[t];
+        const descPatterns = tData ? tData.descriptions : ["説明がありません。"];
         return descPatterns[Math.floor(Math.random() * descPatterns.length)];
       });
 
@@ -64,8 +67,8 @@ export async function generateQuestion(
   const options = [term, ...otherOptions].sort(() => 0.5 - Math.random());
 
   // Check if static descriptions exist for this term
-  if (termDescriptions[term]) {
-    const patterns = termDescriptions[term];
+  if (termData) {
+    const patterns = termData.descriptions;
     const randomDescription = patterns[Math.floor(Math.random() * patterns.length)];
     
     return {

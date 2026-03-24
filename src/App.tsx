@@ -86,11 +86,8 @@ import {
 import { QRCodeSVG } from 'qrcode.react';
 import { Html5Qrcode } from 'html5-qrcode';
 import CryptoJS from 'crypto-js';
-import { quizCategories, Category, Subcategory } from './data/quizData';
+import { quizCategories, Category, Subcategory, allTermsMap, allTerms, Rarity } from './data/quizData';
 import { generateQuestion, Question, QuestionType } from './services/geminiService';
-import { termDescriptions } from './data/termDescriptions';
-import { flavorTexts } from './data/flavorTexts';
-import { termRarities, Rarity } from './data/rarities';
 
 type GameState = 'START' | 'CATEGORY_SELECT' | 'QUIZ' | 'RESULT' | 'COLLECTION' | 'STATS' | 'SPEED_STAR';
 
@@ -702,8 +699,8 @@ export default function App() {
     quizCategories.forEach(cat => {
       cat.subcategories.forEach(sub => {
         sub.terms.forEach(term => {
-          if (!map[term]) {
-            map[term] = count.toString().padStart(3, '0');
+          if (!map[term.name]) {
+            map[term.name] = count.toString().padStart(3, '0');
             count++;
           }
         });
@@ -786,7 +783,7 @@ export default function App() {
       else if (score > 2000) weights = { UR: 5, SR: 15, R: 40, C: 40 };
       else if (score > 1000) weights = { UR: 2, SR: 10, R: 30, C: 58 };
 
-      const allTerms = Object.keys(termDescriptions);
+      const allTermsList = allTerms;
       
       // Determine rarity first
       const rand = Math.random() * 100;
@@ -801,7 +798,7 @@ export default function App() {
       }
 
       // Filter terms by rarity
-      let possibleTerms = allTerms.filter(term => (termRarities[term] || 'C') === selectedRarity);
+      let possibleTerms = allTermsList.filter(term => (allTermsMap[term]?.rarity || 'C') === selectedRarity);
       
       // Bias: 70% chance to pick from unowned if available in this rarity
       const unownedInRarity = possibleTerms.filter(term => !newCollection[term]);
@@ -854,7 +851,7 @@ export default function App() {
 
     for (const cat of quizCategories) {
       for (const sub of cat.subcategories) {
-        if (sub.terms.includes(term)) {
+        if (sub.terms.some(t => t.name === term)) {
           catId = cat.id;
           subId = sub.id;
           break;
@@ -885,7 +882,7 @@ export default function App() {
 
     if (pickedCard?.term === term) {
       // If already picked, cycle description (only unlocked ones)
-      const descriptions = termDescriptions[term] || ["説明がありません。"];
+      const descriptions = allTermsMap[term]?.descriptions || ["説明がありません。"];
       const unlockedCount = Math.min(ownedCards[term], descriptions.length);
       setPickedCard({
         term,
@@ -963,13 +960,14 @@ export default function App() {
     
     if ('subcategories' in item) {
       // It's a Category (Unit)
-      termsToPickFrom = item.subcategories.flatMap(sub => sub.terms);
+      const termsToPickFromData = item.subcategories.flatMap(sub => sub.terms);
+      termsToPickFrom = termsToPickFromData.map(t => t.name);
       title = `${item.title}（単元演習）`;
-      setSelectedSubcategory({ id: item.id, title, terms: termsToPickFrom });
+      setSelectedSubcategory({ id: item.id, title, terms: termsToPickFromData });
       questionCount = 10;
     } else {
       // It's a Subcategory (Sub-unit)
-      termsToPickFrom = item.terms;
+      termsToPickFrom = item.terms.map(t => t.name);
       title = item.title;
       setSelectedSubcategory(item);
       questionCount = 5;
@@ -981,8 +979,6 @@ export default function App() {
       .slice(0, questionCount);
 
     try {
-      const allTerms = quizCategories.flatMap(cat => cat.subcategories.flatMap(sub => sub.terms));
-      
       // Generate questions sequentially to track consecutive types
       const generatedQuestions = [];
       let consecutiveDescToTerm = 0;
@@ -1022,7 +1018,7 @@ export default function App() {
 
     // Flatten all subcategories to pick from
     const allSubcategories = quizCategories.flatMap(cat => cat.subcategories);
-    const allTerms = allSubcategories.flatMap(sub => sub.terms);
+    const allTermsData = allSubcategories.flatMap(sub => sub.terms);
     
     // Pick 20 random questions
     const selectedQuestionsData = [];
@@ -1043,7 +1039,7 @@ export default function App() {
           forcedType = 'TERM_TO_DESC';
         }
         
-        const q = await generateQuestion(data.term, data.subTerms, allTerms, forcedType);
+        const q = await generateQuestion(data.term.name, data.subTerms.map(t => t.name), allTerms, forcedType);
         
         if (q.type === 'DESC_TO_TERM') {
           consecutiveDescToTerm++;
@@ -1076,7 +1072,6 @@ export default function App() {
     try {
       // Flatten all subcategories to pick from
       const allSubcategories = quizCategories.flatMap(cat => cat.subcategories);
-      const allTerms = allSubcategories.flatMap(sub => sub.terms);
       
       // Pick 100 random questions with dummy options from the same category
       const selectedQuestionsData = [];
@@ -1087,7 +1082,7 @@ export default function App() {
       }
       
       const ssQuestions = await Promise.all(
-        selectedQuestionsData.map(data => generateQuestion(data.term, data.subTerms, allTerms, 'DESC_TO_TERM', 4))
+        selectedQuestionsData.map(data => generateQuestion(data.term.name, data.subTerms.map(t => t.name), allTerms, 'DESC_TO_TERM', 4))
       );
       
       setQuestions(ssQuestions);
@@ -1238,7 +1233,7 @@ export default function App() {
         cat.subcategories.forEach(sub => {
           if (!activeSubcollectionTab || activeSubcollectionTab === sub.id) {
             sub.terms.forEach(term => {
-              terms.push({ term, category: cat.title, subcategoryId: sub.id });
+              terms.push({ term: term.name, category: cat.title, subcategoryId: sub.id });
             });
           }
         });
@@ -1247,17 +1242,17 @@ export default function App() {
 
     if (searchTerm) {
       // If searching, ignore category/subcategory tabs and search everywhere
-      let allTerms: { term: string; category: string; subcategoryId: string }[] = [];
+      let allTermsResults: { term: string; category: string; subcategoryId: string }[] = [];
       quizCategories.forEach(cat => {
         cat.subcategories.forEach(sub => {
           sub.terms.forEach(term => {
-            if (term.includes(searchTerm)) {
-              allTerms.push({ term, category: cat.title, subcategoryId: sub.id });
+            if (term.name.includes(searchTerm)) {
+              allTermsResults.push({ term: term.name, category: cat.title, subcategoryId: sub.id });
             }
           });
         });
       });
-      return allTerms;
+      return allTermsResults;
     }
 
     return terms;
@@ -1266,8 +1261,8 @@ export default function App() {
   const { rarityOwned, rarityTotals } = useMemo(() => {
     const totals = { UR: 0, SR: 0, R: 0, C: 0 };
     const owned = { UR: 0, SR: 0, R: 0, C: 0 };
-    Object.keys(termRarities).forEach(term => {
-      const r = termRarities[term] as 'UR'|'SR'|'R'|'C';
+    allTerms.forEach(term => {
+      const r = (allTermsMap[term]?.rarity || 'C') as 'UR'|'SR'|'R'|'C';
       if (totals[r] !== undefined) totals[r]++;
       if (ownedCards[term]) owned[r]++;
     });
@@ -1699,7 +1694,7 @@ export default function App() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
               <div>
                 <h2 className="text-4xl font-theme-heading font-bold mb-2">IT Card Collection</h2>
-                <p className="text-theme-text-muted">知識をカードとして集めよう。{Object.keys(termDescriptions).length}枚のカードを収録。</p>
+                <p className="text-theme-text-muted">知識をカードとして集めよう。{allTerms.length}枚のカードを収録。</p>
               </div>
               <button 
                 onClick={() => setGameState('START')}
@@ -1770,7 +1765,7 @@ export default function App() {
                   <div key={category.id} className="space-y-8">
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8">
                       {categoryTerms.map(({ term }, index) => {
-                        const rarity = termRarities[term] || 'C';
+                        const rarity = allTermsMap[term]?.rarity || 'C';
                         const styles = getRarityStyles(rarity);
                         const isOwned = !!ownedCards[term];
                         const count = ownedCards[term] || 0;
@@ -1821,11 +1816,23 @@ export default function App() {
                                     animate={{ opacity: 1 }}
                                     className="pt-2 md:pt-3 border-t border-theme-border w-full flex-1 flex flex-col justify-between"
                                   >
-                                    <p className="text-[10px] md:text-xs text-theme-text leading-relaxed text-left mb-2 drop-shadow-sm font-bold">
-                                      {(termDescriptions[term] || ["説明がありません。"])[pickedCard?.term === term ? pickedCard.descriptionIndex : 0]}
+                                    <p className="text-[10px] md:text-xs text-theme-text leading-relaxed text-left mb-1 drop-shadow-sm font-bold">
+                                      {(allTermsMap[term]?.descriptions || ["説明がありません。"])[pickedCard?.term === term ? pickedCard.descriptionIndex : 0]}
                                     </p>
+                                    {allTermsMap[term]?.flavorTexts && (
+                                      <p className="text-[8px] md:text-[10px] text-theme-text-muted leading-relaxed text-left mb-2 italic">
+                                        {(() => {
+                                          const flavor = allTermsMap[term]?.flavorTexts;
+                                          const idx = pickedCard?.term === term ? pickedCard.descriptionIndex : 0;
+                                          if (Array.isArray(flavor)) {
+                                            return flavor[idx % flavor.length];
+                                          }
+                                          return flavor;
+                                        })()}
+                                      </p>
+                                    )}
                                     <div className="flex justify-center gap-1 mt-auto pb-1">
-                                      {[...Array(Math.min(termDescriptions[term]?.length || 1, 3))].map((_, i) => (
+                                      {[...Array(Math.min(allTermsMap[term]?.descriptions?.length || 1, 3))].map((_, i) => (
                                         <div 
                                           key={i} 
                                           className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${
@@ -2348,15 +2355,15 @@ export default function App() {
               initial={{ opacity: 1 }}
               animate={{ opacity: 0 }}
               transition={{ duration: 0.8 }}
-              className={`absolute inset-0 z-[250] pointer-events-none ${getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').flash}`}
+              className={`absolute inset-0 z-[250] pointer-events-none ${getRarityStyles(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C').flash}`}
             />
 
-            <HaloEffect rarity={termRarities[gachaResults[currentGachaIndex]] || 'C'} />
+            <HaloEffect rarity={allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C'} />
             
             {/* Burst Effect */}
             <Burst 
-              color={getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').flash} 
-              count={getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').particles} 
+              color={getRarityStyles(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C').flash} 
+              count={getRarityStyles(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C').particles} 
             />
 
             <motion.div
@@ -2376,18 +2383,18 @@ export default function App() {
               className="relative w-full max-w-[280px] md:max-w-sm aspect-[2/3] md:aspect-[3/4] z-10"
             >
               {/* Card Display */}
-              <div className={`relative w-full h-full rounded-2xl md:rounded-[2.5rem] overflow-hidden group ${getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').border} ${getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').glow} transition-all duration-300 flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.5)] border-4`}>
+              <div className={`relative w-full h-full rounded-2xl md:rounded-[2.5rem] overflow-hidden group ${getRarityStyles(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C').border} ${getRarityStyles(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C').glow} transition-all duration-300 flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.5)] border-4`}>
                       {/* Card Backgrounds */}
                       <div className="absolute inset-0 bg-theme-card" />
-                      <div className={`absolute inset-0 ${getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').bg} opacity-10`} />
+                      <div className={`absolute inset-0 ${getRarityStyles(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C').bg} opacity-10`} />
                       
                       {/* Pulse Effect (Behind Content) */}
-                      {getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').pulse && (
-                        <div className={`absolute inset-0 ${getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').bg} opacity-15 ${getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').pulse} z-0`} />
+                      {getRarityStyles(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C').pulse && (
+                        <div className={`absolute inset-0 ${getRarityStyles(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C').bg} opacity-15 ${getRarityStyles(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C').pulse} z-0`} />
                       )}
 
                       {/* Sparkles for High Rarity (Behind Content) */}
-                      {['SR', 'UR'].includes(termRarities[gachaResults[currentGachaIndex]] || 'C') && (
+                      {['SR', 'UR'].includes(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C') && (
                         <div className="absolute inset-0 pointer-events-none z-0">
                           <motion.div 
                             animate={{ opacity: [0, 1, 0], scale: [0.8, 1.2, 0.8] }}
@@ -2399,14 +2406,14 @@ export default function App() {
 
                       <div className="h-full flex flex-col bg-transparent relative z-10">
                         {/* Card Header */}
-                        <div className={`px-3 py-2 md:px-4 md:py-3 flex justify-between items-center relative z-10 ${termRarities[gachaResults[currentGachaIndex]] !== 'C' ? getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').bg : 'bg-theme-muted'} ${termRarities[gachaResults[currentGachaIndex]] !== 'C' ? 'text-white' : 'text-theme-text-muted'}`}>
-                          <span className="text-[10px] md:text-xs font-bold tracking-widest uppercase drop-shadow-sm">{getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').label}</span>
+                        <div className={`px-3 py-2 md:px-4 md:py-3 flex justify-between items-center relative z-10 ${allTermsMap[gachaResults[currentGachaIndex]]?.rarity !== 'C' ? getRarityStyles(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C').bg : 'bg-theme-muted'} ${allTermsMap[gachaResults[currentGachaIndex]]?.rarity !== 'C' ? 'text-white' : 'text-theme-text-muted'}`}>
+                          <span className="text-[10px] md:text-xs font-bold tracking-widest uppercase drop-shadow-sm">{getRarityStyles(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C').label}</span>
                           <span className="text-[8px] md:text-[10px] font-bold bg-theme-card/20 px-2 py-0.5 rounded-full">NEW!</span>
                         </div>
 
                         {/* Card Content */}
                         <div className="flex-1 p-4 md:p-6 flex flex-col items-center justify-center text-center space-y-3 md:space-y-4 relative z-10">
-                          <div className={`w-16 h-16 md:w-24 md:h-24 rounded-xl md:rounded-2xl flex items-center justify-center ${getRarityStyles(termRarities[gachaResults[currentGachaIndex]] || 'C').bg} ${termRarities[gachaResults[currentGachaIndex]] === 'C' || !termRarities[gachaResults[currentGachaIndex]] ? 'text-theme-text' : 'text-white'} shadow-inner`}>
+                          <div className={`w-16 h-16 md:w-24 md:h-24 rounded-xl md:rounded-2xl flex items-center justify-center ${getRarityStyles(allTermsMap[gachaResults[currentGachaIndex]]?.rarity || 'C').bg} ${allTermsMap[gachaResults[currentGachaIndex]]?.rarity === 'C' || !allTermsMap[gachaResults[currentGachaIndex]] ? 'text-theme-text' : 'text-white'} shadow-inner`}>
                             <div className="hidden md:block">{getTermIcon(gachaResults[currentGachaIndex], 48)}</div>
                             <div className="block md:hidden">{getTermIcon(gachaResults[currentGachaIndex], 32)}</div>
                           </div>
@@ -2414,19 +2421,19 @@ export default function App() {
                           <div className="space-y-1">
                             <h3 className="text-xl md:text-2xl font-bold leading-tight text-theme-text drop-shadow-sm">{gachaResults[currentGachaIndex]}</h3>
                             <p className="text-[9px] md:text-xs text-theme-text-muted font-bold uppercase tracking-widest">
-                              {quizCategories.find(c => c.subcategories.some(s => s.terms.includes(gachaResults[currentGachaIndex])))?.title || 'Unknown Category'}
+                              {quizCategories.find(c => c.subcategories.some(s => s.terms.some(t => t.name === gachaResults[currentGachaIndex])))?.title || 'Unknown Category'}
                             </p>
                           </div>
 
                           <div className="pt-3 md:pt-4 border-t border-theme-border w-full">
                             <p className="text-sm md:text-lg text-theme-text leading-relaxed font-bold mb-2 drop-shadow-sm">
-                              "{(termDescriptions[gachaResults[currentGachaIndex]] || ["説明がありません。"])[0]}"
+                              "{(allTermsMap[gachaResults[currentGachaIndex]]?.descriptions || ["説明がありません。"])[0]}"
                             </p>
-                            {flavorTexts[gachaResults[currentGachaIndex]] && (
+                            {allTermsMap[gachaResults[currentGachaIndex]]?.flavorTexts && (
                               <p className="text-[10px] md:text-sm text-theme-text-muted leading-relaxed italic">
-                                {Array.isArray(flavorTexts[gachaResults[currentGachaIndex]]) 
-                                  ? (flavorTexts[gachaResults[currentGachaIndex]] as string[])[0] 
-                                  : flavorTexts[gachaResults[currentGachaIndex]]}
+                                {Array.isArray(allTermsMap[gachaResults[currentGachaIndex]]?.flavorTexts) 
+                                  ? (allTermsMap[gachaResults[currentGachaIndex]]?.flavorTexts as string[])[0] 
+                                  : allTermsMap[gachaResults[currentGachaIndex]]?.flavorTexts}
                               </p>
                             )}
                           </div>
@@ -2531,20 +2538,20 @@ export default function App() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8"
           >
-            <HaloEffect rarity={termRarities[pickedCard.term] || 'C'} />
+            <HaloEffect rarity={allTermsMap[pickedCard.term]?.rarity || 'C'} />
             {/* Backdrop with Rarity Effect */}
             <div 
               className={`absolute inset-0 backdrop-blur-xl ${
-                termRarities[pickedCard.term] === 'UR' ? 'bg-purple-900/40' :
-                termRarities[pickedCard.term] === 'SR' ? 'bg-yellow-900/30' :
-                termRarities[pickedCard.term] === 'R' ? 'bg-blue-900/30' :
+                allTermsMap[pickedCard.term]?.rarity === 'UR' ? 'bg-purple-900/40' :
+                allTermsMap[pickedCard.term]?.rarity === 'SR' ? 'bg-yellow-900/30' :
+                allTermsMap[pickedCard.term]?.rarity === 'R' ? 'bg-blue-900/30' :
                 'bg-black/60'
               }`}
               onClick={() => setPickedCard(null)}
             />
 
             {/* Floating Particles or Glow for High Rarity */}
-            {['SR', 'UR'].includes(termRarities[pickedCard.term] || 'C') && (
+            {['SR', 'UR'].includes(allTermsMap[pickedCard.term]?.rarity || 'C') && (
               <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
                 {[...Array(20)].map((_, i) => (
                   <motion.div
@@ -2566,7 +2573,7 @@ export default function App() {
                       delay: Math.random() * 2
                     }}
                     className={`absolute w-2 h-2 rounded-full ${
-                      termRarities[pickedCard.term!] === 'UR' ? 'bg-pink-400' : 'bg-yellow-300'
+                      allTermsMap[pickedCard.term!]?.rarity === 'UR' ? 'bg-pink-400' : 'bg-yellow-300'
                     } blur-sm`}
                   />
                 ))}
@@ -2579,15 +2586,15 @@ export default function App() {
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 50 }}
               onClick={() => handleCardClick(pickedCard.term)}
-              className={`relative w-full max-w-[260px] md:max-w-sm aspect-[2/3] md:aspect-[3/4] max-h-[85vh] rounded-2xl md:rounded-[2rem] overflow-hidden cursor-pointer shadow-2xl border-4 ${getRarityStyles(termRarities[pickedCard.term] || 'C').border} ${getRarityStyles(termRarities[pickedCard.term] || 'C').glow} z-10`}
+              className={`relative w-full max-w-[260px] md:max-w-sm aspect-[2/3] md:aspect-[3/4] max-h-[85vh] rounded-2xl md:rounded-[2rem] overflow-hidden cursor-pointer shadow-2xl border-4 ${getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').border} ${getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').glow} z-10`}
             >
               {/* Card Backgrounds */}
               <div className="absolute inset-0 bg-theme-card" />
-              <div className={`absolute inset-0 ${getRarityStyles(termRarities[pickedCard.term] || 'C').bg} opacity-10`} />
+              <div className={`absolute inset-0 ${getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').bg} opacity-10`} />
 
               {/* Pulse Effect (Behind Content) */}
-              {getRarityStyles(termRarities[pickedCard.term] || 'C').pulse && (
-                <div className={`absolute inset-0 ${getRarityStyles(termRarities[pickedCard.term] || 'C').bg} opacity-15 ${getRarityStyles(termRarities[pickedCard.term] || 'C').pulse} z-0`} />
+              {getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').pulse && (
+                <div className={`absolute inset-0 ${getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').bg} opacity-15 ${getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').pulse} z-0`} />
               )}
 
               {/* Shine Effect (Behind Content) */}
@@ -2600,9 +2607,9 @@ export default function App() {
               {/* Card Content in Modal */}
               <div className="h-full flex flex-col bg-transparent relative z-10">
                 {/* Header */}
-                <div className={`px-3 py-2 md:px-4 md:py-3 flex justify-between items-center shrink-0 ${termRarities[pickedCard.term] !== 'C' ? getRarityStyles(termRarities[pickedCard.term] || 'C').bg : 'bg-theme-muted'} ${termRarities[pickedCard.term] !== 'C' ? 'text-white' : 'text-theme-text-muted'}`}>
+                <div className={`px-3 py-2 md:px-4 md:py-3 flex justify-between items-center shrink-0 ${allTermsMap[pickedCard.term]?.rarity !== 'C' ? getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').bg : 'bg-theme-muted'} ${allTermsMap[pickedCard.term]?.rarity !== 'C' ? 'text-white' : 'text-theme-text-muted'}`}>
                   <span className="text-[10px] md:text-xs font-bold tracking-widest uppercase drop-shadow-sm">
-                    {getRarityStyles(termRarities[pickedCard.term] || 'C').label}
+                    {getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').label}
                   </span>
                   <span className="text-[8px] md:text-[10px] font-bold bg-theme-card/20 px-2 py-0.5 rounded-full font-mono">
                     ID: {termToId[pickedCard.term] || "000"}
@@ -2611,7 +2618,7 @@ export default function App() {
 
                 {/* Body */}
                 <div className="flex-1 p-4 md:p-6 flex flex-col items-center justify-center text-center space-y-3 md:space-y-4 overflow-y-auto">
-                  <div className={`w-16 h-16 md:w-24 md:h-24 rounded-xl md:rounded-2xl flex items-center justify-center ${getRarityStyles(termRarities[pickedCard.term] || 'C').bg} ${termRarities[pickedCard.term] === 'C' || !termRarities[pickedCard.term] ? 'text-theme-text' : 'text-white'} shadow-inner shrink-0`}>
+                  <div className={`w-16 h-16 md:w-24 md:h-24 rounded-xl md:rounded-2xl flex items-center justify-center ${getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').bg} ${allTermsMap[pickedCard.term]?.rarity === 'C' || !allTermsMap[pickedCard.term] ? 'text-theme-text' : 'text-white'} shadow-inner shrink-0`}>
                     <div className="hidden md:block">{getTermIcon(pickedCard.term, 48)}</div>
                     <div className="block md:hidden">{getTermIcon(pickedCard.term, 32)}</div>
                   </div>
@@ -2619,7 +2626,7 @@ export default function App() {
                   <div className="space-y-1 shrink-0">
                     <h3 className="text-xl md:text-2xl font-bold leading-tight text-theme-text drop-shadow-sm">{pickedCard.term}</h3>
                     <p className="text-[9px] md:text-xs text-theme-text-muted font-bold uppercase tracking-widest">
-                      {quizCategories.find(c => c.subcategories.some(s => s.terms.includes(pickedCard.term)))?.title || 'Unknown Category'}
+                      {quizCategories.find(c => c.subcategories.some(s => s.terms.some(t => t.name === pickedCard.term)))?.title || 'Unknown Category'}
                     </p>
                   </div>
 
@@ -2629,11 +2636,11 @@ export default function App() {
                       <span className="text-[8px] md:text-[10px] font-bold uppercase tracking-widest">Pattern {pickedCard.descriptionIndex + 1}</span>
                     </div>
                     <p className="text-sm md:text-lg text-theme-text leading-relaxed font-bold mb-2 drop-shadow-sm">
-                      "{(termDescriptions[pickedCard.term] || ["説明がありません。"])[pickedCard.descriptionIndex]}"
+                      "{(allTermsMap[pickedCard.term]?.descriptions || ["説明がありません。"])[pickedCard.descriptionIndex]}"
                     </p>
                     <p className="text-[10px] md:text-sm text-theme-text-muted leading-relaxed italic">
                       {(() => {
-                        const flavor = flavorTexts[pickedCard.term];
+                        const flavor = allTermsMap[pickedCard.term]?.flavorTexts;
                         if (!flavor) return "未知のデータ...";
                         if (Array.isArray(flavor)) {
                           return flavor[pickedCard.descriptionIndex % flavor.length];
@@ -2647,10 +2654,10 @@ export default function App() {
                 {/* Footer */}
                 <div className="px-4 py-2 md:px-4 md:py-3 bg-theme-muted flex justify-between items-center shrink-0 border-t border-theme-border">
                   <div className="flex gap-1 md:gap-1.5">
-                    {[...Array(Math.min(termDescriptions[pickedCard.term]?.length || 1, 3))].map((_, i) => (
+                    {[...Array(Math.min(allTermsMap[pickedCard.term]?.descriptions?.length || 1, 3))].map((_, i) => (
                       <div 
                         key={i} 
-                        className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${i === pickedCard.descriptionIndex ? getRarityStyles(termRarities[pickedCard.term] || 'C').bg : 'bg-theme-border-strong'}`} 
+                        className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${i === pickedCard.descriptionIndex ? getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').bg : 'bg-theme-border-strong'}`} 
                       />
                     ))}
                   </div>
