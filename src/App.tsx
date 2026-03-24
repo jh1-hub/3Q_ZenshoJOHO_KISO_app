@@ -1935,7 +1935,7 @@ export default function App() {
                                 <div className={`absolute inset-0 ${styles.bg} opacity-15 ${styles.pulse} z-0`} />
                               )}
 
-                              <div className="flex-1 flex flex-col bg-transparent relative z-10">
+                              <div className="flex-1 flex flex-col bg-transparent relative z-10" style={{ perspective: 1000 }}>
                                 {/* Card Header */}
                                 <div className={`px-2 py-1.5 md:px-3 md:py-2 flex justify-between items-center shrink-0 ${isOwned && rarity !== 'C' ? styles.bg : 'bg-theme-muted'} ${isOwned && rarity !== 'C' ? 'text-white' : 'text-theme-text-muted'}`}>
                                   <span className="text-[8px] md:text-[10px] font-bold tracking-widest uppercase drop-shadow-sm">{isOwned ? styles.label : 'LOCKED'}</span>
@@ -1956,8 +1956,11 @@ export default function App() {
 
                                   {isOwned && (
                                     <motion.div 
-                                      initial={{ opacity: 0 }}
-                                      animate={{ opacity: 1 }}
+                                      key={pickedCard?.term === term ? pickedCard.descriptionIndex : 0}
+                                      initial={{ rotateY: 90, opacity: 0, scale: 0.9 }}
+                                      animate={{ rotateY: 0, opacity: 1, scale: 1 }}
+                                      exit={{ rotateY: -90, opacity: 0, scale: 0.9 }}
+                                      transition={{ duration: 0.5, ease: "easeInOut" }}
                                       className="pt-2 md:pt-3 border-t border-theme-border w-full flex-1 flex flex-col justify-between"
                                     >
                                       <p className="text-[10px] md:text-xs text-theme-text leading-relaxed text-left mb-1 drop-shadow-sm font-bold">
