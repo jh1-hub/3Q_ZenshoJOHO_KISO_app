@@ -1923,7 +1923,7 @@ export default function App() {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.05 }}
-                                whileHover={isOwned ? { scale: 1.05, rotateY: 2 } : {}}
+                                whileHover={isOwned ? { scale: 1.05 } : {}}
                                 onClick={() => handleCardClick(term)}
                                 className={`relative h-full flex flex-col rounded-2xl overflow-hidden ${isOwned ? 'cursor-pointer' : 'cursor-not-allowed grayscale opacity-50'} group ${isOwned ? styles.border : 'border-2 border-dashed border-theme-border-strong'} ${isOwned ? styles.glow : ''} bg-theme-card`}
                               >
@@ -1955,14 +1955,14 @@ export default function App() {
                                   </div>
 
                                   {isOwned && (
-                                    <motion.div 
-                                      key={pickedCard?.term === term ? pickedCard.descriptionIndex : 0}
-                                      initial={{ rotateY: 90, opacity: 0, scale: 0.9 }}
-                                      animate={{ rotateY: 0, opacity: 1, scale: 1 }}
-                                      exit={{ rotateY: -90, opacity: 0, scale: 0.9 }}
-                                      transition={{ duration: 0.5, ease: "easeInOut" }}
-                                      className="pt-2 md:pt-3 border-t border-theme-border w-full flex-1 flex flex-col justify-between"
-                                    >
+                                      <motion.div 
+                                        key={pickedCard?.term === term ? pickedCard.descriptionIndex : 0}
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.9 }}
+                                        transition={{ duration: 0.5, ease: "easeInOut" }}
+                                        className="pt-2 md:pt-3 border-t border-theme-border w-full flex-1 flex flex-col justify-between"
+                                      >
                                       <p className="text-[10px] md:text-xs text-theme-text leading-relaxed text-left mb-1 drop-shadow-sm font-bold">
                                         {(allTermsMap[term]?.descriptions || ["説明がありません。"])[pickedCard?.term === term ? pickedCard.descriptionIndex : 0]}
                                       </p>
@@ -2834,9 +2834,11 @@ export default function App() {
 
             <motion.div
               layoutId={`card-${pickedCard.term}`}
-              initial={{ scale: 0.8, y: 50 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.8, y: 50 }}
+              style={{ perspective: 1000 }}
+              initial={{ scale: 0.8, y: 50, rotateY: 180 }}
+              animate={{ scale: 1, y: 0, rotateY: 0 }}
+              exit={{ scale: 0.8, y: 50, rotateY: 180 }}
+              transition={{ type: "spring", stiffness: 200, damping: 20 }}
               onClick={() => handleCardClick(pickedCard.term)}
               className={`relative w-full max-w-[260px] md:max-w-sm aspect-[2/3] md:aspect-[3/4] max-h-[85vh] rounded-2xl md:rounded-[2rem] overflow-hidden cursor-pointer shadow-2xl border-4 ${getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').border} ${getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').glow} z-10`}
             >
@@ -2882,7 +2884,14 @@ export default function App() {
                     </p>
                   </div>
 
-                  <div className="pt-3 md:pt-4 border-t border-theme-border w-full shrink-0">
+                  <motion.div 
+                    key={pickedCard.descriptionIndex}
+                    initial={{ rotateY: 90, opacity: 0 }}
+                    animate={{ rotateY: 0, opacity: 1 }}
+                    exit={{ rotateY: -90, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="pt-3 md:pt-4 border-t border-theme-border w-full shrink-0"
+                  >
                     <div className="flex items-center justify-center gap-1.5 md:gap-2 text-theme-text-muted mb-2">
                       <Info size={12} className="md:w-3 md:h-3" />
                       <span className="text-[8px] md:text-[10px] font-bold uppercase tracking-widest">Pattern {pickedCard.descriptionIndex + 1}</span>
@@ -2900,7 +2909,7 @@ export default function App() {
                         return flavor;
                       })()}
                     </p>
-                  </div>
+                  </motion.div>
                 </div>
 
                 {/* Footer */}
