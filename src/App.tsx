@@ -83,8 +83,7 @@ import {
   QrCode,
   Scan,
   X,
-  List,
-  Camera
+  List
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Html5Qrcode } from 'html5-qrcode';
@@ -188,24 +187,14 @@ const HaloEffect = ({ rarity }: { rarity: Rarity }) => {
       <motion.div
         initial={{ opacity: 0, scale: 0.5 }}
         animate={{ 
-          opacity: [0.3, 0.6, 0.3],
-          scale: [1, 1.5, 1],
+          opacity: [0.3, 0.5, 0.3],
+          scale: [1, 1.3, 1],
         }}
-        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
         className="absolute w-[150vmax] h-[150vmax] rounded-full"
         style={{
           background: `radial-gradient(circle, ${getColors()})`,
-          filter: 'blur(80px)',
-        }}
-      />
-      
-      {/* Rotating Rays */}
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-        className="absolute w-[200vmax] h-[200vmax] opacity-20"
-        style={{
-          background: `conic-gradient(from 0deg, transparent, rgba(255,255,255,0.2) 5deg, transparent 10deg, transparent 15deg, rgba(255,255,255,0.2) 20deg, transparent 25deg)`,
+          filter: 'blur(100px)',
         }}
       />
     </div>
@@ -244,11 +233,11 @@ const Burst = ({ color, count }: { color: string, count: number }) => (
 
 const SpeedLines = () => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    {[...Array(40)].map((_, i) => (
+    {[...Array(15)].map((_, i) => (
       <motion.div
         key={i}
         initial={{ 
-          rotate: (i * 360) / 40,
+          rotate: (i * 360) / 15,
           scaleX: 0,
           opacity: 0,
           x: "-50%",
@@ -257,16 +246,16 @@ const SpeedLines = () => (
           top: "50%"
         }}
         animate={{ 
-          scaleX: [0, 1.5, 0],
-          opacity: [0, 0.5, 0],
+          scaleX: [0, 1.2, 0],
+          opacity: [0, 0.4, 0],
         }}
         transition={{ 
-          duration: 0.8, 
+          duration: 1, 
           repeat: Infinity, 
           delay: Math.random() * 0.5,
           ease: "easeInOut"
         }}
-        className="absolute h-[2px] w-[1000px] bg-gradient-to-r from-transparent via-white/40 to-transparent origin-left"
+        className="absolute h-[2px] w-[1000px] bg-gradient-to-r from-transparent via-white/30 to-transparent origin-left"
       />
     ))}
   </div>
@@ -284,7 +273,7 @@ const GachaRollingOverlay = () => {
       
       {/* Background Particles */}
       <div className="absolute inset-0 overflow-hidden">
-        {[...Array(30)].map((_, i) => (
+        {[...Array(12)].map((_, i) => (
           <motion.div
             key={i}
             initial={{ 
@@ -294,12 +283,12 @@ const GachaRollingOverlay = () => {
               opacity: 0
             }}
             animate={{ 
-              y: [null, '-20vh'],
-              scale: [0, Math.random() * 1.5, 0],
-              opacity: [0, 0.8, 0]
+              y: [null, '-10vh'],
+              scale: [0, Math.random() * 1.2, 0],
+              opacity: [0, 0.6, 0]
             }}
             transition={{ 
-              duration: 2 + Math.random() * 2, 
+              duration: 3 + Math.random() * 2, 
               repeat: Infinity,
               ease: "easeInOut"
             }}
@@ -502,6 +491,7 @@ export default function App() {
 
   const takeScreenshot = () => {
     const fileName = `${userProfile?.grade || '0'}${userProfile?.classNum || '0'}${userProfile?.attendanceNum || '00'}stats.png`;
+    const level = Math.floor(quizCount / 10) + 1;
 
     const canvas = document.createElement('canvas');
     canvas.width = 1920;
@@ -509,10 +499,37 @@ export default function App() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // 背景（クールなダークグラデーション）
+    // レベルに応じたカラーパレットの定義
+    let color1 = '#1e1b4b'; // デフォルト（Lv 1-5）
+    let color2 = '#4c1d95';
+    let accentColor = '#fbbf24';
+
+    if (level >= 31) {
+      color1 = '#0f172a'; // Legend: Slate 900
+      color2 = '#334155'; // Slate 700
+      accentColor = '#fcd34d'; // 明るいゴールド
+    } else if (level >= 21) {
+      color1 = '#4c1d95'; // Grandmaster: Violet
+      color2 = '#db2777'; // Pink
+      accentColor = '#6ee7b7'; // エメラルド
+    } else if (level >= 16) {
+      color1 = '#7f1d1d'; // Master: Red
+      color2 = '#991b1b';
+      accentColor = '#fde047'; // イエロー
+    } else if (level >= 11) {
+      color1 = '#78350f'; // Expert: Amber
+      color2 = '#92400e';
+      accentColor = '#38bdf8'; // スカイブルー
+    } else if (level >= 6) {
+      color1 = '#064e3b'; // Apprentice: Emerald
+      color2 = '#065f46';
+      accentColor = '#f9a8d4'; // ピンク
+    }
+
+    // 背景（レベルに応じたグラデーション）
     const gradient = ctx.createLinearGradient(0, 0, 1920, 1080);
-    gradient.addColorStop(0, '#1e1b4b');
-    gradient.addColorStop(1, '#4c1d95');
+    gradient.addColorStop(0, color1);
+    gradient.addColorStop(1, color2);
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 1920, 1080);
 
@@ -534,9 +551,8 @@ export default function App() {
     ctx.fillText(`学年: ${userProfile?.grade || '0'}年 ${userProfile?.classNum || '0'}組 ${userProfile?.attendanceNum || '0'}番`, 1400, 100);
     
     // レベルとカード収集状況
-    const level = Math.floor(quizCount / 10) + 1;
     const collectionRate = allTerms.length > 0 ? Math.floor((Object.keys(ownedCards).length / allTerms.length) * 100) : 0;
-    ctx.fillStyle = '#fbbf24';
+    ctx.fillStyle = accentColor;
     ctx.font = 'bold 36px Arial';
     ctx.fillText(`Lv. ${level} | 収集率: ${collectionRate}%`, 1400, 150);
 
@@ -564,7 +580,7 @@ export default function App() {
     
     quizCategories.forEach((category) => {
       if (y > 1000) return;
-      ctx.fillStyle = '#fbbf24';
+      ctx.fillStyle = accentColor;
       ctx.font = 'bold 30px Arial';
       const catStats = getStatsFor(category.id);
       ctx.fillText(`■ ${category.title}`, 80, y);
@@ -585,6 +601,15 @@ export default function App() {
       });
       y += 15;
     });
+
+    // ロゴ（右下）
+    ctx.textAlign = 'right';
+    ctx.fillStyle = accentColor;
+    ctx.font = 'italic bold 80px "Times New Roman", serif';
+    ctx.fillText('IT QUIZ MASTER', 1870, 1000);
+    ctx.font = 'bold 24px Arial';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.fillText('Knowledge is Power', 1870, 1035);
     
     const link = document.createElement('a');
     link.download = fileName;
@@ -678,6 +703,7 @@ export default function App() {
     localStorage.removeItem('it_quiz_username');
     localStorage.removeItem('it_quiz_user_profile');
     setResetStep(0);
+    setGameState('START');
   };
 
   const exportData = () => {
@@ -1075,7 +1101,7 @@ export default function App() {
           glow: 'shadow-[0_0_30px_rgba(236,72,153,0.8)]',
           pulse: 'animate-pulse',
           flash: 'bg-purple-400',
-          particles: 40
+          particles: 20
         };
       case 'SR':
         return {
@@ -1088,7 +1114,7 @@ export default function App() {
           glow: 'shadow-[0_0_20px_rgba(250,204,21,0.6)]',
           pulse: 'animate-pulse',
           flash: 'bg-yellow-300',
-          particles: 25
+          particles: 15
         };
       case 'R':
         return {
@@ -1101,7 +1127,7 @@ export default function App() {
           glow: 'shadow-[0_0_10px_rgba(59,130,246,0.4)]',
           pulse: '',
           flash: 'bg-blue-300',
-          particles: 15
+          particles: 8
         };
       default:
         return {
@@ -2114,7 +2140,7 @@ export default function App() {
                         <table className="w-full text-left text-sm md:text-base min-w-[600px]">
                           <thead className="bg-theme-muted text-theme-text-muted">
                             <tr>
-                              <th className="p-4 font-bold w-48">Term</th>
+                              <th className="p-4 font-bold w-24 md:w-48">Term</th>
                               <th className="p-4 font-bold">Description</th>
                               <th className="p-4 font-bold">Flavor Text</th>
                               <th className="p-4 font-bold w-16 text-center">Rarity</th>
@@ -2138,18 +2164,29 @@ export default function App() {
                                 }
                               };
 
+                              // Helper to wrap term every 6 characters for mobile
+                              const formatTerm = (t: string) => {
+                                if (!t) return '';
+                                const chunks = [];
+                                for (let i = 0; i < t.length; i += 6) {
+                                  chunks.push(t.substring(i, i + 6));
+                                }
+                                return chunks.join('\n');
+                              };
+
                               return (
                                 <tr 
                                   key={term} 
                                   onClick={handleRowClick}
                                   className={`${isOwned ? 'hover:bg-theme-muted/50 cursor-pointer' : 'opacity-50'} transition-colors`}
                                 >
-                                  <td className="p-4 font-bold">
+                                  <td className="p-4 font-bold align-top">
                                     {isOwned ? (
-                                      <div className="flex items-center gap-2">
-                                        {term}
+                                      <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
+                                        <span className="hidden md:inline">{term}</span>
+                                        <span className="md:hidden whitespace-pre-wrap leading-tight">{formatTerm(term)}</span>
                                         {count > 1 && (
-                                          <span className="text-[10px] bg-theme-border px-1.5 py-0.5 rounded-full text-theme-text-muted">x{count}</span>
+                                          <span className="text-[10px] bg-theme-border px-1.5 py-0.5 rounded-full text-theme-text-muted w-fit">x{count}</span>
                                         )}
                                       </div>
                                     ) : '???'}
@@ -3136,7 +3173,7 @@ export default function App() {
             onClick={() => setShowLevelUp(null)}
           >
             <SpeedLines />
-            <Burst color="bg-amber-400" count={50} />
+            <Burst color="bg-amber-400" count={20} />
             
             <motion.div
               initial={{ scale: 0.5, y: 100, opacity: 0 }}
