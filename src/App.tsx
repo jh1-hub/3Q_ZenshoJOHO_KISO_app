@@ -83,7 +83,11 @@ import {
   QrCode,
   Scan,
   X,
-  List
+  List,
+  Loader2,
+  PlusCircle,
+  RefreshCcw,
+  Gift
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Html5Qrcode } from 'html5-qrcode';
@@ -267,105 +271,52 @@ const GachaRollingOverlay = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[700] bg-black flex flex-col items-center justify-center overflow-hidden"
+      className="fixed inset-0 z-[700] bg-slate-900 flex flex-col items-center justify-center overflow-hidden"
     >
-      <SpeedLines />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-black"></div>
       
-      {/* Background Particles */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(12)].map((_, i) => (
-          <motion.div
-            key={i}
-            initial={{ 
-              x: Math.random() * 100 + 'vw', 
-              y: Math.random() * 100 + 'vh',
-              scale: 0,
-              opacity: 0
-            }}
-            animate={{ 
-              y: [null, '-10vh'],
-              scale: [0, Math.random() * 1.2, 0],
-              opacity: [0, 0.6, 0]
-            }}
-            transition={{ 
-              duration: 3 + Math.random() * 2, 
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-            className="absolute w-2 h-2 bg-amber-400 rounded-full blur-[1px]"
-          />
-        ))}
+      {/* Particle Stream Effect */}
+      <div className="absolute inset-0 opacity-30">
+        <motion.div 
+          animate={{ y: ['-100%', '100%'] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          className="absolute top-0 left-1/4 w-1 h-full bg-gradient-to-b from-transparent via-emerald-500 to-transparent"
+        />
+        <motion.div 
+          animate={{ y: ['-100%', '100%'] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "linear", delay: 0.5 }}
+          className="absolute top-0 left-2/4 w-1 h-full bg-gradient-to-b from-transparent via-cyan-500 to-transparent"
+        />
+        <motion.div 
+          animate={{ y: ['-100%', '100%'] }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: "linear", delay: 1 }}
+          className="absolute top-0 left-3/4 w-1 h-full bg-gradient-to-b from-transparent via-purple-500 to-transparent"
+        />
       </div>
 
-      <motion.div
-        initial={{ scale: 0.5, rotate: -20 }}
-        animate={{ 
-          scale: [0.5, 1.1, 1],
-          rotate: [0, 5, -5, 0],
-          y: [0, -20, 0]
-        }}
-        transition={{ 
-          duration: 0.6,
-          repeat: Infinity,
-          repeatType: "reverse"
-        }}
-        className="relative mb-12"
-      >
-        {/* Energy Rings */}
-        <motion.div 
-          animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          className="absolute inset-[-60px] border-4 border-dashed border-amber-400/40 rounded-full"
-        />
-        <motion.div 
-          animate={{ rotate: -360, scale: [1, 1.3, 1] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-          className="absolute inset-[-100px] border-2 border-theme-accent/30 rounded-full"
-        />
-
-        {/* The Capsule */}
-        <div className="w-40 h-56 md:w-48 md:h-64 bg-gradient-to-b from-white/20 to-white/5 backdrop-blur-md rounded-full shadow-[0_0_80px_rgba(251,191,36,0.5)] flex flex-col items-center justify-center border-4 border-white/40 relative z-10 overflow-hidden">
-          {/* Top Half */}
-          <div className="flex-1 w-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center border-b-4 border-white/50">
-            <Sparkles size={60} className="text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]" />
-          </div>
-          {/* Bottom Half */}
-          <div className="flex-1 w-full bg-gradient-to-br from-slate-200 to-slate-400 flex items-center justify-center">
-            <div className="w-12 h-12 rounded-full bg-white/30 border-2 border-white/50 shadow-inner" />
-          </div>
-          
-          {/* Internal Glow */}
+      <div className="relative z-10 flex flex-col items-center">
+        <div className="relative">
           <motion.div 
-            animate={{ opacity: [0.3, 0.7, 0.3] }}
-            transition={{ duration: 1, repeat: Infinity }}
-            className="absolute inset-0 bg-white/10 pointer-events-none"
+            animate={{ opacity: [0.3, 0.6, 0.3] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+            className="absolute inset-0 bg-emerald-500 blur-xl opacity-50"
           />
+          <motion.div 
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-32 h-48 bg-white/10 backdrop-blur-md rounded-xl border-2 border-white/30 flex items-center justify-center shadow-[0_0_50px_rgba(255,255,255,0.2)]"
+          >
+            <Loader2 className="w-12 h-12 text-white" />
+          </motion.div>
         </div>
-      </motion.div>
-      
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center relative z-10"
-      >
-        <h2 className="text-white text-3xl md:text-5xl font-black tracking-[0.6em] uppercase mb-8 drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">
-          Summoning
-        </h2>
-        <div className="flex justify-center gap-4">
-          {[0, 1, 2, 3].map(i => (
-            <motion.div
-              key={i}
-              animate={{ 
-                scale: [1, 1.5, 1],
-                opacity: [0.3, 1, 0.3],
-                backgroundColor: ["#fbbf24", "#ffffff", "#fbbf24"]
-              }}
-              transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
-              className="w-3 h-3 rounded-full shadow-[0_0_10px_rgba(251,191,36,0.8)]"
-            />
-          ))}
-        </div>
-      </motion.div>
+        <motion.p 
+          animate={{ opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+          className="text-white font-black text-2xl mt-8 tracking-[0.3em] [text-shadow:0_0_10px_rgba(255,255,255,0.8)]"
+        >
+          DATA ANALYZING...
+        </motion.p>
+      </div>
 
       {/* Final Flash Trigger */}
       <motion.div
@@ -1092,54 +1043,58 @@ export default function App() {
     switch (rarity) {
       case 'UR':
         return {
-          border: 'border-4 border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.6)]',
-          bg: 'bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400',
+          bgContainer: 'bg-slate-950',
+          cardContainer: 'bg-gradient-to-br from-amber-100 via-yellow-50 to-amber-200',
+          border: 'border-amber-400 border-4 shadow-[0_0_50px_rgba(245,158,11,0.6)]',
           text: 'text-white',
-          textColor: 'text-purple-600',
+          textColor: 'text-amber-600',
           label: 'Ultra Rare',
-          accent: 'bg-theme-card/20',
-          glow: 'shadow-[0_0_30px_rgba(236,72,153,0.8)]',
-          pulse: 'animate-pulse',
-          flash: 'bg-purple-400',
+          accent: 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-lg',
+          glow: 'shadow-[0_0_80px_rgba(251,191,36,0.8)]',
+          pulse: true,
+          flash: 'bg-amber-400',
           particles: 20
         };
       case 'SR':
         return {
-          border: 'border-4 border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.5)]',
-          bg: 'bg-gradient-to-br from-yellow-400 to-orange-500',
+          bgContainer: 'bg-slate-900',
+          cardContainer: 'bg-gradient-to-br from-emerald-50 via-white to-emerald-100',
+          border: 'border-emerald-400 border-4 shadow-[0_0_30px_rgba(16,185,129,0.4)]',
           text: 'text-white',
-          textColor: 'text-yellow-600',
+          textColor: 'text-emerald-600',
           label: 'Super Rare',
-          accent: 'bg-theme-card/20',
-          glow: 'shadow-[0_0_20px_rgba(250,204,21,0.6)]',
-          pulse: 'animate-pulse',
-          flash: 'bg-yellow-300',
+          accent: 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white',
+          glow: 'shadow-[0_0_50px_rgba(16,185,129,0.5)]',
+          pulse: true,
+          flash: 'bg-emerald-400',
           particles: 15
         };
       case 'R':
         return {
-          border: 'border-4 border-blue-400',
-          bg: 'bg-gradient-to-br from-blue-500 to-indigo-600',
+          bgContainer: 'bg-slate-800',
+          cardContainer: 'bg-gradient-to-br from-blue-50 to-white',
+          border: 'border-blue-400 border-2',
           text: 'text-white',
           textColor: 'text-blue-600',
           label: 'Rare',
-          accent: 'bg-theme-card/20',
-          glow: 'shadow-[0_0_10px_rgba(59,130,246,0.4)]',
-          pulse: '',
+          accent: 'bg-blue-500 text-white',
+          glow: 'shadow-[0_0_20px_rgba(59,130,246,0.3)]',
+          pulse: false,
           flash: 'bg-blue-300',
           particles: 8
         };
       default:
         return {
-          border: 'border-4 border-theme-border-strong',
-          bg: 'bg-theme-card',
-          text: 'text-theme-text',
-          textColor: 'text-theme-text-muted',
+          bgContainer: 'bg-slate-100',
+          cardContainer: 'bg-white',
+          border: 'border-slate-300 border-2',
+          text: 'text-slate-700',
+          textColor: 'text-slate-600',
           label: 'Common',
-          accent: 'bg-theme-border',
+          accent: 'bg-slate-500 text-white',
           glow: '',
-          pulse: '',
-          flash: 'bg-white',
+          pulse: false,
+          flash: 'bg-slate-200',
           particles: 0
         };
     }
@@ -1685,7 +1640,7 @@ export default function App() {
                                   initial={{ width: 0 }}
                                   animate={{ width: `${percentage}%` }}
                                   transition={{ duration: 1, delay: 0.2 }}
-                                  className={`h-full rounded-full ${styles.bg}`} 
+                                  className={`h-full rounded-full ${styles.accent}`} 
                                 />
                               </div>
                             </div>
@@ -1699,7 +1654,7 @@ export default function App() {
                                   initial={{ width: 0 }}
                                   animate={{ width: `${copiesPercentage}%` }}
                                   transition={{ duration: 1, delay: 0.3 }}
-                                  className={`h-full rounded-full ${styles.bg} opacity-70`} 
+                                  className={`h-full rounded-full ${styles.accent} opacity-70`} 
                                 />
                               </div>
                             </div>
@@ -1715,7 +1670,7 @@ export default function App() {
                                 initial={{ width: 0 }}
                                 animate={{ width: `${percentage}%` }}
                                 transition={{ duration: 1, delay: 0.2 }}
-                                className={`h-full rounded-full ${styles.bg}`} 
+                                className={`h-full rounded-full ${styles.accent}`} 
                               />
                             </div>
                             <p className="text-[10px] text-right mt-1.5 text-theme-text-muted font-bold">{percentage}%</p>
@@ -2064,16 +2019,16 @@ export default function App() {
                                 className={`relative h-full flex flex-col rounded-2xl overflow-hidden ${isOwned ? 'cursor-pointer' : 'cursor-not-allowed grayscale opacity-50'} group ${isOwned ? styles.border : 'border-2 border-dashed border-theme-border-strong'} ${isOwned ? styles.glow : ''} bg-theme-card`}
                               >
                                 {/* Card Backgrounds */}
-                                <div className={`absolute inset-0 ${isOwned ? styles.bg : 'bg-theme-border'} opacity-10 group-hover:opacity-20 transition-opacity`} />
+                                <div className={`absolute inset-0 ${isOwned ? styles.accent : 'bg-theme-border'} opacity-10 group-hover:opacity-20 transition-opacity`} />
                               
                               {/* Pulse Effect (Behind Content) */}
                               {isOwned && styles.pulse && (
-                                <div className={`absolute inset-0 ${styles.bg} opacity-15 ${styles.pulse} z-0`} />
+                                <div className={`absolute inset-0 ${styles.accent} opacity-15 ${styles.pulse} z-0`} />
                               )}
 
                               <div className="flex-1 flex flex-col bg-transparent relative z-10" style={{ perspective: 1000 }}>
                                 {/* Card Header */}
-                                <div className={`px-2 py-1.5 md:px-3 md:py-2 flex justify-between items-center shrink-0 ${isOwned && rarity !== 'C' ? styles.bg : 'bg-theme-muted'} ${isOwned && rarity !== 'C' ? 'text-white' : 'text-theme-text-muted'}`}>
+                                <div className={`px-2 py-1.5 md:px-3 md:py-2 flex justify-between items-center shrink-0 ${isOwned && rarity !== 'C' ? styles.accent : 'bg-theme-muted'} ${isOwned && rarity !== 'C' ? 'text-white' : 'text-theme-text-muted'}`}>
                                   <span className="text-[8px] md:text-[10px] font-bold tracking-widest uppercase drop-shadow-sm">{isOwned ? styles.label : 'LOCKED'}</span>
                                   {isOwned && count > 1 && (
                                     <span className="text-[8px] md:text-[10px] font-bold bg-theme-card/20 px-1.5 py-0.5 rounded-full">x{count}</span>
@@ -2082,7 +2037,7 @@ export default function App() {
 
                                 {/* Card Content */}
                                 <div className="flex-1 p-3 md:p-4 flex flex-col items-center justify-start text-center space-y-2 md:space-y-3">
-                                  <div className={`hidden md:flex w-12 h-12 shrink-0 rounded-xl items-center justify-center ${isOwned ? styles.bg : 'bg-theme-border'} ${isOwned ? (rarity === 'C' ? 'text-theme-text' : 'text-white') : 'text-theme-text-muted'} shadow-inner`}>
+                                  <div className={`hidden md:flex w-12 h-12 shrink-0 rounded-xl items-center justify-center ${isOwned ? styles.accent : 'bg-theme-border'} ${isOwned ? (rarity === 'C' ? 'text-theme-text' : 'text-white') : 'text-theme-text-muted'} shadow-inner`}>
                                     {isOwned ? getTermIcon(term, 20) : <Lock size={20} />}
                                   </div>
                                   
@@ -2120,7 +2075,7 @@ export default function App() {
                                             key={i} 
                                             className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${
                                               (pickedCard?.term === term ? i === pickedCard.descriptionIndex : i === 0)
-                                                ? (isOwned ? styles.bg : 'bg-theme-text-muted') 
+                                                ? (isOwned ? styles.accent : 'bg-theme-text-muted') 
                                                 : (i < count ? 'bg-theme-border-strong' : 'bg-theme-border')
                                             }`} 
                                           />
@@ -2200,7 +2155,7 @@ export default function App() {
                                             {[...Array(Math.min(count, allTermsMap[term]?.descriptions?.length || 1, 3))].map((_, i) => (
                                               <div 
                                                 key={i} 
-                                                className={`w-1.5 h-1.5 rounded-full ${i === currentIndex ? styles.bg : 'bg-theme-border-strong'}`} 
+                                                className={`w-1.5 h-1.5 rounded-full ${i === currentIndex ? styles.accent : 'bg-theme-border-strong'}`} 
                                               />
                                             ))}
                                           </div>
@@ -2221,7 +2176,7 @@ export default function App() {
                                   </td>
                                   <td className="p-4 text-center">
                                     {isOwned ? (
-                                      <span className={`inline-block px-2 py-1 rounded text-[10px] font-bold tracking-widest uppercase ${styles.bg} ${rarity === 'C' ? 'text-theme-text' : 'text-white'}`}>
+                                      <span className={`inline-block px-2 py-1 rounded text-[10px] font-bold tracking-widest uppercase ${styles.accent} ${rarity === 'C' ? 'text-theme-text' : 'text-white'}`}>
                                         {styles.label}
                                       </span>
                                     ) : (
@@ -2710,6 +2665,10 @@ export default function App() {
                   <RotateCcw size={24} /> もう一度挑戦
                 </button>
               </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Gacha Rolling Overlay */}
       <AnimatePresence>
@@ -2723,9 +2682,77 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6"
+            className={`fixed inset-0 z-[200] ${getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').bgContainer} flex flex-col items-center justify-center p-6 overflow-hidden`}
           >
-            <SpeedLines />
+            {/* Background Effects */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              {allTermsMap[currentGachaCard.term]?.rarity === 'UR' && (
+                <>
+                  <motion.div 
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200vmax] h-[200vmax] opacity-40"
+                    style={{
+                      background: `conic-gradient(from 0deg, transparent 0deg, #fbbf24 20deg, transparent 40deg, #f59e0b 60deg, transparent 80deg, #fbbf24 100deg, transparent 120deg, #f59e0b 140deg, transparent 160deg, #fbbf24 180deg, transparent 200deg, #f59e0b 220deg, transparent 240deg, #fbbf24 260deg, transparent 280deg, #f59e0b 300deg, transparent 320deg, #fbbf24 340deg, transparent 360deg)`
+                    }}
+                  />
+                  <motion.div 
+                    animate={{ opacity: [0.3, 0.6, 0.3] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(251,191,36,0.3)_0%,transparent_70%)]"
+                  />
+                  {[...Array(20)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, scale: 0 }}
+                      animate={{ 
+                        opacity: [0, 1, 0], 
+                        scale: [0, 1, 0],
+                        y: [0, -100],
+                        x: [0, (Math.random() - 0.5) * 50]
+                      }}
+                      transition={{ duration: 2 + Math.random() * 3, repeat: Infinity, delay: Math.random() * 2 }}
+                      className="absolute w-2 h-2 bg-yellow-300 rounded-full"
+                      style={{ top: `${Math.random() * 100}%`, left: `${Math.random() * 100}%` }}
+                    />
+                  ))}
+                </>
+              )}
+              {allTermsMap[currentGachaCard.term]?.rarity === 'SR' && (
+                <>
+                  <motion.div 
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200vmax] h-[200vmax] opacity-20"
+                    style={{
+                      background: `repeating-conic-gradient(#10b981 0deg, #10b981 10deg, transparent 10deg, transparent 20deg)`
+                    }}
+                  />
+                  <motion.div 
+                    className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.3)_0%,transparent_60%)]"
+                  />
+                  {[...Array(10)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      animate={{ scale: [1, 1.5, 1], opacity: [0.4, 0.8, 0.4] }}
+                      transition={{ duration: 1 + Math.random(), repeat: Infinity, delay: Math.random() }}
+                      className="absolute w-1 h-1 bg-emerald-400 rounded-full"
+                      style={{ top: `${Math.random() * 100}%`, left: `${Math.random() * 100}%` }}
+                    />
+                  ))}
+                </>
+              )}
+              {allTermsMap[currentGachaCard.term]?.rarity === 'R' && (
+                <>
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.2)_0%,transparent_70%)]" />
+                  <motion.div 
+                    animate={{ x: ['-100%', '100%'] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                    className="absolute top-0 left-0 w-full h-full bg-[linear-gradient(45deg,transparent_45%,rgba(255,255,255,0.05)_50%,transparent_55%)] bg-[length:200%_200%]"
+                  />
+                </>
+              )}
+            </div>
             
             {/* Reveal Flash */}
             <motion.div
@@ -2736,157 +2763,129 @@ export default function App() {
               className={`absolute inset-0 z-[250] pointer-events-none ${getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').flash}`}
             />
 
-            <HaloEffect rarity={allTermsMap[currentGachaCard.term]?.rarity || 'C'} />
-            
-            {/* Burst Effect */}
-            <Burst 
-              color={getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').flash} 
-              count={getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').particles} 
-            />
-
             <motion.div
               key={`${currentGachaCard.term}-${currentGachaCard.redrawsUsed}`}
-              initial={{ scale: 0.2, opacity: 0, rotateY: 180, rotate: -15 }}
-              animate={{ 
-                scale: 1,
-                opacity: 1, 
-                rotateY: 0, 
-                rotate: 0,
-                x: [0, -10, 10, -5, 5, 0]
-              }}
-              transition={{ 
-                scale: { type: "spring", damping: 12, stiffness: 100, delay: 0.1 },
-                x: { duration: 0.4, delay: 0.2 }
-              }}
-              className="relative w-full max-w-[280px] md:max-w-sm aspect-[2/3] md:aspect-[3/4] z-10"
+              initial={{ scale: 0.5, opacity: 0, y: 50 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              transition={{ type: "spring", damping: 12, stiffness: 100 }}
+              className="relative w-full max-w-sm z-10"
             >
-              {/* Card Display */}
-              <div className={`relative w-full h-full rounded-2xl md:rounded-[2.5rem] overflow-hidden group ${getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').border} ${getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').glow} transition-all duration-300 flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.5)] border-4`}>
-                      {/* Card Backgrounds */}
-                      <div className="absolute inset-0 bg-theme-card" />
-                      <div className={`absolute inset-0 ${getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').bg} opacity-10`} />
-                      
-                      {/* Pulse Effect (Behind Content) */}
-                      {getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').pulse && (
-                        <div className={`absolute inset-0 ${getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').bg} opacity-15 ${getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').pulse} z-0`} />
-                      )}
+              {/* The Card */}
+              <motion.div 
+                whileHover={{ scale: 1.02, rotate: -1 }}
+                className="relative group"
+              >
+                {/* Outer Glow */}
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5, duration: 1 }}
+                  className={`absolute inset-0 rounded-3xl ${getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').glow}`}
+                />
+                
+                {/* Card Body */}
+                <div className={`${getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').cardContainer} ${getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').border} rounded-2xl p-6 flex flex-col items-center text-center relative overflow-hidden min-h-[440px] shadow-2xl`}>
+                  
+                  {/* NEW / DUPLICATE Badge */}
+                  {currentGachaCard.isDuplicate ? (
+                    <div className="absolute top-4 right-4 bg-slate-500 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-md z-20 border border-white">DUPLICATE</div>
+                  ) : (
+                    <motion.div 
+                      animate={{ y: [0, -5, 0] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                      className="absolute top-4 right-4 bg-rose-500 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-md z-20 border border-white"
+                    >
+                      NEW!
+                    </motion.div>
+                  )}
+                  
+                  {/* Rarity Watermark */}
+                  <div className={`text-[10rem] font-black absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-5 select-none z-0 pointer-events-none ${getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').textColor}`}>
+                    {allTermsMap[currentGachaCard.term]?.rarity || 'C'}
+                  </div>
 
-                      {/* Sparkles for High Rarity (Behind Content) */}
-                      {['SR', 'UR'].includes(allTermsMap[currentGachaCard.term]?.rarity || 'C') && (
-                        <div className="absolute inset-0 pointer-events-none z-0">
-                          <motion.div 
-                            animate={{ opacity: [0, 1, 0], scale: [0.8, 1.2, 0.8] }}
-                            transition={{ repeat: Infinity, duration: 2 }}
-                            className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/15 to-white/0"
-                          />
-                        </div>
-                      )}
-
-                      <div className="h-full flex flex-col bg-transparent relative z-10">
-                        {/* Card Header */}
-                        <div className={`px-3 py-2 md:px-4 md:py-3 flex justify-between items-center relative z-10 ${allTermsMap[currentGachaCard.term]?.rarity !== 'C' ? getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').bg : 'bg-theme-muted'} ${allTermsMap[currentGachaCard.term]?.rarity !== 'C' ? 'text-white' : 'text-theme-text-muted'}`}>
-                          <span className="text-[10px] md:text-xs font-bold tracking-widest uppercase drop-shadow-sm">{getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').label}</span>
-                          <span className="text-[8px] md:text-[10px] font-bold bg-theme-card/20 px-2 py-0.5 rounded-full">NEW!</span>
-                        </div>
-
-                        {/* Card Content */}
-                        <div className="flex-1 p-4 md:p-6 flex flex-col items-center justify-center text-center space-y-3 md:space-y-4 relative z-10">
-                          <div className={`w-16 h-16 md:w-24 md:h-24 rounded-xl md:rounded-2xl flex items-center justify-center ${getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').bg} ${allTermsMap[currentGachaCard.term]?.rarity === 'C' || !allTermsMap[currentGachaCard.term] ? 'text-theme-text' : 'text-white'} shadow-inner`}>
-                            <div className="hidden md:block">{getTermIcon(currentGachaCard.term, 48)}</div>
-                            <div className="block md:hidden">{getTermIcon(currentGachaCard.term, 32)}</div>
-                          </div>
-                          
-                          <div className="space-y-1">
-                            <h3 className="text-xl md:text-2xl font-bold leading-tight text-theme-text drop-shadow-sm">{currentGachaCard.term}</h3>
-                            <p className="text-[9px] md:text-xs text-theme-text-muted font-bold uppercase tracking-widest">
-                              {quizCategories.find(c => c.subcategories.some(s => s.terms.some(t => t.name === currentGachaCard.term)))?.title || 'Unknown Category'}
-                            </p>
-                          </div>
-
-                          <div className="pt-3 md:pt-4 border-t border-theme-border w-full">
-                            <p className="text-sm md:text-lg text-theme-text leading-relaxed font-bold mb-2 drop-shadow-sm">
-                              "{(allTermsMap[currentGachaCard.term]?.descriptions || ["説明がありません。"])[0]}"
-                            </p>
-                            {allTermsMap[currentGachaCard.term]?.flavorTexts && (
-                              <p className="text-[10px] md:text-sm text-theme-text-muted leading-relaxed italic">
-                                {Array.isArray(allTermsMap[currentGachaCard.term]?.flavorTexts) 
-                                  ? (allTermsMap[currentGachaCard.term]?.flavorTexts as string[])[0] 
-                                  : allTermsMap[currentGachaCard.term]?.flavorTexts}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                  {/* Icon Circle */}
+                  <motion.div 
+                    animate={{ y: [0, -8, 0] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                    className="mt-8 mb-6 w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-inner border-4 border-slate-50 relative z-10"
+                  >
+                    <div className={getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').textColor}>
+                      {getTermIcon(currentGachaCard.term, 64)}
                     </div>
                   </motion.div>
+                  
+                  {/* Rarity Label */}
+                  <div className="mb-3 relative z-10">
+                    <span className={`inline-block px-4 py-1.5 rounded-full text-sm font-black tracking-widest ${getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').accent} border border-white/20`}>
+                      {getRarityStyles(allTermsMap[currentGachaCard.term]?.rarity || 'C').label}
+                    </span>
+                  </div>
 
-                  <div className="mt-6 md:mt-12 flex flex-col items-center gap-4 md:gap-6 w-full max-w-[280px] md:max-w-sm">
-                    <p className="text-white/60 font-bold tracking-widest text-sm md:text-base">
-                      {gachaHistory.length + 1} / {gachaHistory.length + gachaQueue + 1}
-                    </p>
-                    
-                    {currentGachaCard.isDuplicate && currentGachaCard.redrawsUsed < currentGachaCard.maxRedraws && (
-                      <div className="text-amber-400 font-bold text-sm mb-2">
-                        ダブり発生！再抽選可能です（残り {currentGachaCard.maxRedraws - currentGachaCard.redrawsUsed} 回）
-                      </div>
-                    )}
-
-                    <div className="flex flex-col md:flex-row justify-center gap-3 md:gap-4 w-full">
-                      {currentGachaCard.isDuplicate && currentGachaCard.redrawsUsed < currentGachaCard.maxRedraws ? (
-                        <>
-                          <button 
-                            onClick={handleRedraw}
-                            className="w-full md:w-auto px-4 py-3 md:px-8 md:py-4 bg-gradient-to-r from-amber-400 to-orange-500 text-white rounded-xl md:rounded-2xl font-bold hover:scale-105 active:scale-95 transition-all shadow-lg shadow-amber-500/40 text-sm md:text-base whitespace-nowrap"
-                          >
-                            再抽選する
-                          </button>
-                          <button 
-                            onClick={() => handleKeepCard('next')}
-                            className="w-full md:w-auto px-4 py-3 md:px-8 md:py-4 bg-theme-card/20 text-white rounded-xl md:rounded-2xl font-bold hover:bg-theme-card/30 transition-all text-sm md:text-base whitespace-nowrap"
-                          >
-                            このまま獲得
-                          </button>
-                        </>
-                      ) : gachaQueue > 0 ? (
-                        <>
-                          <button 
-                            onClick={() => handleKeepCard('next')}
-                            className="w-full md:w-auto px-4 py-3 md:px-12 md:py-4 bg-theme-accent text-white rounded-xl md:rounded-2xl font-bold hover:scale-105 active:scale-95 transition-all shadow-lg shadow-theme-accent/40 text-sm md:text-base whitespace-nowrap order-first md:order-last"
-                          >
-                            続けて引く
-                          </button>
-                          <button 
-                            disabled
-                            className="w-full md:w-auto px-4 py-3 md:px-8 md:py-4 bg-white/5 text-white/20 rounded-xl md:rounded-2xl font-bold flex items-center justify-center gap-2 border border-white/10 text-sm md:text-base whitespace-nowrap cursor-not-allowed"
-                          >
-                            コレクションで見る <ArrowRight size={16} className="md:w-[18px] md:h-[18px] shrink-0" />
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button 
-                            onClick={() => handleKeepCard('close')}
-                            className="w-full md:w-auto px-4 py-3 md:px-12 md:py-4 bg-theme-card text-black rounded-xl md:rounded-2xl font-bold hover:scale-105 active:scale-95 transition-all shadow-xl text-sm md:text-base whitespace-nowrap"
-                          >
-                            結果を閉じる
-                          </button>
-                          <button 
-                            onClick={() => handleKeepCard('collection')}
-                            className="w-full md:w-auto px-4 py-3 md:px-8 md:py-4 bg-theme-card/10 hover:bg-theme-card/20 text-white rounded-xl md:rounded-2xl font-bold transition-all flex items-center justify-center gap-2 border border-white/20 text-sm md:text-base whitespace-nowrap"
-                          >
-                            コレクションで見る <ArrowRight size={16} className="md:w-[18px] md:h-[18px] shrink-0" />
-                          </button>
-                        </>
-                      )}
+                  {/* Name */}
+                  <h2 className="text-2xl md:text-3xl font-black text-slate-800 mb-4 leading-tight relative z-10 drop-shadow-sm">
+                    {currentGachaCard.term}
+                  </h2>
+                  
+                  {/* Description */}
+                  <div className="relative z-10 w-full">
+                    <div className="bg-white/60 backdrop-blur-sm p-4 rounded-xl border border-white/50 shadow-sm">
+                      <p className="text-slate-700 text-sm font-medium leading-relaxed text-left">
+                        {(allTermsMap[currentGachaCard.term]?.descriptions || ["説明がありません。"])[0]}
+                      </p>
                     </div>
                   </div>
-                </motion.div>
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* Action Buttons */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.5, duration: 0.5 }}
+              className="mt-8 relative z-10 flex flex-col gap-3 w-full max-w-sm"
+            >
+              {currentGachaCard.isDuplicate ? (
+                <>
+                  <div className="text-white text-center text-sm font-bold mb-2 drop-shadow-md">
+                    既に持っているカードです。<br />所持数を増やすか、引き直すか選べます。
+                  </div>
+                  
+                  <button 
+                    onClick={() => handleKeepCard(gachaQueue > 0 ? 'next' : 'close')}
+                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    <PlusCircle className="w-5 h-5" /> このまま入手 (所持数+1)
+                  </button>
+                  
+                  {currentGachaCard.redrawsUsed < currentGachaCard.maxRedraws ? (
+                    <button 
+                      onClick={handleRedraw}
+                      className="w-full bg-white hover:bg-slate-100 text-slate-900 font-bold py-3 px-6 rounded-xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
+                    >
+                      <RefreshCcw className="w-5 h-5" /> 引き直す (あと{currentGachaCard.maxRedraws - currentGachaCard.redrawsUsed}回)
+                    </button>
+                  ) : (
+                    <button disabled className="w-full bg-slate-400 text-slate-200 font-bold py-3 px-6 rounded-xl cursor-not-allowed flex items-center justify-center gap-2">
+                      <XCircle className="w-5 h-5" /> 引き直し終了
+                    </button>
+                  )}
+                </>
+              ) : (
+                <div className="flex justify-center">
+                  <button 
+                    onClick={() => handleKeepCard(gachaQueue > 0 ? 'next' : 'close')}
+                    className="bg-white hover:bg-slate-100 text-slate-900 font-bold py-3 px-8 rounded-full shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all hover:scale-105 active:scale-95 flex items-center gap-2 border border-slate-200"
+                  >
+                    <Home className="w-5 h-5" /> {gachaQueue > 0 ? '続けて引く' : '完了してメニューへ'}
+                  </button>
+                </div>
               )}
-            </AnimatePresence>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Loading Overlay */}
       <AnimatePresence>
@@ -2990,12 +2989,15 @@ export default function App() {
               className={`relative w-full max-w-[260px] md:max-w-sm aspect-[2/3] md:aspect-[3/4] max-h-[85vh] rounded-2xl md:rounded-[2rem] overflow-hidden cursor-pointer shadow-2xl border-4 ${getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').border} ${getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').glow} z-10`}
             >
               {/* Card Backgrounds */}
-              <div className="absolute inset-0 bg-theme-card" />
-              <div className={`absolute inset-0 ${getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').bg} opacity-10`} />
+              <div className={`absolute inset-0 ${getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').cardContainer}`} />
 
               {/* Pulse Effect (Behind Content) */}
               {getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').pulse && (
-                <div className={`absolute inset-0 ${getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').bg} opacity-15 ${getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').pulse} z-0`} />
+                <motion.div 
+                  animate={{ opacity: [0.1, 0.3, 0.1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className={`absolute inset-0 ${getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').accent} opacity-20 z-0`} 
+                />
               )}
 
               {/* Shine Effect (Behind Content) */}
@@ -3008,18 +3010,18 @@ export default function App() {
               {/* Card Content in Modal */}
               <div className="h-full flex flex-col bg-transparent relative z-10">
                 {/* Header */}
-                <div className={`px-3 py-2 md:px-4 md:py-3 flex justify-between items-center shrink-0 ${allTermsMap[pickedCard.term]?.rarity !== 'C' ? getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').bg : 'bg-theme-muted'} ${allTermsMap[pickedCard.term]?.rarity !== 'C' ? 'text-white' : 'text-theme-text-muted'}`}>
+                <div className={`px-3 py-2 md:px-4 md:py-3 flex justify-between items-center shrink-0 ${getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').accent} ${allTermsMap[pickedCard.term]?.rarity !== 'C' ? 'text-white' : 'text-slate-100'}`}>
                   <span className="text-[10px] md:text-xs font-bold tracking-widest uppercase drop-shadow-sm">
                     {getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').label}
                   </span>
-                  <span className="text-[8px] md:text-[10px] font-bold bg-theme-card/20 px-2 py-0.5 rounded-full font-mono">
+                  <span className="text-[8px] md:text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full font-mono">
                     ID: {termToId[pickedCard.term] || "000"}
                   </span>
                 </div>
 
                 {/* Body */}
                 <div className="flex-1 p-4 md:p-6 flex flex-col items-center justify-center text-center space-y-3 md:space-y-4 overflow-y-auto">
-                  <div className={`w-16 h-16 md:w-24 md:h-24 rounded-xl md:rounded-2xl flex items-center justify-center ${getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').bg} ${allTermsMap[pickedCard.term]?.rarity === 'C' || !allTermsMap[pickedCard.term] ? 'text-theme-text' : 'text-white'} shadow-inner shrink-0`}>
+                  <div className={`w-16 h-16 md:w-24 md:h-24 rounded-xl md:rounded-2xl flex items-center justify-center bg-white ${getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').textColor} shadow-inner shrink-0`}>
                     <div className="hidden md:block">{getTermIcon(pickedCard.term, 48)}</div>
                     <div className="block md:hidden">{getTermIcon(pickedCard.term, 32)}</div>
                   </div>
@@ -3065,7 +3067,7 @@ export default function App() {
                     {[...Array(Math.min(allTermsMap[pickedCard.term]?.descriptions?.length || 1, 3))].map((_, i) => (
                       <div 
                         key={i} 
-                        className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${i === pickedCard.descriptionIndex ? getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').bg : 'bg-theme-border-strong'}`} 
+                        className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${i === pickedCard.descriptionIndex ? getRarityStyles(allTermsMap[pickedCard.term]?.rarity || 'C').accent : 'bg-slate-300'}`} 
                       />
                     ))}
                   </div>
