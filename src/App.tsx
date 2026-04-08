@@ -1107,7 +1107,9 @@ export default function App() {
       termsToPickFrom = item.terms.map(t => t.name);
       title = item.title;
       setSelectedSubcategory(item);
-      questionCount = 5;
+      // If the ID matches a top-level category, it's a "Unit Practice" continuation
+      const isCategory = quizCategories.some(cat => cat.id === item.id);
+      questionCount = isCategory ? 10 : 5;
     }
     
     // Select random terms
