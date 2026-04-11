@@ -5,6 +5,7 @@ import {
   Trophy, 
   Timer, 
   ChevronRight, 
+  ChevronLeft,
   RotateCcw, 
   Award,
   BrainCircuit,
@@ -90,9 +91,10 @@ import { QRCodeSVG } from 'qrcode.react';
 import { Html5Qrcode } from 'html5-qrcode';
 import CryptoJS from 'crypto-js';
 import { quizCategories, Category, Subcategory, allTermsMap, allTerms, Rarity } from './data/quizData';
+import { storyCards, StoryCard } from './data/storyData';
 import { generateQuestion, Question, QuestionType } from './services/geminiService';
 
-type GameState = 'START' | 'CATEGORY_SELECT' | 'QUIZ' | 'RESULT' | 'COLLECTION' | 'STATS' | 'SPEED_STAR';
+type GameState = 'START' | 'CATEGORY_SELECT' | 'QUIZ' | 'RESULT' | 'COLLECTION' | 'STATS' | 'SPEED_STAR' | 'STORY';
 
 interface UnitStats {
   highScore: number;
@@ -320,12 +322,68 @@ const GachaRollingOverlay = () => {
   );
 };
 
+const StoryCardOverlay = ({ card, onClose }: { card: StoryCard; onClose: () => void }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[600] flex items-center justify-center bg-black/95 backdrop-blur-2xl p-6"
+      onClick={onClose}
+    >
+      <SpeedLines />
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0, rotateY: -180 }}
+        animate={{ scale: 1, opacity: 1, rotateY: 0 }}
+        exit={{ scale: 0.8, opacity: 0, rotateY: 180 }}
+        transition={{ type: "spring", damping: 15, stiffness: 100 }}
+        className="relative w-full max-w-sm aspect-[2/3] bg-slate-900 rounded-[2.5rem] border-4 border-amber-500/50 shadow-[0_0_50px_rgba(245,158,11,0.3)] overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-amber-500/10 to-transparent pointer-events-none" />
+        
+        {/* Card Header */}
+        <div className="p-6 border-b border-amber-500/20 flex justify-between items-center bg-amber-500/5">
+          <span className="text-amber-500 font-black tracking-widest text-xs uppercase">Story Card #{card.id}</span>
+          <span className="bg-amber-500 text-black text-[10px] font-black px-2 py-0.5 rounded-full uppercase">{card.chapter}</span>
+        </div>
+
+        {/* Card Content */}
+        <div className="flex-1 p-8 flex flex-col items-center justify-center text-center space-y-6 overflow-y-auto">
+          <div className="w-20 h-20 bg-amber-500/20 rounded-2xl flex items-center justify-center">
+            <BookOpen size={40} className="text-amber-500" />
+          </div>
+          
+          <div className="space-y-4">
+            <h3 className="text-2xl md:text-3xl font-bold text-white leading-tight">「{card.title}」</h3>
+            <div className="w-12 h-1 bg-amber-500 mx-auto rounded-full opacity-50" />
+            <p className="text-slate-300 text-sm md:text-base leading-relaxed whitespace-pre-wrap text-left">
+              {card.content}
+            </p>
+          </div>
+        </div>
+
+        {/* Card Footer */}
+        <div className="p-6 text-center border-t border-amber-500/10">
+          <button 
+            onClick={onClose}
+            className="text-amber-500/60 font-bold text-xs uppercase tracking-[0.2em] hover:text-amber-500 transition-colors"
+          >
+            Tap to close
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
 export default function App() {
   const statsRef = useRef<HTMLDivElement>(null);
   const [gameState, setGameState] = useState<GameState>('START');
   const [userName, setUserName] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<{ grade: string; classNum: string; attendanceNum: string } | null>(null);
   const [showLevelUp, setShowLevelUp] = useState<number | null>(null);
+  const [showStoryCard, setShowStoryCard] = useState<StoryCard | null>(null);
   const [showMigrationModal, setShowMigrationModal] = useState(false);
   const [migrationQR, setMigrationQR] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
@@ -905,8 +963,24 @@ export default function App() {
       }
     }
 
+    // Determine the base pool of terms
+    let baseTerms = allTermsList;
+    if (selectedSubcategory && Math.random() < 0.9) {
+      const parentCategory = quizCategories.find(cat => 
+        cat.subcategories.some(sub => sub.id === selectedSubcategory.id)
+      );
+      if (parentCategory) {
+        baseTerms = parentCategory.subcategories.flatMap(sub => sub.terms.map(t => t.name));
+      }
+    }
+
     // Filter terms by rarity
-    let possibleTerms = allTermsList.filter(term => (allTermsMap[term]?.rarity || 'C') === selectedRarity);
+    let possibleTerms = baseTerms.filter(term => (allTermsMap[term]?.rarity || 'C') === selectedRarity);
+    
+    // Fallback if no terms of this rarity exist in the restricted pool
+    if (possibleTerms.length === 0) {
+      possibleTerms = allTermsList.filter(term => (allTermsMap[term]?.rarity || 'C') === selectedRarity);
+    }
     
     // Bias: 70% chance to pick from unowned if available in this rarity
     const unownedInRarity = possibleTerms.filter(term => !currentCollection[term]);
@@ -914,11 +988,11 @@ export default function App() {
       possibleTerms = unownedInRarity;
     }
 
-    // Apply 1.3x weight to terms in the current category/subcategory
-    const currentTerms = selectedSubcategory?.terms || [];
+    // Apply 1.3x weight to terms in the current subcategory
+    const currentSubcategoryTerms = selectedSubcategory?.terms.map(t => t.name) || [];
     const weightedTerms = possibleTerms.map(term => ({
       term,
-      weight: currentTerms.includes(term) ? 1.3 : 1.0
+      weight: currentSubcategoryTerms.includes(term) ? 1.3 : 1.0
     }));
 
     const totalWeight = weightedTerms.reduce((sum, item) => sum + item.weight, 0);
@@ -1638,6 +1712,16 @@ export default function App() {
                   学習成績 <BarChart size={24} />
                 </span>
               </button>
+
+              <button 
+                onClick={() => setGameState('STORY')}
+                className="group relative px-12 py-5 bg-gradient-to-r from-slate-800 to-slate-900 text-white border-2 border-slate-700 rounded-full text-xl font-bold overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-lg"
+              >
+                <span className="relative z-10 flex items-center gap-3">
+                  ストーリー <BookOpen size={24} className="text-amber-400" />
+                </span>
+                <div className="absolute inset-0 bg-white/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+              </button>
             </div>
 
             {/* Collection Progress Section */}
@@ -1945,6 +2029,111 @@ export default function App() {
                   </div>
                 </section>
               ))}
+            </div>
+          </motion.div>
+        )}
+
+        {gameState === 'STORY' && (
+          <motion.div 
+            key="story"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="max-w-6xl mx-auto p-6 py-12"
+          >
+            <div className="flex items-center gap-4 mb-12">
+              <button 
+                onClick={() => setGameState('START')}
+                className="p-3 bg-theme-card rounded-2xl border border-theme-border hover:bg-theme-muted transition-all"
+              >
+                <ChevronLeft size={24} />
+              </button>
+              <div>
+                <h2 className="text-4xl font-theme-heading font-bold mb-2">Story Archive</h2>
+                <p className="text-theme-text-muted">解放されたストーリーを振り返ることができます。</p>
+              </div>
+              <div className="ml-auto text-right hidden md:block">
+                <p className="text-xs font-bold text-theme-text-muted uppercase tracking-widest mb-1">Total Progress</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-48 h-2 bg-theme-border rounded-full overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(Math.max(0, userLevel - 1) / 98) * 100}%` }}
+                      className="h-full bg-amber-500"
+                    />
+                  </div>
+                  <span className="text-xl font-mono font-bold text-amber-500">{Math.max(0, userLevel - 1)} / 98</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-12">
+              {["プロローグ", "第一章：企業活動と情報処理", "第二章：コンピュータシステムと情報通信ネットワーク", "第三章：情報セキュリティの確保と法規", "第四章：情報の集計と分析", "最終章：統合判断", "アフターエピソード：それから"].map(chapter => {
+                const chapterCards = storyCards.filter(c => c.chapter === chapter);
+                const unlockedInChapter = chapterCards.filter(c => c.id < userLevel);
+                
+                if (unlockedInChapter.length === 0) return null;
+
+                return (
+                  <div key={chapter} className="space-y-6">
+                    <div className="flex items-center gap-4">
+                      <h3 className="text-2xl font-bold text-theme-accent">{chapter}</h3>
+                      <div className="flex-1 h-px bg-theme-border" />
+                      <span className="text-xs font-bold text-theme-text-muted uppercase tracking-widest">
+                        {unlockedInChapter.length} / {chapterCards.length}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {chapterCards.map(card => {
+                        const isUnlocked = card.id < userLevel;
+                        return (
+                          <motion.button
+                            key={card.id}
+                            whileHover={isUnlocked ? { scale: 1.02, y: -4 } : {}}
+                            whileTap={isUnlocked ? { scale: 0.98 } : {}}
+                            onClick={() => isUnlocked && setShowStoryCard(card)}
+                            className={`relative p-6 rounded-3xl border-2 text-left transition-all ${
+                              isUnlocked 
+                                ? 'bg-theme-card border-theme-border hover:border-amber-500/50 shadow-sm' 
+                                : 'bg-theme-muted border-transparent opacity-40 grayscale cursor-not-allowed'
+                            }`}
+                          >
+                            <div className="flex justify-between items-start mb-4">
+                              <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase ${
+                                isUnlocked ? 'bg-amber-500 text-black' : 'bg-theme-border text-theme-text-muted'
+                              }`}>
+                                #{card.id}
+                              </span>
+                              {isUnlocked ? (
+                                <BookOpen size={18} className="text-amber-500" />
+                              ) : (
+                                <Lock size={18} className="text-theme-text-muted" />
+                              )}
+                            </div>
+                            <h4 className={`font-bold mb-2 ${isUnlocked ? 'text-theme-text' : 'text-theme-text-muted'}`}>
+                              {isUnlocked ? card.title : 'Locked Episode'}
+                            </h4>
+                            <p className="text-xs text-theme-text-muted line-clamp-2">
+                              {isUnlocked ? card.content : 'レベルを上げてストーリーを解放しましょう。'}
+                            </p>
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+              
+              {userLevel < 2 && (
+                <div className="text-center py-20 bg-theme-card rounded-[3rem] border-2 border-dashed border-theme-border">
+                  <div className="w-20 h-20 bg-theme-muted rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Lock size={40} className="text-theme-text-muted" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">ストーリーはまだありません</h3>
+                  <p className="text-theme-text-muted">レベル2になると最初のストーリーが解放されます。</p>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -3172,7 +3361,14 @@ export default function App() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[500] flex items-center justify-center bg-black/90 backdrop-blur-xl overflow-hidden"
-            onClick={() => setShowLevelUp(null)}
+            onClick={() => {
+              const unlockedLevel = showLevelUp;
+              setShowLevelUp(null);
+              if (unlockedLevel && unlockedLevel >= 2 && unlockedLevel <= 99) {
+                const card = storyCards.find(c => c.id === unlockedLevel - 1);
+                if (card) setShowStoryCard(card);
+              }
+            }}
           >
             <SpeedLines />
             <Burst color="bg-amber-400" count={20} />
@@ -3231,6 +3427,16 @@ export default function App() {
               </motion.p>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Story Card Overlay */}
+      <AnimatePresence>
+        {showStoryCard && (
+          <StoryCardOverlay 
+            card={showStoryCard} 
+            onClose={() => setShowStoryCard(null)} 
+          />
         )}
       </AnimatePresence>
 
