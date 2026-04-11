@@ -1540,14 +1540,8 @@ export default function App() {
     return { rarityOwned: owned, rarityTotals: totals, rarityOwnedCopies: ownedCopies, rarityTotalCopies: totalCopies, hasAnyDuplicate: hasDup };
   }, [ownedCards]);
 
-  const showThemeToggle = useMemo(() => {
-    const totalOwned = Object.values(rarityOwned).reduce((a, b) => (a as number) + (b as number), 0) as number;
-    const totalCards = Object.values(rarityTotals).reduce((a, b) => (a as number) + (b as number), 0) as number;
-    return totalCards > 0 && totalOwned > totalCards / 2;
-  }, [rarityOwned, rarityTotals]);
-
   return (
-    <div className={`min-h-screen ${theme === 'cyber' ? 'theme-cyber' : 'bg-theme-bg text-theme-text font-sans'} selection:bg-theme-accent selection:text-white transition-colors duration-500`}>
+    <div className="min-h-screen bg-theme-bg text-theme-text font-sans selection:bg-theme-accent selection:text-white transition-colors duration-500">
       {/* Global Header */}
       {userName && gameState !== 'QUIZ' && (
         <header className="sticky top-0 z-40 bg-theme-bg/80 backdrop-blur-md border-b border-theme-border">
@@ -1629,26 +1623,6 @@ export default function App() {
             exit={{ opacity: 0, y: -20 }}
             className="flex flex-col items-center justify-center min-h-screen p-6 text-center relative"
           >
-            {/* Theme Toggle Button */}
-            {showThemeToggle && (
-              <div className="absolute top-4 right-4 md:top-8 md:right-8 z-50">
-                <button 
-                  onClick={() => setTheme(prev => prev === 'classic' ? 'cyber' : 'classic')}
-                  className="p-3 md:px-4 md:py-3 bg-theme-card rounded-full shadow-md border border-theme-border-strong hover:bg-theme-muted transition-all flex items-center gap-2 group"
-                  title="テーマを切り替える"
-                >
-                  {theme === 'classic' ? (
-                    <Terminal size={20} className="text-theme-accent group-hover:scale-110 transition-transform" />
-                  ) : (
-                    <Monitor size={20} className="text-[#00ffcc] group-hover:scale-110 transition-transform" />
-                  )}
-                  <span className="font-bold text-sm hidden md:inline text-theme-text-muted">
-                    {theme === 'classic' ? 'Cyber Theme' : 'Classic Theme'}
-                  </span>
-                </button>
-              </div>
-            )}
-
             <div className="mb-8 relative mt-12 md:mt-0">
               <motion.div
                 animate={{ rotate: [0, 10, -10, 0] }}
