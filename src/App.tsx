@@ -374,6 +374,31 @@ export default function App() {
   const [speedStarMaxCorrect, setSpeedStarMaxCorrect] = useState(0);
   const [speedStarChallenges, setSpeedStarChallenges] = useState(0);
 
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+      }
+      setShowInstallPrompt(false);
+    }
+  };
+
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
@@ -570,6 +595,10 @@ export default function App() {
     setUserProfile({ grade: profile.grade, classNum: profile.classNum, attendanceNum: profile.attendanceNum });
     localStorage.setItem('it_quiz_username', profile.userName);
     localStorage.setItem('it_quiz_user_profile', JSON.stringify({ grade: profile.grade, classNum: profile.classNum, attendanceNum: profile.attendanceNum }));
+    
+    if (isMobile && deferredPrompt) {
+      setShowInstallPrompt(true);
+    }
   };
 
   useEffect(() => {
@@ -1475,6 +1504,16 @@ export default function App() {
                   <span className="text-[10px] md:text-xs font-black text-amber-400 tracking-tighter uppercase">Bonus Ticket</span>
                 </div>
               )}
+              {deferredPrompt && (
+                <button 
+                  onClick={handleInstallClick}
+                  className="p-2 md:px-4 md:py-2 bg-theme-accent text-white rounded-xl border border-theme-accent hover:bg-black transition-all flex items-center gap-2 group shadow-lg shadow-theme-accent/20"
+                  title="アプリをインストール"
+                >
+                  <Download size={18} className="group-hover:-translate-y-1 transition-transform" />
+                  <span className="font-bold text-sm hidden md:inline">インストール</span>
+                </button>
+              )}
               <button 
                 onClick={() => setShowMigrationModal(true)}
                 className="p-2 md:px-4 md:py-2 bg-theme-card rounded-xl border border-theme-border hover:bg-theme-muted transition-all flex items-center gap-2 group"
@@ -1740,8 +1779,8 @@ export default function App() {
             className="max-w-4xl mx-auto p-6 py-12 relative"
           >
             {/* Watermark */}
-            <div className="absolute inset-0 pointer-events-none opacity-5 flex items-center justify-center rotate-[-20deg]">
-              <span className="text-9xl font-bold text-theme-text select-none">CONFIDENTIAL</span>
+            <div className="absolute inset-0 pointer-events-none opacity-5 flex items-center justify-center overflow-hidden rounded-[3rem]">
+              <span className="text-6xl md:text-9xl font-bold text-theme-text select-none whitespace-nowrap rotate-[-20deg]">CONFIDENTIAL</span>
             </div>
 
             <div className="flex items-center justify-between mb-12">
@@ -1776,7 +1815,7 @@ export default function App() {
                   <h3 className="text-2xl font-bold">{userName}</h3>
                 </div>
               </div>
-              <div className="flex gap-8 md:gap-12">
+              <div className="flex flex-wrap gap-x-8 gap-y-4 md:gap-12">
                 <div className="space-y-1">
                   <p className="text-[10px] font-bold text-theme-text-muted uppercase tracking-widest">学年</p>
                   <p className="text-xl font-bold">{userProfile?.grade}年</p>
@@ -1845,11 +1884,11 @@ export default function App() {
               {/* Category Breakdown */}
               {quizCategories.map(category => (
                 <section key={category.id} className="space-y-6">
-                  <div className="flex items-center justify-between border-b border-theme-border-strong pb-2">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-theme-border-strong pb-2 gap-2">
                     <h3 className="text-xl font-bold text-theme-accent">
                       {category.title}
                     </h3>
-                    <div className="flex gap-6 text-sm">
+                    <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
                       <span className="text-theme-text-muted">単元ハイスコア: <span className="text-black font-mono font-bold">{getStatsFor(category.id).highScore.toLocaleString()}</span></span>
                       <span className="text-theme-text-muted">演習回数: <span className="text-black font-mono font-bold">{getStatsFor(category.id).attempts}回</span></span>
                       <span className="text-theme-text-muted">平均スコア: <span className="text-black font-mono font-bold">
@@ -3210,6 +3249,10 @@ export default function App() {
                     alert("すべての項目を入力してください。");
                     return;
                   }
+                  if (parseInt(classNum) < 1 || parseInt(attendanceNum) < 1) {
+                    alert("クラスと出席番号は1以上の数値を入力してください。");
+                    return;
+                  }
                   if (userNameInput.length > 12) {
                     alert("名前は12文字以内で入力してください。");
                     return;
@@ -3234,11 +3277,11 @@ export default function App() {
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-theme-text-muted ml-2 uppercase tracking-wider">クラス</label>
-                    <input name="classNum" type="number" placeholder="組" className="w-full px-4 py-3 bg-theme-muted border-2 border-theme-border rounded-xl focus:border-theme-accent outline-none font-bold transition-all" />
+                    <input name="classNum" type="number" min="1" placeholder="組" className="w-full px-4 py-3 bg-theme-muted border-2 border-theme-border rounded-xl focus:border-theme-accent outline-none font-bold transition-all" />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-theme-text-muted ml-2 uppercase tracking-wider">出席番号</label>
-                    <input name="attendanceNum" type="number" placeholder="番" className="w-full px-4 py-3 bg-theme-muted border-2 border-theme-border rounded-xl focus:border-theme-accent outline-none font-bold transition-all" />
+                    <input name="attendanceNum" type="number" min="1" placeholder="番" className="w-full px-4 py-3 bg-theme-muted border-2 border-theme-border rounded-xl focus:border-theme-accent outline-none font-bold transition-all" />
                   </div>
                 </div>
 
@@ -3259,6 +3302,45 @@ export default function App() {
                   冒険を始める
                 </button>
               </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Install Prompt Modal (Mobile) */}
+      <AnimatePresence>
+        {showInstallPrompt && isMobile && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 z-[700] flex items-center justify-center bg-black/90 backdrop-blur-xl p-6"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-theme-card w-full max-w-md p-8 rounded-[2.5rem] shadow-2xl border border-theme-border space-y-8 text-center"
+            >
+              <div className="w-16 h-16 bg-theme-accent/10 text-theme-accent rounded-3xl flex items-center justify-center mx-auto mb-2">
+                <Download size={32} />
+              </div>
+              <h2 className="text-2xl font-bold">アプリをインストール</h2>
+              <p className="text-theme-text-muted text-sm">
+                ホーム画面に追加すると、より快適に学習を進めることができます！
+              </p>
+              <div className="space-y-3">
+                <button
+                  onClick={handleInstallClick}
+                  className="w-full py-4 bg-theme-accent text-white rounded-xl font-bold text-lg hover:bg-black transition-colors"
+                >
+                  インストールする
+                </button>
+                <button
+                  onClick={() => setShowInstallPrompt(false)}
+                  className="w-full py-4 bg-theme-muted text-theme-text-muted rounded-xl font-bold hover:bg-theme-border transition-colors"
+                >
+                  あとで
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
