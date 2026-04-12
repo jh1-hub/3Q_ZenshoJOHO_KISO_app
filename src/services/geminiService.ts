@@ -3,6 +3,7 @@ import { allTermsMap } from "../data/quizData";
 export type QuestionType = 'TERM_TO_DESC' | 'DESC_TO_TERM';
 
 export interface Question {
+  term: string;
   description: string;
   correctAnswer: string;
   options: string[];
@@ -55,6 +56,7 @@ export async function generateQuestion(
     const options = [correctDescription, ...distractors].sort(() => 0.5 - Math.random());
 
     return {
+      term: term,
       description: `${term} の説明として最も適切なものはどれか。`,
       correctAnswer: correctDescription,
       options: options,
@@ -75,6 +77,7 @@ export async function generateQuestion(
     const randomDescription = patterns[Math.floor(Math.random() * patterns.length)];
     
     return {
+      term: term,
       description: randomDescription,
       correctAnswer: term,
       options: options,
@@ -84,6 +87,7 @@ export async function generateQuestion(
 
   // Fallback if no static description is found (should not happen with complete data)
   return {
+    term: term,
     description: `${term}に関する説明文が見つかりませんでした。`,
     correctAnswer: term,
     options: options,

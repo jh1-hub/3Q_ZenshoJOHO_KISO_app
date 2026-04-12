@@ -94,12 +94,21 @@ import { quizCategories, Category, Subcategory, allTermsMap, allTerms, Rarity } 
 import { storyCards, StoryCard } from './data/storyData';
 import { generateQuestion, Question, QuestionType } from './services/geminiService';
 
-type GameState = 'START' | 'CATEGORY_SELECT' | 'QUIZ' | 'RESULT' | 'COLLECTION' | 'STATS' | 'SPEED_STAR' | 'STORY';
+type GameState = 'START' | 'CATEGORY_SELECT' | 'QUIZ' | 'RESULT' | 'COLLECTION' | 'STATS' | 'SPEED_STAR' | 'STORY' | 'TERM_PERFORMANCE';
 
 interface UnitStats {
   highScore: number;
   attempts: number;
   totalScore: number;
+}
+
+interface TermStat {
+  correct: number;
+  total: number;
+}
+
+interface TermStats {
+  [termName: string]: TermStat;
 }
 
 interface GameStats {
@@ -393,6 +402,10 @@ export default function App() {
     const saved = localStorage.getItem('it-quiz-theme');
     return (saved === 'cyber' || saved === 'classic') ? saved : 'classic';
   });
+  const [termStats, setTermStats] = useState<TermStats>(() => {
+    const saved = localStorage.getItem('it_quiz_term_stats');
+    return saved ? JSON.parse(saved) : {};
+  });
   const [selectedSubcategory, setSelectedSubcategory] = useState<Subcategory | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -598,6 +611,25 @@ export default function App() {
     drawStats('SPEED STAR', { highScore: speedStarMaxCorrect, attempts: speedStarChallenges, totalScore: 0 }, 80, y);
     y += 60;
 
+    // 弱点ランキング (Screenshot output)
+    if (weakPoints.length > 0) {
+      ctx.fillStyle = '#ff4444';
+      ctx.font = 'bold 36px Arial';
+      ctx.fillText('【WEAK POINT 10】', 1300, 200);
+      let y_wp = 245;
+      ctx.font = '24px Arial';
+      weakPoints.forEach((wp, idx) => {
+        ctx.fillStyle = '#ffcccc';
+        ctx.fillText(`#${idx + 1} ${wp.name}`, 1320, y_wp);
+        ctx.fillStyle = '#ff4444';
+        ctx.textAlign = 'right';
+        ctx.fillText(`${wp.rate.toFixed(1)}%`, 1850, y_wp);
+        ctx.textAlign = 'left';
+        y_wp += 35;
+      });
+    }
+
+    ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 36px Arial';
     ctx.fillText('【詳細成績】', 50, y);
     y += 45;
@@ -669,6 +701,41 @@ export default function App() {
     localStorage.setItem('it_quiz_speed_star_stats', JSON.stringify(stats));
   }, [speedStarMaxCombo, speedStarMaxCorrect, speedStarChallenges, isLoaded]);
 
+  const updateTermStats = (term: string, isCorrect: boolean) => {
+    if (!term || term === 'undefined' || term === 'null') return;
+    setTermStats(prev => {
+      const current = prev[term] || { correct: 0, total: 0 };
+      const next = {
+        correct: current.correct + (isCorrect ? 1 : 0),
+        total: current.total + 1
+      };
+      const newStats = { ...prev, [term]: next };
+      localStorage.setItem('it_quiz_term_stats', JSON.stringify(newStats));
+      return newStats;
+    });
+  };
+
+  const [termSortOrder, setTermSortOrder] = useState<'asc' | 'desc' | null>(null);
+
+  const [termPerformanceDescIndexes, setTermPerformanceDescIndexes] = useState<Record<string, number>>({});
+
+  const weakPoints = useMemo(() => {
+    const statsArray = Object.entries(termStats)
+      .filter(([name, data]) => name !== 'undefined' && name !== 'null' && (data as TermStat).total > 0)
+      .map(([name, data]) => {
+        const d = data as TermStat;
+        return {
+          name,
+          rate: (d.correct / d.total) * 100,
+          ...d
+        };
+      });
+    
+    return statsArray
+      .sort((a, b) => a.rate - b.rate)
+      .slice(0, 10);
+  }, [termStats]);
+
   const calculateLevel = (collection: Record<string, number>) => {
     const totalPoints = Object.values(collection).reduce((sum: number, count: number) => sum + Math.min(3, count), 0);
     // Max points = 262 * 3 = 786
@@ -727,6 +794,8 @@ export default function App() {
   const resetAllStats = () => {
     saveStats({});
     saveCollection({});
+    setTermStats({});
+    localStorage.removeItem('it_quiz_term_stats');
     setUserName(null);
     setUserProfile(null);
     localStorage.removeItem('it_quiz_username');
@@ -760,6 +829,7 @@ export default function App() {
       userProfile,
       stats,
       ownedCards,
+      termStats,
       theme,
       timestamp: Date.now()
     };
@@ -790,6 +860,10 @@ export default function App() {
       setUserProfile(pendingMigrationData.userProfile);
       setStats(pendingMigrationData.stats);
       setOwnedCards(pendingMigrationData.ownedCards);
+      if (pendingMigrationData.termStats) {
+        setTermStats(pendingMigrationData.termStats);
+        localStorage.setItem('it_quiz_term_stats', JSON.stringify(pendingMigrationData.termStats));
+      }
       if (pendingMigrationData.theme) setTheme(pendingMigrationData.theme);
       
       // Save to localStorage
@@ -1424,6 +1498,7 @@ export default function App() {
     setUserAnswer(answer);
     
     if (gameState === 'SPEED_STAR') {
+      updateTermStats(currentQuestion.term, isCorrect);
       if (isCorrect) {
         setScore(prev => prev + 200);
         setSpeedStarCorrectCount(prev => prev + 1);
@@ -1453,6 +1528,7 @@ export default function App() {
     }
 
     if (isCorrect) {
+      updateTermStats(currentQuestion.term, true);
       // Score based on time: Base 100 + (remaining time * 10)
       const timeBonus = Math.floor(timeLeft * 10);
       const comboBonus = combo * 20;
@@ -1462,6 +1538,7 @@ export default function App() {
       setCorrectCount(prev => prev + 1);
       setFeedback('CORRECT');
     } else {
+      updateTermStats(currentQuestion.term, false);
       setCombo(0);
       setFeedback('WRONG');
       setPenaltyActive(true);
@@ -1887,14 +1964,14 @@ export default function App() {
                   onClick={() => setResetStep(1)}
                   className="text-sm font-bold text-red-400 hover:text-red-600 transition-colors flex items-center gap-1 bg-red-50 px-3 py-1.5 rounded-full"
                 >
-                  <RotateCcw size={16} /> データをリセット
+                  <RotateCcw size={16} /> リセット
                 </button>
               </div>
               <button 
                 onClick={takeScreenshot}
                 className="text-sm font-bold text-theme-accent hover:text-white hover:bg-theme-accent transition-all duration-300 flex items-center gap-2 bg-theme-accent/10 px-6 py-3 rounded-full border border-theme-accent/20 hover:shadow-lg"
               >
-                <Camera size={16} /> スクリーンショット
+                <Camera size={16} /> 提出
               </button>
             </div>
 
@@ -1928,34 +2005,34 @@ export default function App() {
               </div>
             </div>
 
-            <div className="space-y-16">
-              {/* Comprehensive Summary */}
-              <section className="space-y-6">
-                <h3 className="text-xl font-bold flex items-center gap-2 text-theme-accent">
-                  <Trophy size={24} /> 総合演習
-                </h3>
-                <div className="bg-theme-card p-8 rounded-[2rem] shadow-sm border border-theme-border grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <div className="space-y-1">
-                    <p className="text-sm text-theme-text-muted font-bold uppercase tracking-wider">ハイスコア</p>
-                    <p className="text-3xl font-mono font-bold">{getStatsFor('all').highScore.toLocaleString()}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm text-theme-text-muted font-bold uppercase tracking-wider">演習回数</p>
-                    <p className="text-3xl font-mono font-bold">{getStatsFor('all').attempts}回</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm text-theme-text-muted font-bold uppercase tracking-wider">平均スコア</p>
-                    <p className="text-3xl font-mono font-bold">
-                      {getStatsFor('all').attempts > 0 
-                        ? Math.floor(getStatsFor('all').totalScore / getStatsFor('all').attempts).toLocaleString() 
-                        : 0}
-                    </p>
-                  </div>
-                </div>
-              </section>
+                <div className="space-y-16">
+                  {/* Comprehensive Summary */}
+                  <section className="space-y-6">
+                    <h3 className="text-xl font-bold flex items-center gap-2 text-theme-accent">
+                      <Trophy size={24} /> 総合演習
+                    </h3>
+                    <div className="bg-theme-card p-8 rounded-[2rem] shadow-sm border border-theme-border grid grid-cols-1 md:grid-cols-3 gap-8">
+                      <div className="space-y-1">
+                        <p className="text-sm text-theme-text-muted font-bold uppercase tracking-wider">ハイスコア</p>
+                        <p className="text-3xl font-mono font-bold">{getStatsFor('all').highScore.toLocaleString()}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-theme-text-muted font-bold uppercase tracking-wider">演習回数</p>
+                        <p className="text-3xl font-mono font-bold">{getStatsFor('all').attempts}回</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-theme-text-muted font-bold uppercase tracking-wider">平均スコア</p>
+                        <p className="text-3xl font-mono font-bold">
+                          {getStatsFor('all').attempts > 0 
+                            ? Math.floor(getStatsFor('all').totalScore / getStatsFor('all').attempts).toLocaleString() 
+                            : 0}
+                        </p>
+                      </div>
+                    </div>
+                  </section>
 
-              {/* Speed Star Stats */}
-              <section className="space-y-6">
+                  {/* Speed Star Stats */}
+                  <section className="space-y-6">
                 <h3 className="text-xl font-bold flex items-center gap-2 text-amber-500">
                   <Zap size={24} /> SPEED STAR
                 </h3>
@@ -2023,6 +2100,233 @@ export default function App() {
                   </div>
                 </section>
               ))}
+
+              {/* Weak Points Section */}
+              {weakPoints.length > 0 && (
+                <section className="space-y-6 mt-12">
+                  <div className="flex items-center justify-between border-b border-theme-border-strong pb-2">
+                    <h3 className="text-xl font-bold text-red-500 flex items-center gap-2 uppercase tracking-tighter">
+                      <AlertCircle size={24} /> weak point 3
+                    </h3>
+                    <button 
+                      onClick={() => setGameState('TERM_PERFORMANCE')}
+                      className="text-sm font-bold text-theme-accent hover:underline flex items-center gap-1"
+                    >
+                      詳細データ <ChevronRight size={16} />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {weakPoints.slice(0, 3).map((wp, idx) => (
+                      <div key={wp.name} className="bg-red-50 p-6 rounded-2xl border border-red-100 shadow-sm relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-2 opacity-10">
+                          <span className="text-4xl font-black text-red-900">#{idx + 1}</span>
+                        </div>
+                        <p className="font-bold text-red-900 mb-1 truncate pr-8">{wp.name}</p>
+                        <div className="flex items-end gap-2">
+                          <p className="text-2xl font-mono font-bold text-red-600">{wp.rate.toFixed(1)}%</p>
+                          <p className="text-[10px] text-red-400 font-bold mb-1 uppercase tracking-tighter">Correct Rate</p>
+                        </div>
+                        <p className="text-xs text-red-400 mt-2">正解: {wp.correct} / 出題: {wp.total}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {gameState === 'TERM_PERFORMANCE' && (
+          <motion.div 
+            key="term-performance"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="max-w-7xl mx-auto p-4 sm:p-6 py-8 md:py-12"
+          >
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 md:mb-12">
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => setGameState('STATS')}
+                  className="p-3 bg-theme-card rounded-2xl border border-theme-border hover:bg-theme-muted transition-all"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+                <div>
+                  <h2 className="text-2xl md:text-4xl font-theme-heading font-bold mb-1 md:mb-2">用語別分析</h2>
+                  <p className="text-xs md:text-sm text-theme-text-muted">すべての用語の正答率と学習状況を確認できます。</p>
+                </div>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                <button 
+                  onClick={() => setTermSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                  className={`flex items-center gap-2 px-4 py-2 md:px-6 md:py-3 rounded-full border text-xs md:text-sm font-bold transition-all ${
+                    termSortOrder 
+                      ? 'bg-theme-accent text-white border-theme-accent shadow-lg' 
+                      : 'bg-theme-card text-theme-text border-theme-border hover:bg-theme-muted'
+                  }`}
+                >
+                  <BarChart size={16} className="md:w-[18px] md:h-[18px]" />
+                  正答率でソート {termSortOrder === 'asc' ? '（昇順）' : termSortOrder === 'desc' ? '（降順）' : ''}
+                </button>
+                {termSortOrder && (
+                  <button 
+                    onClick={() => setTermSortOrder(null)}
+                    className="p-2 md:p-3 bg-theme-muted rounded-full text-theme-text-muted hover:text-theme-text transition-colors"
+                    title="ソートを解除"
+                  >
+                    <RotateCcw size={16} className="md:w-[18px] md:h-[18px]" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Search & Category Tabs (Reusing collection logic) */}
+            <div className="bg-theme-card p-4 md:p-6 rounded-[2rem] shadow-sm border border-theme-border mb-8 md:mb-12">
+              <div className="flex flex-wrap gap-1.5 md:gap-2 mb-4 md:mb-6">
+                {quizCategories.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      setActiveCollectionTab(cat.id);
+                      setActiveSubcollectionTab(null);
+                    }}
+                    className={`px-3 py-2 md:px-6 md:py-3 rounded-lg md:rounded-xl text-[10px] md:text-base font-bold transition-all ${
+                      activeCollectionTab === cat.id 
+                        ? `${getCategoryColor(cat.id).accent} text-white shadow-lg scale-105` 
+                        : 'bg-theme-border text-theme-text-muted hover:bg-theme-border-strong'
+                    }`}
+                  >
+                    {cat.title}
+                  </button>
+                ))}
+              </div>
+
+              {/* Subcategory Tabs */}
+              {quizCategories.find(c => c.id === activeCollectionTab)?.subcategories.length! > 0 && (
+                <div className="flex flex-wrap gap-1.5 md:gap-2 pt-4 md:pt-6 border-t border-theme-border">
+                  {quizCategories.find(c => c.id === activeCollectionTab)?.subcategories.map(sub => (
+                    <button
+                      key={sub.id}
+                      onClick={() => setActiveSubcollectionTab(sub.id)}
+                      className={`px-3 py-1.5 md:px-4 md:py-2 rounded-md md:rounded-lg text-[10px] md:text-sm font-bold transition-all ${
+                        activeSubcollectionTab === sub.id 
+                          ? `${getCategoryColor(activeCollectionTab).accent} text-white shadow-md` 
+                          : 'bg-theme-muted text-theme-text-muted hover:bg-theme-border'
+                      }`}
+                    >
+                      {sub.title}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-12">
+              {quizCategories.filter(c => c.id === activeCollectionTab).map(category => {
+                const categoryTerms = category.subcategories
+                  .filter(sub => !activeSubcollectionTab || sub.id === activeSubcollectionTab)
+                  .flatMap(sub => sub.terms.map(t => ({ ...t, subId: sub.id })));
+                
+                const displayTerms = categoryTerms.map(term => {
+                  const stat = termStats[term.name] || { correct: 0, total: 0 };
+                  const rate = stat.total > 0 ? (stat.correct / stat.total) * 100 : 0;
+                  const ownedCount = ownedCards[term.name] || 0;
+                  return { term, stat, rate, ownedCount };
+                });
+
+                if (termSortOrder) {
+                  displayTerms.sort((a, b) => termSortOrder === 'asc' ? a.rate - b.rate : b.rate - a.rate);
+                }
+
+                if (displayTerms.length === 0) return null;
+
+                return (
+                  <div key={category.id} className="space-y-6">
+                    <div className="flex items-center gap-4">
+                      <h3 className={`text-xl md:text-2xl font-bold ${getCategoryColor(category.id).text}`}>{category.title}</h3>
+                      <div className="flex-1 h-px bg-theme-border" />
+                    </div>
+
+                    <div className="bg-theme-card rounded-[2rem] border border-theme-border overflow-hidden shadow-sm">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs md:text-sm min-w-[700px]">
+                          <thead className="bg-theme-muted text-theme-text-muted border-b border-theme-border">
+                            <tr>
+                              <th className="p-4 md:p-6 font-bold w-24 md:w-32 text-center">正答率</th>
+                              <th className="p-4 md:p-6 font-bold w-32 md:w-48">用語</th>
+                              <th className="p-4 md:p-6 font-bold">説明文</th>
+                              <th className="p-4 md:p-6 font-bold w-24 md:w-32 text-center">正解 / 出題</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-theme-border">
+                            {displayTerms.map(({ term, stat, rate, ownedCount }) => {
+                              const descriptions = allTermsMap[term.name]?.descriptions || ["説明がありません。"];
+                              const currentIndex = termPerformanceDescIndexes[term.name] || 0;
+                              
+                              return (
+                                <tr 
+                                  key={term.name} 
+                                  className={`transition-colors ${ownedCount > 1 ? 'hover:bg-theme-muted/50 cursor-pointer' : 'hover:bg-theme-muted/30'}`}
+                                  onClick={() => {
+                                    if (ownedCount > 1) {
+                                      const unlockedCount = Math.min(ownedCount, descriptions.length);
+                                      if (unlockedCount > 1) {
+                                        setTermPerformanceDescIndexes(prev => ({
+                                          ...prev,
+                                          [term.name]: (currentIndex + 1) % unlockedCount
+                                        }));
+                                      }
+                                    }
+                                  }}
+                                >
+                                  <td className="p-4 md:p-6 text-center align-middle">
+                                    <div className={`inline-flex flex-col items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl ${
+                                      stat.total === 0 ? 'bg-theme-muted text-theme-text-muted' :
+                                      rate < 40 ? 'bg-red-50 text-red-600 border border-red-100' :
+                                      rate < 70 ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                                      'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                                    }`}>
+                                      <span className="text-sm md:text-lg font-mono font-bold leading-none">{rate.toFixed(1)}</span>
+                                      <span className="text-[8px] font-bold uppercase mt-1">%</span>
+                                    </div>
+                                  </td>
+                                  <td className="p-4 md:p-6 align-top">
+                                    <div className="space-y-1">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-bold text-sm md:text-base">{term.name}</span>
+                                      </div>
+                                      <div className={`text-[9px] md:text-[10px] font-bold px-2 py-0.5 rounded-full uppercase w-fit ${
+                                        ownedCount > 0 ? 'bg-theme-accent/10 text-theme-accent' : 'bg-theme-muted text-theme-text-muted'
+                                      }`}>
+                                        {ownedCount > 0 ? `x${ownedCount}` : '未所持'}
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="p-4 md:p-6 align-top">
+                                    <div className="space-y-3">
+                                      <p className="text-xs md:text-sm text-theme-text leading-relaxed">
+                                        {descriptions[currentIndex]}
+                                      </p>
+                                    </div>
+                                  </td>
+                                  <td className="p-4 md:p-6 text-center align-middle">
+                                    <div className="space-y-1">
+                                      <p className="text-xs md:text-sm font-mono font-bold">{stat.correct} / {stat.total}</p>
+                                      <p className="text-[8px] md:text-[10px] font-bold text-theme-text-muted uppercase tracking-widest">Correct / Total</p>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </motion.div>
         )}
