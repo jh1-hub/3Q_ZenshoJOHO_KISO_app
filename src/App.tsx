@@ -2015,24 +2015,30 @@ export default function App() {
 
               <div className="space-y-6 mb-12">
                 {/* Comprehensive Stats */}
-                <div className="bg-theme-card p-8 rounded-[2.5rem] shadow-sm border border-theme-border relative overflow-hidden group flex flex-col md:flex-row md:items-center justify-between gap-8">
+                <div className="bg-theme-card p-8 rounded-[2.5rem] shadow-sm border border-theme-border relative overflow-hidden group">
                   <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
                     <Trophy size={120} />
                   </div>
                   
-                  <div className="relative z-10">
-                    <p className="text-xs font-bold text-theme-text-muted uppercase tracking-widest mb-2">総合演習（全単元）</p>
-                    <h3 className="text-3xl font-theme-heading font-bold">現在の成績</h3>
-                  </div>
-
-                  <div className="relative z-10 flex flex-wrap gap-12">
-                    <div className="space-y-1">
-                      <p className="text-sm text-theme-text-muted">ハイスコア</p>
-                      <p className="text-3xl font-mono font-bold">{getStatsFor('all').highScore.toLocaleString()}</p>
+                  <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-center md:justify-around gap-8 text-center md:text-left">
+                    <div className="flex flex-col items-center md:items-start">
+                      <p className="text-xs font-bold text-theme-text-muted uppercase tracking-widest mb-2">総合演習（全単元）</p>
+                      <h3 className="text-3xl font-theme-heading font-bold">現在の成績</h3>
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-sm text-theme-text-muted">演習回数</p>
-                      <p className="text-3xl font-mono font-bold">{getStatsFor('all').attempts}回</p>
+
+                    <div className="flex flex-wrap justify-center gap-8 md:gap-16">
+                      <div className="space-y-1 text-center">
+                        <p className="text-sm text-theme-text-muted flex items-center justify-center gap-2">
+                          <Trophy size={14} className="text-amber-500" /> ハイスコア
+                        </p>
+                        <p className="text-3xl font-mono font-bold tracking-tight">{getStatsFor('all').highScore.toLocaleString()}</p>
+                      </div>
+                      <div className="space-y-1 text-center">
+                        <p className="text-sm text-theme-text-muted flex items-center justify-center gap-2">
+                          <RotateCcw size={14} className="text-theme-accent" /> 演習回数
+                        </p>
+                        <p className="text-3xl font-mono font-bold tracking-tight">{getStatsFor('all').attempts}<span className="text-sm ml-1 font-sans">回</span></p>
+                      </div>
                     </div>
                   </div>
                 </div>
