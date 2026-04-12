@@ -436,6 +436,14 @@ export default function App() {
   const [targetCardId, setTargetCardId] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [resetStep, setResetStep] = useState(0);
+  const [resetCooldown, setResetCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resetCooldown > 0) {
+      const timer = setTimeout(() => setResetCooldown(prev => prev - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resetCooldown]);
   const [hasBonusTicket, setHasBonusTicket] = useState(false);
   const [quizCount, setQuizCount] = useState(0);
   const [speedStarCorrectCount, setSpeedStarCorrectCount] = useState(0);
@@ -1957,21 +1965,24 @@ export default function App() {
               <span className="text-6xl md:text-9xl font-bold text-theme-text select-none whitespace-nowrap rotate-[-20deg]">CONFIDENTIAL</span>
             </div>
 
-            <div className="flex items-center justify-between mb-12">
-              <div className="flex items-center gap-6">
-                <h2 className="text-4xl font-theme-heading font-bold">学習成績</h2>
+            <div className="flex flex-nowrap items-center justify-between gap-2 md:gap-4 mb-12">
+              <div className="flex items-center gap-2 md:gap-6 min-w-0">
+                <h2 className="text-xl sm:text-2xl md:text-4xl font-theme-heading font-bold truncate">学習成績</h2>
                 <button 
-                  onClick={() => setResetStep(1)}
-                  className="text-sm font-bold text-red-400 hover:text-red-600 transition-colors flex items-center gap-1 bg-red-50 px-3 py-1.5 rounded-full"
+                  onClick={() => {
+                    setResetStep(1);
+                    setResetCooldown(0);
+                  }}
+                  className="shrink-0 text-[10px] md:text-sm font-bold text-red-400 hover:text-red-600 transition-colors flex items-center gap-1 bg-red-50 px-2 py-1 md:px-3 md:py-1.5 rounded-full"
                 >
-                  <RotateCcw size={16} /> リセット
+                  <RotateCcw size={14} className="md:w-4 md:h-4" /> リセット
                 </button>
               </div>
               <button 
                 onClick={takeScreenshot}
-                className="text-sm font-bold text-theme-accent hover:text-white hover:bg-theme-accent transition-all duration-300 flex items-center gap-2 bg-theme-accent/10 px-6 py-3 rounded-full border border-theme-accent/20 hover:shadow-lg"
+                className="shrink-0 text-[10px] md:text-sm font-bold text-theme-accent hover:text-white hover:bg-theme-accent transition-all duration-300 flex items-center gap-2 bg-theme-accent/10 px-3 py-1.5 md:px-6 md:py-3 rounded-full border border-theme-accent/20 hover:shadow-lg"
               >
-                <Camera size={16} /> 提出
+                <Camera size={14} className="md:w-4 md:h-4" /> 提出
               </button>
             </div>
 
@@ -2888,6 +2899,15 @@ export default function App() {
                     <span className="text-white/60">|</span>
                     <span>Correct: {speedStarCorrectCount}</span>
                   </div>
+                  {combo > 1 && (
+                    <motion.div 
+                      initial={{ scale: 0, x: -20 }}
+                      animate={{ scale: 1, x: 0 }}
+                      className="bg-amber-500 text-black px-4 py-1 rounded-full text-sm font-bold shadow-[0_0_15px_rgba(245,158,11,0.5)] flex items-center gap-1"
+                    >
+                      <Zap size={14} fill="currentColor" /> {combo} COMBO
+                    </motion.div>
+                  )}
                 </div>
                 <div className="flex items-center gap-2 text-2xl md:text-3xl font-mono font-bold">
                   <Timer size={28} className={timeLeft < 5 ? 'text-red-500 animate-pulse' : 'text-amber-400'} />
@@ -2980,15 +3000,6 @@ export default function App() {
                   <span className="text-xs text-theme-accent bg-theme-accent/10 px-2 py-0.5 rounded-full">Lv.{userLevel}</span>
                   <span>Q {currentQuestionIndex + 1} / {questions.length}</span>
                 </div>
-                {combo > 1 && (
-                  <motion.div 
-                    initial={{ scale: 0 }}
-                    animate={{ scale: [1, 1.2, 1] }}
-                    className="bg-theme-secondary text-white px-4 py-1 rounded-full text-sm font-bold shadow-lg flex items-center gap-1"
-                  >
-                    <Zap size={14} /> {combo} COMBO
-                  </motion.div>
-                )}
               </div>
               <div className="flex items-center gap-2 text-xl font-mono font-bold">
                 <Timer size={24} className={timeLeft < 3 ? 'text-red-500 animate-pulse' : ''} />
@@ -3082,9 +3093,26 @@ export default function App() {
             </div>
 
             {/* Score Display */}
-            <div className="mt-8 text-center">
-              <p className="text-sm text-theme-text-muted uppercase tracking-widest font-bold">Current Score</p>
-              <p className="text-4xl font-mono font-bold">{score.toLocaleString()}</p>
+            <div className="mt-8 flex flex-col items-center gap-2">
+              <div className="flex items-center gap-4">
+                <div className="text-center">
+                  <p className="text-[10px] text-theme-text-muted uppercase tracking-widest font-bold">Current Score</p>
+                  <p className="text-4xl font-mono font-bold">{score.toLocaleString()}</p>
+                </div>
+                {combo > 1 && (
+                  <motion.div 
+                    initial={{ scale: 0, x: -20 }}
+                    animate={{ scale: 1, x: 0 }}
+                    className="bg-theme-secondary text-white px-4 py-2 rounded-2xl shadow-lg flex flex-col items-center justify-center min-w-[100px]"
+                  >
+                    <span className="text-[10px] font-black uppercase tracking-tighter opacity-80">Combo</span>
+                    <div className="flex items-center gap-1">
+                      <Zap size={16} fill="currentColor" />
+                      <span className="text-2xl font-mono font-bold">{combo}</span>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
             </div>
           </motion.div>
         )}
@@ -3617,10 +3645,19 @@ export default function App() {
                 {resetStep < 4 ? (
                   <>
                     <button 
-                      onClick={() => setResetStep(prev => prev + 1)}
-                      className="w-full py-4 bg-red-500 text-white rounded-2xl font-bold hover:bg-red-600 transition-colors"
+                      onClick={() => {
+                        const nextStep = resetStep + 1;
+                        setResetStep(nextStep);
+                        setResetCooldown(nextStep); // 1s, 2s, 3s
+                      }}
+                      disabled={resetCooldown > 0}
+                      className={`w-full py-4 rounded-2xl font-bold transition-all ${
+                        resetCooldown > 0 
+                          ? 'bg-theme-muted text-theme-text-muted cursor-not-allowed' 
+                          : 'bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/20'
+                      }`}
                     >
-                      次へ進む
+                      {resetCooldown > 0 ? `${resetCooldown}...` : '次へ進む'}
                     </button>
                     <button 
                       onClick={() => setResetStep(0)}
@@ -3633,9 +3670,14 @@ export default function App() {
                   <>
                     <button 
                       onClick={resetAllStats}
-                      className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold hover:bg-red-700 transition-colors"
+                      disabled={resetCooldown > 0}
+                      className={`w-full py-4 rounded-2xl font-bold transition-all ${
+                        resetCooldown > 0 
+                          ? 'bg-theme-muted text-theme-text-muted cursor-not-allowed' 
+                          : 'bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-600/20'
+                      }`}
                     >
-                      後悔しません
+                      {resetCooldown > 0 ? `${resetCooldown}...` : '後悔しません'}
                     </button>
                     <button 
                       onClick={() => setResetStep(0)}
