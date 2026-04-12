@@ -413,7 +413,7 @@ export default function App() {
   const [score, setScore] = useState(0);
   const [combo, setCombo] = useState(0);
   const [maxCombo, setMaxCombo] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(15);
+  const [timeLeft, setTimeLeft] = useState(45);
   const [isLoading, setIsLoading] = useState(false);
   const [feedback, setFeedback] = useState<'CORRECT' | 'WRONG' | null>(null);
   const [userAnswer, setUserAnswer] = useState<string | null>(null);
@@ -1486,7 +1486,7 @@ export default function App() {
     setCombo(0);
     setMaxCombo(0);
     setCurrentQuestionIndex(0);
-    setTimeLeft(15);
+    setTimeLeft(45);
     setUserAnswer(null);
     setFeedback(null);
     setCorrectCount(0);
@@ -1609,7 +1609,7 @@ export default function App() {
     if (isCorrect) {
       updateTermStats(currentQuestion.term, true);
       // Score based on time: Base 100 + (remaining time * 10)
-      const timeBonus = Math.floor(timeLeft * 10);
+      const timeBonus = Math.floor(timeLeft * 3.33); // Adjusted for 45s limit (150/45 approx 3.33)
       const comboBonus = combo * 20;
       setScore(prev => prev + 100 + timeBonus + comboBonus);
       setCombo(prev => prev + 1);
@@ -1631,7 +1631,7 @@ export default function App() {
       setUserAnswer(null);
       if (currentQuestionIndex < questions.length - 1) {
         setCurrentQuestionIndex(prev => prev + 1);
-        setTimeLeft(15);
+        setTimeLeft(45);
       } else {
         // Update stats on completion
         if (selectedSubcategory) {
@@ -3158,7 +3158,7 @@ export default function App() {
               <motion.div 
                 className={`h-full ${timeLeft < 5 ? 'bg-red-500' : (isDailyChallenge ? 'bg-indigo-400' : 'bg-theme-secondary')}`}
                 initial={{ width: '100%' }}
-                animate={{ width: `${(timeLeft / 15) * 100}%` }}
+                animate={{ width: `${(timeLeft / 45) * 100}%` }}
                 transition={{ duration: 0.1, ease: "linear" }}
               />
             </div>
