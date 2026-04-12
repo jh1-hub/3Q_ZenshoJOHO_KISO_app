@@ -1889,7 +1889,7 @@ export default function App() {
                 className="group relative px-8 md:px-10 py-4 md:py-5 bg-gradient-to-r from-slate-800 to-slate-900 text-white border-2 border-slate-700 rounded-full text-lg md:text-xl font-bold overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-lg flex-1 min-w-[200px] max-w-xs"
               >
                 <span className="relative z-10 flex items-center justify-center gap-3">
-                  ストーリー <BookOpen size={24} className="text-amber-400" />
+                  STORY <BookOpen size={24} className="text-amber-400" />
                 </span>
                 <div className="absolute inset-0 bg-white/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
               </button>
@@ -1903,7 +1903,7 @@ export default function App() {
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg md:text-xl font-bold text-theme-text flex items-center gap-2">
                   <LayoutGrid className="text-theme-accent group-hover:rotate-12 transition-transform" size={20} />
-                  カードコレクション収集状況
+                  Card collection status
                 </h3>
                 <div className="flex items-center gap-2">
                   <span className="text-xs md:text-sm font-bold text-theme-text-muted bg-theme-border px-3 py-1 rounded-full">
@@ -2079,20 +2079,22 @@ export default function App() {
 
             <div className="flex flex-nowrap items-center justify-between gap-2 md:gap-4 mb-12">
               <div className="flex items-center gap-2 md:gap-6 min-w-0">
-                <h2 className="text-xl sm:text-2xl md:text-4xl font-theme-heading font-bold truncate">学習成績</h2>
+                <h2 className="text-2xl sm:text-4xl md:text-6xl font-theme-heading font-bold truncate">学習成績</h2>
+              </div>
+              <div className="flex items-center gap-2 md:gap-3 shrink-0">
                 <button 
                   onClick={() => setGameState('TERM_PERFORMANCE')}
-                  className="shrink-0 text-[10px] md:text-sm font-bold text-theme-accent hover:text-white hover:bg-theme-accent transition-all duration-300 flex items-center gap-1 bg-theme-accent/10 px-2 py-1 md:px-4 md:py-2 rounded-full border border-theme-accent/20"
+                  className="text-[10px] md:text-sm font-bold text-theme-accent hover:text-white hover:bg-theme-accent transition-all duration-300 flex items-center gap-1 bg-theme-accent/10 px-2 py-1 md:px-4 md:py-2 rounded-full border border-theme-accent/20"
                 >
                   <BarChart size={14} className="md:w-4 md:h-4" /> 詳細データ
                 </button>
+                <button 
+                  onClick={takeScreenshot}
+                  className="text-[10px] md:text-sm font-bold text-theme-accent hover:text-white hover:bg-theme-accent transition-all duration-300 flex items-center gap-2 bg-theme-accent/10 px-3 py-1.5 md:px-6 md:py-3 rounded-full border border-theme-accent/20 hover:shadow-lg"
+                >
+                  <Camera size={14} className="md:w-4 md:h-4" /> 提出
+                </button>
               </div>
-              <button 
-                onClick={takeScreenshot}
-                className="shrink-0 text-[10px] md:text-sm font-bold text-theme-accent hover:text-white hover:bg-theme-accent transition-all duration-300 flex items-center gap-2 bg-theme-accent/10 px-3 py-1.5 md:px-6 md:py-3 rounded-full border border-theme-accent/20 hover:shadow-lg"
-              >
-                <Camera size={14} className="md:w-4 md:h-4" /> 提出
-              </button>
             </div>
 
             {/* User Profile Summary */}
