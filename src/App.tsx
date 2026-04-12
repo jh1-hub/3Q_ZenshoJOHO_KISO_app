@@ -388,6 +388,7 @@ const StoryCardOverlay = ({ card, onClose }: { card: StoryCard; onClose: () => v
 
 export default function App() {
   const statsRef = useRef<HTMLDivElement>(null);
+  const termPerformanceRef = useRef<HTMLDivElement>(null);
   const [gameState, setGameState] = useState<GameState>('START');
   const [userName, setUserName] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<{ grade: string; classNum: string; attendanceNum: string } | null>(null);
@@ -820,6 +821,12 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    if (gameState === 'TERM_PERFORMANCE') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [gameState]);
+
   const resetAllStats = () => {
     saveStats({});
     saveCollection({});
@@ -836,6 +843,12 @@ export default function App() {
     setSpeedStarMaxCorrect(0);
     setSpeedStarChallenges(0);
     
+    // Daily Challenge Reset
+    setLastDailyChallengeId(null);
+    setDailyStreak(0);
+    localStorage.removeItem('it_quiz_last_daily_id');
+    localStorage.removeItem('it_quiz_daily_streak');
+
     // Other Related Data Reset
     localStorage.removeItem('it_quiz_count');
     setQuizCount(0);
@@ -2064,13 +2077,10 @@ export default function App() {
               <div className="flex items-center gap-2 md:gap-6 min-w-0">
                 <h2 className="text-xl sm:text-2xl md:text-4xl font-theme-heading font-bold truncate">学習成績</h2>
                 <button 
-                  onClick={() => {
-                    setResetStep(1);
-                    setResetCooldown(0);
-                  }}
-                  className="shrink-0 text-[10px] md:text-sm font-bold text-red-400 hover:text-red-600 transition-colors flex items-center gap-1 bg-red-50 px-2 py-1 md:px-3 md:py-1.5 rounded-full"
+                  onClick={() => setGameState('TERM_PERFORMANCE')}
+                  className="shrink-0 text-[10px] md:text-sm font-bold text-theme-accent hover:text-white hover:bg-theme-accent transition-all duration-300 flex items-center gap-1 bg-theme-accent/10 px-2 py-1 md:px-4 md:py-2 rounded-full border border-theme-accent/20"
                 >
-                  <RotateCcw size={14} className="md:w-4 md:h-4" /> リセット
+                  <BarChart size={14} className="md:w-4 md:h-4" /> 詳細データ
                 </button>
               </div>
               <button 
@@ -2245,6 +2255,7 @@ export default function App() {
         {gameState === 'TERM_PERFORMANCE' && (
           <motion.div 
             key="term-performance"
+            ref={termPerformanceRef}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
@@ -4092,6 +4103,22 @@ export default function App() {
                     </div>
                     <div className="font-bold">QRコード読み取り</div>
                     <div className="text-xs text-theme-text-muted">他のデバイスのQRコードを読み込みます。</div>
+                  </button>
+                </div>
+              )}
+
+              {!migrationQR && !isScanning && !pendingMigrationData && (
+                <div className="pt-4 border-t border-theme-border">
+                  <button 
+                    onClick={() => {
+                      setShowMigrationModal(false);
+                      setResetStep(1);
+                      setResetCooldown(0);
+                    }}
+                    className="w-full py-4 flex items-center justify-center gap-2 text-red-500 font-bold hover:bg-red-50 rounded-2xl transition-colors"
+                  >
+                    <RotateCcw size={20} />
+                    データをリセット
                   </button>
                 </div>
               )}
