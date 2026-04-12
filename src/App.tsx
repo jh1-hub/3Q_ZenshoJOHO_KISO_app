@@ -822,7 +822,8 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (gameState === 'TERM_PERFORMANCE') {
+    const scrollStates: GameState[] = ['START', 'CATEGORY_SELECT', 'COLLECTION', 'STATS', 'STORY', 'TERM_PERFORMANCE'];
+    if (scrollStates.includes(gameState)) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [gameState]);
@@ -1055,7 +1056,10 @@ export default function App() {
     if (questions.length === 20) return 5;
     if (questions.length === 10) return 2;
     if (questions.length === 5) {
-      return isDailyChallenge ? 2 : 1; // Daily challenge gives 2 cards (1 base + 1 bonus)
+      if (isDailyChallenge) {
+        return (correctCount / questions.length) >= 0.5 ? 2 : 1;
+      }
+      return (correctCount / questions.length) >= 0.5 ? 1 : 0;
     }
     return 0;
   };
@@ -3284,17 +3288,28 @@ export default function App() {
                     {speedStarCorrectCount > 0 && !selectedSubcategory ? 'Speed Star Bonus' : '学習完了ボーナス'}
                   </h3>
                   
-                  {getGachaPullCount() > 0 && ((speedStarCorrectCount > 0 && !selectedSubcategory) || (questions.length > 0 && (correctCount / questions.length) >= 0.5)) ? (
+                  {getGachaPullCount() > 0 && (isDailyChallenge || (speedStarCorrectCount > 0 && !selectedSubcategory) || (questions.length > 0 && (correctCount / questions.length) >= 0.5)) ? (
                     <div className="space-y-4 md:space-y-6">
                       <p className="text-sm md:text-base text-theme-text-muted">
                         {speedStarCorrectCount > 0 && !selectedSubcategory 
                           ? 'スピードスター達成！結果に応じてガチャを引けます。' 
-                          : '正解率50%以上達成！カードガチャを引くことができます。'}
+                          : isDailyChallenge 
+                            ? 'デイリーチャレンジ完了！特別ボーナスが適用されます。'
+                            : '正解率50%以上達成！カードガチャを引くことができます。'}
                       </p>
+                      
+                      {isDailyChallenge && (
+                        <div className="flex items-center justify-center gap-2 text-indigo-500 font-bold bg-indigo-50 py-2 px-4 rounded-full mb-2 animate-pulse border border-indigo-100">
+                          <Sparkles size={16} />
+                          <span className="text-xs md:text-sm">デイリーボーナス：+1枚引けます！</span>
+                        </div>
+                      )}
+
                       <p className="text-xs md:text-sm text-theme-accent font-bold">
                         {speedStarCorrectCount > 0 && !selectedSubcategory ? `スピードスターボーナス：${getGachaPullCount()}枚引けます！` :
                          questions.length === 20 ? '総合演習ボーナス：5枚引けます！' : 
                          questions.length === 10 ? '単元演習ボーナス：2枚引けます！' : 
+                         isDailyChallenge ? ((correctCount / questions.length) >= 0.5 ? '1枚 + ボーナス1枚引けます！' : 'デイリーボーナス：1枚引けます！') :
                          '1枚引けます！'}
                       </p>
                       
@@ -3757,7 +3772,7 @@ export default function App() {
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              className="bg-theme-card w-full max-w-md rounded-[2.5rem] p-10 space-y-8 text-center shadow-2xl border border-theme-border"
+              className="bg-theme-card w-full max-w-md rounded-[2.5rem] p-10 space-y-8 text-center shadow-2xl border border-theme-border max-h-[90vh] overflow-y-auto"
             >
               <div className="space-y-4">
                 <div className="w-20 h-20 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center mx-auto mb-2">
@@ -4019,7 +4034,7 @@ export default function App() {
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              className="bg-theme-card w-full max-w-md p-8 rounded-[2.5rem] shadow-2xl border border-theme-border space-y-8 text-center"
+              className="bg-theme-card w-full max-w-md p-8 rounded-[2.5rem] shadow-2xl border border-theme-border space-y-8 text-center max-h-[90vh] overflow-y-auto"
             >
               <div className="w-16 h-16 bg-theme-accent/10 text-theme-accent rounded-3xl flex items-center justify-center mx-auto mb-2">
                 <Download size={32} />
@@ -4059,7 +4074,7 @@ export default function App() {
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              className="bg-theme-card w-full max-w-lg p-8 rounded-[2.5rem] shadow-2xl border border-theme-border space-y-6 relative overflow-hidden"
+              className="bg-theme-card w-full max-w-lg p-8 rounded-[2.5rem] shadow-2xl border border-theme-border space-y-6 relative max-h-[90vh] overflow-y-auto"
             >
               <button 
                 onClick={() => {
