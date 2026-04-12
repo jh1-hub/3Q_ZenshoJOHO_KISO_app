@@ -2020,21 +2020,21 @@ export default function App() {
                     <Trophy size={120} />
                   </div>
                   
-                  <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-center md:justify-around gap-8 text-center md:text-left">
+                  <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-center md:justify-between gap-8 text-center md:text-left">
                     <div className="flex flex-col items-center md:items-start">
                       <p className="text-xs font-bold text-theme-text-muted uppercase tracking-widest mb-2">総合演習（全単元）</p>
                       <h3 className="text-3xl font-theme-heading font-bold">現在の成績</h3>
                     </div>
 
-                    <div className="flex flex-wrap justify-center gap-8 md:gap-16">
-                      <div className="space-y-1 text-center">
-                        <p className="text-sm text-theme-text-muted flex items-center justify-center gap-2">
+                    <div className="flex flex-wrap justify-center md:justify-end gap-8 md:gap-16">
+                      <div className="space-y-1 text-center md:text-left">
+                        <p className="text-sm text-theme-text-muted flex items-center justify-center md:justify-start gap-2">
                           <Trophy size={14} className="text-amber-500" /> ハイスコア
                         </p>
                         <p className="text-3xl font-mono font-bold tracking-tight">{getStatsFor('all').highScore.toLocaleString()}</p>
                       </div>
-                      <div className="space-y-1 text-center">
-                        <p className="text-sm text-theme-text-muted flex items-center justify-center gap-2">
+                      <div className="space-y-1 text-center md:text-left">
+                        <p className="text-sm text-theme-text-muted flex items-center justify-center md:justify-start gap-2">
                           <RotateCcw size={14} className="text-theme-accent" /> 演習回数
                         </p>
                         <p className="text-3xl font-mono font-bold tracking-tight">{getStatsFor('all').attempts}<span className="text-sm ml-1 font-sans">回</span></p>
@@ -3103,12 +3103,12 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className={`max-w-3xl mx-auto p-6 py-12 min-h-screen flex flex-col transition-colors duration-1000 ${
+            className={`min-h-screen w-full flex flex-col transition-colors duration-1000 ${
               isDailyChallenge ? 'bg-indigo-950 text-white' : 'bg-theme-bg'
             }`}
           >
             {isDailyChallenge && (
-              <div className="fixed inset-0 pointer-events-none overflow-hidden opacity-20">
+              <div className="fixed inset-0 pointer-events-none overflow-hidden opacity-20 z-0">
                 <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(99,102,241,0.2),transparent_70%)]" />
                 <motion.div 
                   animate={{ 
@@ -3120,8 +3120,10 @@ export default function App() {
                 />
               </div>
             )}
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8 relative z-10">
+            
+            <div className="max-w-3xl mx-auto w-full p-6 py-12 flex flex-col flex-grow relative z-10">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-8 relative z-10">
               <div className="flex items-center gap-4">
                 <button 
                   onClick={quitQuiz}
@@ -3262,6 +3264,7 @@ export default function App() {
                   </motion.div>
                 )}
               </div>
+            </div>
             </div>
           </motion.div>
         )}
