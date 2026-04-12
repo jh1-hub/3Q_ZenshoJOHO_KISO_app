@@ -3001,34 +3001,9 @@ export default function App() {
           >
             <SpeedLines />
             
-            {/* Sticky Header & Timer */}
-            <div className="p-6 pb-4 relative z-20 bg-black/80 backdrop-blur-md border-b border-white/10">
-              <div className="max-w-3xl mx-auto w-full flex items-center justify-between mb-4">
-                <div className="flex items-center gap-4">
-                  <div className="bg-white/10 px-4 py-2 rounded-full border border-white/20 font-bold flex items-center gap-3">
-                    <Zap size={20} className="text-amber-400" />
-                    <span className="text-amber-400">SPEED STAR</span>
-                    <span className="text-white/60">|</span>
-                    <span>Correct: {speedStarCorrectCount}</span>
-                  </div>
-                  {combo > 1 && (
-                    <motion.div 
-                      initial={{ scale: 0, x: -20 }}
-                      animate={{ scale: 1, x: 0 }}
-                      className="bg-amber-500 text-black px-4 py-1 rounded-full text-sm font-bold shadow-[0_0_15px_rgba(245,158,11,0.5)] flex items-center gap-1"
-                    >
-                      <Zap size={14} fill="currentColor" /> {combo} COMBO
-                    </motion.div>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 text-2xl md:text-3xl font-mono font-bold">
-                  <Timer size={28} className={timeLeft < 5 ? 'text-red-500 animate-pulse' : 'text-amber-400'} />
-                  <span className={timeLeft < 5 ? 'text-red-500' : 'text-amber-400'}>{Math.ceil(timeLeft)}s</span>
-                </div>
-              </div>
-
-              {/* Visual Timer Bar */}
-              <div className="max-w-3xl mx-auto w-full h-3 bg-white/10 rounded-full overflow-hidden relative">
+            {/* Fixed Timer Bar ONLY */}
+            <div className="sticky top-0 z-30 bg-black/90 backdrop-blur-md p-2 border-b border-white/10">
+              <div className="max-w-3xl mx-auto w-full h-1.5 md:h-2 bg-white/10 rounded-full overflow-hidden">
                 <motion.div 
                   className={`h-full ${timeLeft < 5 ? 'bg-red-500' : 'bg-amber-400'}`}
                   initial={{ width: '100%' }}
@@ -3039,8 +3014,34 @@ export default function App() {
             </div>
 
             {/* Scrollable Content */}
-            <div className="flex-grow overflow-y-auto p-6 relative z-10">
-              <div className="max-w-3xl mx-auto w-full py-8">
+            <div className="flex-grow overflow-y-auto p-4 md:p-6 relative z-10">
+              <div className="max-w-3xl mx-auto w-full py-2 md:py-8">
+                {/* Header Info (Now scrolls with content) */}
+                <div className="flex items-center justify-between mb-6 gap-2 overflow-x-hidden">
+                  <div className="flex items-center gap-1.5 md:gap-4 min-w-0">
+                    <div className="bg-white/10 px-2.5 py-1.5 md:px-4 md:py-2 rounded-full border border-white/20 font-bold flex items-center gap-1.5 md:gap-3 shrink-0">
+                      <Zap size={14} className="text-amber-400 md:w-5 md:h-5" />
+                      <span className="text-amber-400 text-[9px] sm:text-[10px] md:text-sm whitespace-nowrap">SPEED STAR</span>
+                    </div>
+                    <div className="bg-white/5 px-2.5 py-1.5 md:px-4 md:py-2 rounded-full border border-white/10 text-[9px] sm:text-[10px] md:text-sm font-bold whitespace-nowrap shrink-0">
+                      Correct: {speedStarCorrectCount}
+                    </div>
+                    {combo > 1 && (
+                      <motion.div 
+                        initial={{ scale: 0, x: -20 }}
+                        animate={{ scale: 1, x: 0 }}
+                        className="bg-amber-500 text-black px-2.5 py-1 md:px-4 md:py-1 rounded-full text-[9px] sm:text-[10px] md:text-sm font-black shadow-[0_0_15px_rgba(245,158,11,0.5)] flex items-center gap-1 shrink-0"
+                      >
+                        <Zap size={10} fill="currentColor" className="md:w-3.5 md:h-3.5" /> {combo}
+                      </motion.div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 md:gap-2 font-mono font-bold shrink-0">
+                    <Timer size={16} className={`${timeLeft < 5 ? 'text-red-500 animate-pulse' : 'text-amber-400'} md:w-7 md:h-7`} />
+                    <span className={`text-base sm:text-lg md:text-3xl ${timeLeft < 5 ? 'text-red-500' : 'text-amber-400'} whitespace-nowrap`}>{Math.ceil(timeLeft)}s</span>
+                  </div>
+                </div>
+
                 {/* Question */}
                 <motion.div
                   key={currentQuestionIndex}
