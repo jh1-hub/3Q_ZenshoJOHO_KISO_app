@@ -1899,11 +1899,11 @@ export default function App() {
   }, [ownedCards]);
 
   return (
-    <div className="min-h-screen bg-theme-bg text-theme-text font-sans selection:bg-theme-accent selection:text-white transition-colors duration-500">
+    <div className="min-h-screen bg-theme-bg text-theme-text font-sans selection:bg-theme-accent selection:text-white transition-colors duration-500 overflow-x-hidden">
       {/* Global Header */}
       {userName && gameState !== 'QUIZ' && (
-        <header className="sticky top-0 z-40 bg-theme-bg/80 backdrop-blur-md border-b border-theme-border">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 md:h-20 flex items-center justify-between">
+        <header className="sticky top-0 z-40 bg-theme-bg/80 backdrop-blur-md border-b border-theme-border overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 md:h-20 flex items-center justify-between gap-2">
             <div className="flex items-center gap-3 md:gap-4">
               <div className="w-10 h-10 md:w-12 md:h-12 bg-theme-accent text-white rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg shadow-theme-accent/20">
                 <BrainCircuit size={24} className="md:w-7 md:h-7" />
@@ -1915,7 +1915,7 @@ export default function App() {
                   <span className="text-[10px] md:text-xs font-bold text-theme-text-muted truncate max-w-[100px]">{userName}</span>
                 </div>
                 {/* Level Progress Bar */}
-                <div className="mt-2 w-full max-w-[180px] h-2 bg-theme-muted rounded-full overflow-hidden border border-theme-border/30 shadow-inner relative">
+                <div className="mt-2 w-full max-w-[100px] md:max-w-[180px] h-2 bg-theme-muted rounded-full overflow-hidden border border-theme-border/30 shadow-inner relative">
                   <motion.div 
                     initial={{ width: 0 }}
                     animate={{ width: `${userLevelProgress * 100}%` }}
@@ -1929,7 +1929,7 @@ export default function App() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               {gameState !== 'START' && gameState !== 'SPEED_STAR' && (
                 <button 
                   onClick={() => {
@@ -1942,12 +1942,6 @@ export default function App() {
                   <Home size={18} className="text-theme-text-muted group-hover:text-theme-accent transition-colors" />
                   <span className="font-bold text-sm hidden md:inline">トップに戻る</span>
                 </button>
-              )}
-              {hasBonusTicket && (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-black rounded-xl border border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.2)] animate-pulse">
-                  <Zap size={16} className="text-amber-400" />
-                  <span className="text-[10px] md:text-xs font-black text-amber-400 tracking-tighter uppercase">Bonus Ticket</span>
-                </div>
               )}
               {deferredPrompt && (
                 <button 
@@ -3453,7 +3447,7 @@ export default function App() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="max-w-2xl mx-auto p-4 md:p-6 py-8 md:py-12 text-center"
+            className="max-w-2xl mx-auto p-4 md:p-6 py-8 md:py-12 text-center overflow-x-hidden"
           >
             <div className="bg-theme-card p-6 md:p-12 rounded-[2rem] md:rounded-[3rem] shadow-2xl border border-theme-border mb-8">
               <motion.div

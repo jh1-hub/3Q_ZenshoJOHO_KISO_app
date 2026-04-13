@@ -32,7 +32,11 @@
 }
 
 body {
-  @apply antialiased;
+  @apply antialiased overflow-x-hidden;
+}
+
+html {
+  @apply overflow-x-hidden;
 }
 
 @keyframes fall {
