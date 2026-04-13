@@ -399,10 +399,6 @@ export default function App() {
   const [isScanning, setIsScanning] = useState(false);
   const [migrationError, setMigrationError] = useState<string | null>(null);
   const [pendingMigrationData, setPendingMigrationData] = useState<any | null>(null);
-  const [theme, setTheme] = useState<'classic' | 'cyber'>(() => {
-    const saved = localStorage.getItem('it-quiz-theme');
-    return (saved === 'cyber' || saved === 'classic') ? saved : 'classic';
-  });
   const [termStats, setTermStats] = useState<TermStats>(() => {
     const saved = localStorage.getItem('it_quiz_term_stats');
     return saved ? JSON.parse(saved) : {};
@@ -501,10 +497,6 @@ export default function App() {
   };
 
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
-
-  useEffect(() => {
-    localStorage.setItem('it-quiz-theme', theme);
-  }, [theme]);
 
   // Load user data, stats and collection from localStorage
   useEffect(() => {
@@ -873,7 +865,15 @@ export default function App() {
       stats,
       ownedCards,
       termStats,
-      theme,
+      hasBonusTicket,
+      quizCount,
+      speedStarStats: {
+        maxCombo: speedStarMaxCombo,
+        maxCorrect: speedStarMaxCorrect,
+        challenges: speedStarChallenges
+      },
+      lastDailyChallengeId,
+      dailyStreak,
       timestamp: Date.now()
     };
     const jsonString = JSON.stringify(data);
@@ -907,14 +907,36 @@ export default function App() {
         setTermStats(pendingMigrationData.termStats);
         localStorage.setItem('it_quiz_term_stats', JSON.stringify(pendingMigrationData.termStats));
       }
-      if (pendingMigrationData.theme) setTheme(pendingMigrationData.theme);
+      
+      // New fields
+      if (pendingMigrationData.hasBonusTicket !== undefined) {
+        setHasBonusTicket(pendingMigrationData.hasBonusTicket);
+        localStorage.setItem('it_quiz_bonus_ticket', pendingMigrationData.hasBonusTicket.toString());
+      }
+      if (pendingMigrationData.quizCount !== undefined) {
+        setQuizCount(pendingMigrationData.quizCount);
+        localStorage.setItem('it_quiz_count', pendingMigrationData.quizCount.toString());
+      }
+      if (pendingMigrationData.speedStarStats) {
+        setSpeedStarMaxCombo(pendingMigrationData.speedStarStats.maxCombo || 0);
+        setSpeedStarMaxCorrect(pendingMigrationData.speedStarStats.maxCorrect || 0);
+        setSpeedStarChallenges(pendingMigrationData.speedStarStats.challenges || 0);
+        localStorage.setItem('it_quiz_speed_star_stats', JSON.stringify(pendingMigrationData.speedStarStats));
+      }
+      if (pendingMigrationData.lastDailyChallengeId !== undefined) {
+        setLastDailyChallengeId(pendingMigrationData.lastDailyChallengeId);
+        localStorage.setItem('it_quiz_last_daily_id', pendingMigrationData.lastDailyChallengeId);
+      }
+      if (pendingMigrationData.dailyStreak !== undefined) {
+        setDailyStreak(pendingMigrationData.dailyStreak);
+        localStorage.setItem('it_quiz_daily_streak', pendingMigrationData.dailyStreak.toString());
+      }
       
       // Save to localStorage
       localStorage.setItem('it_quiz_username', pendingMigrationData.userName || '');
       localStorage.setItem('it_quiz_user_profile', JSON.stringify(pendingMigrationData.userProfile));
       localStorage.setItem('it_quiz_stats', JSON.stringify(pendingMigrationData.stats));
       localStorage.setItem('it_quiz_collection', JSON.stringify(pendingMigrationData.ownedCards));
-      if (pendingMigrationData.theme) localStorage.setItem('it-quiz-theme', pendingMigrationData.theme);
       
       setPendingMigrationData(null);
       setShowMigrationModal(false);
@@ -3103,7 +3125,7 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className={`min-h-screen w-full flex flex-col transition-colors duration-1000 ${
+            className={`fixed inset-0 z-50 flex flex-col transition-colors duration-1000 overflow-y-auto ${
               isDailyChallenge ? 'bg-indigo-950 text-white' : 'bg-theme-bg'
             }`}
           >
