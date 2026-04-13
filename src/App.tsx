@@ -970,10 +970,10 @@ export default function App() {
         t: Date.now()
       };
       const jsonString = JSON.stringify(data);
-      const encrypted = CryptoJS.AES.encrypt(jsonString, 'it-quiz-master-secret-key').toString();
+      const encrypted = CryptoJS.AES.encrypt(jsonString, 'it-quiz-master-v3-key').toString();
       
       // QR code data limit check (approximate)
-      if (encrypted.length > 4000) {
+      if (encrypted.length > 4200) {
         setMigrationError("データ量が多すぎるため、QRコードを発行できません。テキストコピー機能をご利用ください。");
         return;
       }
@@ -988,7 +988,13 @@ export default function App() {
 
   const processMigrationData = (encryptedData: string) => {
     try {
-      const bytes = CryptoJS.AES.decrypt(encryptedData, 'it-quiz-master-secret-key');
+      let bytes;
+      try {
+        bytes = CryptoJS.AES.decrypt(encryptedData, 'it-quiz-master-v3-key');
+      } catch (e) {
+        // Try legacy key if v3 fails
+        bytes = CryptoJS.AES.decrypt(encryptedData, 'it-quiz-master-secret-key');
+      }
       const decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
       
       let finalData: any = {};
