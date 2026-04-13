@@ -90,6 +90,7 @@ import {
 import { QRCodeSVG } from 'qrcode.react';
 import { Html5Qrcode } from 'html5-qrcode';
 import CryptoJS from 'crypto-js';
+import { storage } from './lib/storage';
 import { quizCategories, Category, Subcategory, allTermsMap, allTerms, Rarity } from './data/quizData';
 import { storyCards, StoryCard } from './data/storyData';
 import { generateQuestion, Question, QuestionType } from './services/geminiService';
@@ -451,7 +452,7 @@ export default function App() {
   const [isQRFullscreen, setIsQRFullscreen] = useState(false);
   const [pendingMigrationData, setPendingMigrationData] = useState<any | null>(null);
   const [termStats, setTermStats] = useState<TermStats>(() => {
-    const saved = localStorage.getItem('it_quiz_term_stats');
+    const saved = storage.getItem('it_quiz_term_stats');
     return saved ? JSON.parse(saved) : {};
   });
   const [selectedSubcategory, setSelectedSubcategory] = useState<Subcategory | null>(null);
@@ -465,6 +466,7 @@ export default function App() {
   const [feedback, setFeedback] = useState<'CORRECT' | 'WRONG' | null>(null);
   const [userAnswer, setUserAnswer] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [termPerformanceSearchTerm, setTermPerformanceSearchTerm] = useState('');
   const [stats, setStats] = useState<GameStats>({});
   const [ownedCards, setOwnedCards] = useState<Record<string, number>>({});
   const [penaltyActive, setPenaltyActive] = useState(false);
@@ -487,10 +489,10 @@ export default function App() {
   const [resetCooldown, setResetCooldown] = useState(0);
   const [isDailyChallenge, setIsDailyChallenge] = useState(false);
   const [lastDailyChallengeId, setLastDailyChallengeId] = useState<string>(() => {
-    return localStorage.getItem('it_quiz_last_daily_id') || '';
+    return storage.getItem('it_quiz_last_daily_id') || '';
   });
   const [dailyStreak, setDailyStreak] = useState<number>(() => {
-    return parseInt(localStorage.getItem('it_quiz_daily_streak') || '0', 10);
+    return parseInt(storage.getItem('it_quiz_daily_streak') || '0', 10);
   });
 
   const getDailyId = () => {
@@ -551,12 +553,12 @@ export default function App() {
 
   // Load user data, stats and collection from localStorage
   useEffect(() => {
-    const savedName = localStorage.getItem('it_quiz_username');
-    const savedProfile = localStorage.getItem('it_quiz_user_profile');
+    const savedName = storage.getItem('it_quiz_username');
+    const savedProfile = storage.getItem('it_quiz_user_profile');
     if (savedName) setUserName(savedName);
     if (savedProfile) setUserProfile(JSON.parse(savedProfile));
 
-    const savedStats = localStorage.getItem('it_quiz_stats');
+    const savedStats = storage.getItem('it_quiz_stats');
     if (savedStats) {
       try {
         setStats(JSON.parse(savedStats));
@@ -565,13 +567,13 @@ export default function App() {
       }
     }
 
-    const savedTicket = localStorage.getItem('it_quiz_bonus_ticket');
+    const savedTicket = storage.getItem('it_quiz_bonus_ticket');
     if (savedTicket) setHasBonusTicket(savedTicket === 'true');
 
-    const savedQuizCount = localStorage.getItem('it_quiz_count');
+    const savedQuizCount = storage.getItem('it_quiz_count');
     if (savedQuizCount) setQuizCount(parseInt(savedQuizCount, 10));
 
-    const savedSpeedStarStats = localStorage.getItem('it_quiz_speed_star_stats');
+    const savedSpeedStarStats = storage.getItem('it_quiz_speed_star_stats');
     if (savedSpeedStarStats) {
       try {
         const parsed = JSON.parse(savedSpeedStarStats);
@@ -583,7 +585,7 @@ export default function App() {
       }
     }
 
-    const savedCollection = localStorage.getItem('it_quiz_collection');
+    const savedCollection = storage.getItem('it_quiz_collection');
     if (savedCollection) {
       try {
         setOwnedCards(JSON.parse(savedCollection));
@@ -601,7 +603,7 @@ export default function App() {
       cappedCollection[term] = Math.min(255, count);
     });
     setOwnedCards(cappedCollection);
-    localStorage.setItem('it_quiz_collection', JSON.stringify(cappedCollection));
+    storage.setItem('it_quiz_collection', JSON.stringify(cappedCollection));
   };
 
   const takeScreenshot = () => {
@@ -754,14 +756,14 @@ export default function App() {
   // Save stats to localStorage
   const saveStats = (newStats: GameStats) => {
     setStats(newStats);
-    localStorage.setItem('it_quiz_stats', JSON.stringify(newStats));
+    storage.setItem('it_quiz_stats', JSON.stringify(newStats));
   };
 
   const saveUserProfile = (profile: { grade: string; classNum: string; attendanceNum: string; userName: string }) => {
     setUserName(profile.userName);
     setUserProfile({ grade: profile.grade, classNum: profile.classNum, attendanceNum: profile.attendanceNum });
-    localStorage.setItem('it_quiz_username', profile.userName);
-    localStorage.setItem('it_quiz_user_profile', JSON.stringify({ grade: profile.grade, classNum: profile.classNum, attendanceNum: profile.attendanceNum }));
+    storage.setItem('it_quiz_username', profile.userName);
+    storage.setItem('it_quiz_user_profile', JSON.stringify({ grade: profile.grade, classNum: profile.classNum, attendanceNum: profile.attendanceNum }));
     
     if (isMobile && deferredPrompt) {
       setShowInstallPrompt(true);
@@ -775,7 +777,7 @@ export default function App() {
       maxCorrect: speedStarMaxCorrect,
       challenges: speedStarChallenges
     };
-    localStorage.setItem('it_quiz_speed_star_stats', JSON.stringify(stats));
+    storage.setItem('it_quiz_speed_star_stats', JSON.stringify(stats));
   }, [speedStarMaxCombo, speedStarMaxCorrect, speedStarChallenges, isLoaded]);
 
   const updateTermStats = (term: string, isCorrect: boolean) => {
@@ -788,7 +790,7 @@ export default function App() {
         total: Math.min(255, current.total + 1)
       };
       const newStats = { ...prev, [term]: next };
-      localStorage.setItem('it_quiz_term_stats', JSON.stringify(newStats));
+      storage.setItem('it_quiz_term_stats', JSON.stringify(newStats));
       return newStats;
     });
   };
@@ -860,11 +862,11 @@ export default function App() {
     if (gameState !== 'SPEED_STAR') {
       const newQuizCount = quizCount + 1;
       setQuizCount(newQuizCount);
-      localStorage.setItem('it_quiz_count', newQuizCount.toString());
+      storage.setItem('it_quiz_count', newQuizCount.toString());
       
       if (newQuizCount % 3 === 0 && !hasBonusTicket) {
         setHasBonusTicket(true);
-        localStorage.setItem('it_quiz_bonus_ticket', 'true');
+        storage.setItem('it_quiz_bonus_ticket', 'true');
       }
     }
   };
@@ -880,14 +882,14 @@ export default function App() {
     saveStats({});
     saveCollection({});
     setTermStats({});
-    localStorage.removeItem('it_quiz_term_stats');
+    storage.removeItem('it_quiz_term_stats');
     setUserName(null);
     setUserProfile(null);
-    localStorage.removeItem('it_quiz_username');
-    localStorage.removeItem('it_quiz_user_profile');
+    storage.removeItem('it_quiz_username');
+    storage.removeItem('it_quiz_user_profile');
     
     // Speed Star Stats Reset
-    localStorage.removeItem('it_quiz_speed_star_stats');
+    storage.removeItem('it_quiz_speed_star_stats');
     setSpeedStarMaxCombo(0);
     setSpeedStarMaxCorrect(0);
     setSpeedStarChallenges(0);
@@ -895,13 +897,13 @@ export default function App() {
     // Daily Challenge Reset
     setLastDailyChallengeId(null);
     setDailyStreak(0);
-    localStorage.removeItem('it_quiz_last_daily_id');
-    localStorage.removeItem('it_quiz_daily_streak');
+    storage.removeItem('it_quiz_last_daily_id');
+    storage.removeItem('it_quiz_daily_streak');
 
     // Other Related Data Reset
-    localStorage.removeItem('it_quiz_count');
+    storage.removeItem('it_quiz_count');
     setQuizCount(0);
-    localStorage.removeItem('it_quiz_bonus_ticket');
+    storage.removeItem('it_quiz_bonus_ticket');
     setHasBonusTicket(false);
     
     // Clear internal session states
@@ -1072,38 +1074,38 @@ export default function App() {
       setOwnedCards(pendingMigrationData.ownedCards);
       if (pendingMigrationData.termStats) {
         setTermStats(pendingMigrationData.termStats);
-        localStorage.setItem('it_quiz_term_stats', JSON.stringify(pendingMigrationData.termStats));
+        storage.setItem('it_quiz_term_stats', JSON.stringify(pendingMigrationData.termStats));
       }
       
       // New fields
       if (pendingMigrationData.hasBonusTicket !== undefined) {
         setHasBonusTicket(pendingMigrationData.hasBonusTicket);
-        localStorage.setItem('it_quiz_bonus_ticket', pendingMigrationData.hasBonusTicket.toString());
+        storage.setItem('it_quiz_bonus_ticket', pendingMigrationData.hasBonusTicket.toString());
       }
       if (pendingMigrationData.quizCount !== undefined) {
         setQuizCount(pendingMigrationData.quizCount);
-        localStorage.setItem('it_quiz_count', pendingMigrationData.quizCount.toString());
+        storage.setItem('it_quiz_count', pendingMigrationData.quizCount.toString());
       }
       if (pendingMigrationData.speedStarStats) {
         setSpeedStarMaxCombo(pendingMigrationData.speedStarStats.maxCombo || 0);
         setSpeedStarMaxCorrect(pendingMigrationData.speedStarStats.maxCorrect || 0);
         setSpeedStarChallenges(pendingMigrationData.speedStarStats.challenges || 0);
-        localStorage.setItem('it_quiz_speed_star_stats', JSON.stringify(pendingMigrationData.speedStarStats));
+        storage.setItem('it_quiz_speed_star_stats', JSON.stringify(pendingMigrationData.speedStarStats));
       }
       if (pendingMigrationData.lastDailyChallengeId !== undefined) {
         setLastDailyChallengeId(pendingMigrationData.lastDailyChallengeId);
-        localStorage.setItem('it_quiz_last_daily_id', pendingMigrationData.lastDailyChallengeId);
+        storage.setItem('it_quiz_last_daily_id', pendingMigrationData.lastDailyChallengeId);
       }
       if (pendingMigrationData.dailyStreak !== undefined) {
         setDailyStreak(pendingMigrationData.dailyStreak);
-        localStorage.setItem('it_quiz_daily_streak', pendingMigrationData.dailyStreak.toString());
+        storage.setItem('it_quiz_daily_streak', pendingMigrationData.dailyStreak.toString());
       }
       
       // Save to localStorage
-      localStorage.setItem('it_quiz_username', pendingMigrationData.userName || '');
-      localStorage.setItem('it_quiz_user_profile', JSON.stringify(pendingMigrationData.userProfile));
-      localStorage.setItem('it_quiz_stats', JSON.stringify(pendingMigrationData.stats));
-      localStorage.setItem('it_quiz_collection', JSON.stringify(pendingMigrationData.ownedCards));
+      storage.setItem('it_quiz_username', pendingMigrationData.userName || '');
+      storage.setItem('it_quiz_user_profile', JSON.stringify(pendingMigrationData.userProfile));
+      storage.setItem('it_quiz_stats', JSON.stringify(pendingMigrationData.stats));
+      storage.setItem('it_quiz_collection', JSON.stringify(pendingMigrationData.ownedCards));
       
       setPendingMigrationData(null);
       setShowMigrationModal(false);
@@ -1195,11 +1197,21 @@ export default function App() {
   }, []);
 
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null);
+  const [isTermPerformanceSearchingAll, setIsTermPerformanceSearchingAll] = useState(false);
+  const [isCollectionSearchingAll, setIsCollectionSearchingAll] = useState(false);
   const [activeCollectionTab, setActiveCollectionTab] = useState<string>(quizCategories[0].id);
   const [activeSubcollectionTab, setActiveSubcollectionTab] = useState<string | null>(null);
   const [pickedCard, setPickedCard] = useState<PickedCard | null>(null);
   const [collectionMode, setCollectionMode] = useState<'card' | 'word'>('card');
   const [wordModeIndexes, setWordModeIndexes] = useState<Record<string, number>>({});
+
+  // Reset search terms when changing game state
+  useEffect(() => {
+    setSearchTerm('');
+    setTermPerformanceSearchTerm('');
+    setIsTermPerformanceSearchingAll(false);
+    setIsCollectionSearchingAll(false);
+  }, [gameState]);
 
   // Reset subcategory tab when main category tab changes, unless the current subcategory is already valid for the new category
   useEffect(() => {
@@ -1662,7 +1674,7 @@ export default function App() {
       setGameState('SPEED_STAR');
       // Ticket is consumed upon starting
       setHasBonusTicket(false);
-      localStorage.setItem('it_quiz_bonus_ticket', 'false');
+      storage.setItem('it_quiz_bonus_ticket', 'false');
     } catch (error) {
       console.error("Failed to start Speed Star:", error);
     } finally {
@@ -1846,8 +1858,8 @@ export default function App() {
           
           setDailyStreak(newStreak);
           setLastDailyChallengeId(dailyId);
-          localStorage.setItem('it_quiz_last_daily_id', dailyId);
-          localStorage.setItem('it_quiz_daily_streak', newStreak.toString());
+          storage.setItem('it_quiz_last_daily_id', dailyId);
+          storage.setItem('it_quiz_daily_streak', newStreak.toString());
         }
         
         setGameState('RESULT');
@@ -1857,6 +1869,21 @@ export default function App() {
 
   // Filtered terms for collection
   const filteredTerms = useMemo(() => {
+    if (isCollectionSearchingAll || searchTerm) {
+      // If searching all or searching specific term, ignore category/subcategory tabs and search everywhere
+      let allTermsResults: { term: string; category: string; subcategoryId: string }[] = [];
+      quizCategories.forEach(cat => {
+        cat.subcategories.forEach(sub => {
+          sub.terms.forEach(term => {
+            if (!searchTerm || term.name.includes(searchTerm)) {
+              allTermsResults.push({ term: term.name, category: cat.title, subcategoryId: sub.id });
+            }
+          });
+        });
+      });
+      return allTermsResults;
+    }
+
     let terms: { term: string; category: string; subcategoryId: string }[] = [];
     quizCategories.forEach(cat => {
       if (activeCollectionTab === cat.id) {
@@ -1870,23 +1897,8 @@ export default function App() {
       }
     });
 
-    if (searchTerm) {
-      // If searching, ignore category/subcategory tabs and search everywhere
-      let allTermsResults: { term: string; category: string; subcategoryId: string }[] = [];
-      quizCategories.forEach(cat => {
-        cat.subcategories.forEach(sub => {
-          sub.terms.forEach(term => {
-            if (term.name.includes(searchTerm)) {
-              allTermsResults.push({ term: term.name, category: cat.title, subcategoryId: sub.id });
-            }
-          });
-        });
-      });
-      return allTermsResults;
-    }
-
     return terms;
-  }, [searchTerm, activeCollectionTab, activeSubcollectionTab]);
+  }, [searchTerm, isCollectionSearchingAll, activeCollectionTab, activeSubcollectionTab]);
 
   const { rarityOwned, rarityTotals, rarityOwnedCopies, rarityTotalCopies, hasAnyDuplicate } = useMemo(() => {
     const totals = { UR: 0, SR: 0, R: 0, C: 0 };
@@ -2268,6 +2280,12 @@ export default function App() {
 
             <div className="flex flex-nowrap items-center justify-between gap-2 md:gap-4 mb-12">
               <div className="flex items-center gap-2 md:gap-6 min-w-0">
+                <button 
+                  onClick={() => setGameState('START')}
+                  className="p-2 md:p-3 bg-theme-card rounded-2xl border border-theme-border hover:bg-theme-muted transition-all shrink-0"
+                >
+                  <ChevronLeft size={20} className="md:w-6 md:h-6" />
+                </button>
                 <h2 className="text-2xl sm:text-4xl md:text-6xl font-theme-heading font-bold truncate">学習成績</h2>
               </div>
               <div className="flex items-center gap-2 md:gap-3 shrink-0">
@@ -2472,7 +2490,9 @@ export default function App() {
               
               <div className="flex flex-wrap items-center gap-2 md:gap-3">
                 <button 
-                  onClick={() => setTermSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                  onClick={() => {
+                    setTermSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                  }}
                   className={`flex items-center gap-2 px-4 py-2 md:px-6 md:py-3 rounded-full border text-xs md:text-sm font-bold transition-all ${
                     termSortOrder 
                       ? 'bg-theme-accent text-white border-theme-accent shadow-lg' 
@@ -2484,7 +2504,9 @@ export default function App() {
                 </button>
                 {termSortOrder && (
                   <button 
-                    onClick={() => setTermSortOrder(null)}
+                    onClick={() => {
+                      setTermSortOrder(null);
+                    }}
                     className="p-2 md:p-3 bg-theme-muted rounded-full text-theme-text-muted hover:text-theme-text transition-colors"
                     title="ソートを解除"
                   >
@@ -2496,16 +2518,58 @@ export default function App() {
 
             {/* Search & Category Tabs (Reusing collection logic) */}
             <div className="bg-theme-card p-4 md:p-6 rounded-[2rem] shadow-sm border border-theme-border mb-8 md:mb-12">
-              <div className="flex flex-wrap gap-1.5 md:gap-2 mb-4 md:mb-6">
+              <div className="relative mb-6">
+                <button 
+                  onClick={() => {
+                    if (!termPerformanceSearchTerm) {
+                      setIsTermPerformanceSearchingAll(true);
+                    }
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-theme-text-muted hover:text-theme-accent transition-colors"
+                >
+                  <Search size={20} />
+                </button>
+                <input 
+                  type="text" 
+                  placeholder="用語の名前で検索..."
+                  value={termPerformanceSearchTerm}
+                  onChange={(e) => {
+                    setTermPerformanceSearchTerm(e.target.value);
+                    if (e.target.value) {
+                      setIsTermPerformanceSearchingAll(true);
+                    } else {
+                      setIsTermPerformanceSearchingAll(false);
+                    }
+                  }}
+                  className="w-full pl-12 pr-4 py-4 bg-theme-bg rounded-2xl border-none focus:ring-2 focus:ring-theme-accent transition-all text-lg"
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-1.5 md:gap-2 mb-6">
+                <button
+                  onClick={() => {
+                    setIsTermPerformanceSearchingAll(true);
+                    setTermPerformanceSearchTerm('');
+                  }}
+                  className={`px-3 py-2 md:px-6 md:py-3 rounded-lg md:rounded-xl text-[10px] md:text-base font-bold transition-all ${
+                    isTermPerformanceSearchingAll && !termPerformanceSearchTerm
+                      ? 'bg-theme-accent text-white shadow-lg scale-105'
+                      : 'bg-theme-border text-theme-text-muted hover:bg-theme-border-strong'
+                  }`}
+                >
+                  すべてのデータ
+                </button>
                 {quizCategories.map(cat => (
                   <button
                     key={cat.id}
                     onClick={() => {
                       setActiveCollectionTab(cat.id);
                       setActiveSubcollectionTab(null);
+                      setIsTermPerformanceSearchingAll(false);
+                      setTermPerformanceSearchTerm('');
                     }}
                     className={`px-3 py-2 md:px-6 md:py-3 rounded-lg md:rounded-xl text-[10px] md:text-base font-bold transition-all ${
-                      activeCollectionTab === cat.id 
+                      !isTermPerformanceSearchingAll && activeCollectionTab === cat.id 
                         ? `${getCategoryColor(cat.id).accent} text-white shadow-lg scale-105` 
                         : 'bg-theme-border text-theme-text-muted hover:bg-theme-border-strong'
                     }`}
@@ -2516,8 +2580,8 @@ export default function App() {
               </div>
 
               {/* Subcategory Tabs */}
-              {quizCategories.find(c => c.id === activeCollectionTab)?.subcategories.length! > 0 && (
-                <div className="flex flex-wrap gap-1.5 md:gap-2 pt-4 md:pt-6 border-t border-theme-border">
+              {!isTermPerformanceSearchingAll && quizCategories.find(c => c.id === activeCollectionTab)?.subcategories.length! > 0 && (
+                <div className="flex flex-wrap gap-1.5 md:gap-2 pt-6 border-t border-theme-border">
                   {quizCategories.find(c => c.id === activeCollectionTab)?.subcategories.map(sub => (
                     <button
                       key={sub.id}
@@ -2536,53 +2600,72 @@ export default function App() {
             </div>
 
             <div className="space-y-12">
-              {quizCategories.filter(c => c.id === activeCollectionTab).map(category => {
-                const categoryTerms = category.subcategories
-                  .filter(sub => !activeSubcollectionTab || sub.id === activeSubcollectionTab)
-                  .flatMap(sub => sub.terms.map(t => ({ ...t, subId: sub.id })));
-                
-                const displayTerms = categoryTerms.map(term => {
-                  const stat = termStats[term.name] || { correct: 0, total: 0 };
-                  const rate = stat.total > 0 ? (stat.correct / stat.total) * 100 : 0;
-                  const ownedCount = ownedCards[term.name] || 0;
-                  return { term, stat, rate, ownedCount };
-                });
+              {isTermPerformanceSearchingAll ? (
+                <div className="space-y-6">
+                  <div className="flex items-center gap-4">
+                    <h3 className="text-xl md:text-2xl font-bold text-theme-accent">
+                      {termPerformanceSearchTerm ? `検索結果: ${termPerformanceSearchTerm}` : 'すべてのデータ'}
+                    </h3>
+                    <div className="flex-1 h-px bg-theme-border" />
+                  </div>
 
-                if (termSortOrder) {
-                  displayTerms.sort((a, b) => termSortOrder === 'asc' ? a.rate - b.rate : b.rate - a.rate);
-                }
+                  <div className="bg-theme-card rounded-[2rem] border border-theme-border overflow-hidden shadow-sm">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs md:text-sm min-w-[700px]">
+                        <thead className="bg-theme-muted text-theme-text-muted border-b border-theme-border">
+                          <tr>
+                            <th className="p-4 md:p-6 font-bold w-24 md:w-32 text-center">正答率</th>
+                            <th className="p-4 md:p-6 font-bold w-32 md:w-48">用語</th>
+                            <th className="p-4 md:p-6 font-bold">説明文</th>
+                            <th className="p-4 md:p-6 font-bold w-24 md:w-32 text-center">正解 / 出題</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-theme-border">
+                          {(() => {
+                            const allMatches = quizCategories.flatMap(category => 
+                              category.subcategories.flatMap(sub => 
+                                sub.terms.filter(t => !termPerformanceSearchTerm || t.name.includes(termPerformanceSearchTerm))
+                                  .map(term => {
+                                    const stat = termStats[term.name] || { correct: 0, total: 0 };
+                                    const rate = stat.total > 0 ? (stat.correct / stat.total) * 100 : 0;
+                                    const ownedCount = ownedCards[term.name] || 0;
+                                    return { term, stat, rate, ownedCount };
+                                  })
+                              )
+                            );
 
-                if (displayTerms.length === 0) return null;
+                            if (termSortOrder) {
+                              allMatches.sort((a, b) => {
+                                if (a.rate !== b.rate) {
+                                  return termSortOrder === 'asc' ? a.rate - b.rate : b.rate - a.rate;
+                                }
+                                const aSec = a.stat.correct - a.stat.total;
+                                const bSec = b.stat.correct - b.stat.total;
+                                return termSortOrder === 'asc' ? aSec - bSec : bSec - aSec;
+                              });
+                            }
 
-                return (
-                  <div key={category.id} className="space-y-6">
-                    <div className="flex items-center gap-4">
-                      <h3 className={`text-xl md:text-2xl font-bold ${getCategoryColor(category.id).text}`}>{category.title}</h3>
-                      <div className="flex-1 h-px bg-theme-border" />
-                    </div>
+                            if (allMatches.length === 0) {
+                              return (
+                                <tr>
+                                  <td colSpan={4} className="p-12 text-center text-theme-text-muted">
+                                    一致する用語が見つかりませんでした。
+                                  </td>
+                                </tr>
+                              );
+                            }
 
-                    <div className="bg-theme-card rounded-[2rem] border border-theme-border overflow-hidden shadow-sm">
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs md:text-sm min-w-[700px]">
-                          <thead className="bg-theme-muted text-theme-text-muted border-b border-theme-border">
-                            <tr>
-                              <th className="p-4 md:p-6 font-bold w-24 md:w-32 text-center">正答率</th>
-                              <th className="p-4 md:p-6 font-bold w-32 md:w-48">用語</th>
-                              <th className="p-4 md:p-6 font-bold">説明文</th>
-                              <th className="p-4 md:p-6 font-bold w-24 md:w-32 text-center">正解 / 出題</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-theme-border">
-                            {displayTerms.map(({ term, stat, rate, ownedCount }) => {
+                            return allMatches.map(({ term, stat, rate, ownedCount }) => {
                               const descriptions = allTermsMap[term.name]?.descriptions || ["説明がありません。"];
                               const currentIndex = termPerformanceDescIndexes[term.name] || 0;
+                              const isOwned = ownedCount > 0;
                               
                               return (
                                 <tr 
                                   key={term.name} 
-                                  className={`transition-colors ${ownedCount > 1 ? 'hover:bg-theme-muted/50 cursor-pointer' : 'hover:bg-theme-muted/30'}`}
+                                  className={`transition-colors ${isOwned && ownedCount > 1 ? 'hover:bg-theme-muted/50 cursor-pointer' : 'hover:bg-theme-muted/30'}`}
                                   onClick={() => {
-                                    if (ownedCount > 1) {
+                                    if (isOwned && ownedCount > 1) {
                                       const unlockedCount = Math.min(ownedCount, descriptions.length);
                                       if (unlockedCount > 1) {
                                         setTermPerformanceDescIndexes(prev => ({
@@ -2607,12 +2690,14 @@ export default function App() {
                                   <td className="p-4 md:p-6 align-top">
                                     <div className="space-y-1">
                                       <div className="flex items-center gap-2">
-                                        <span className="font-bold text-sm md:text-base">{term.name}</span>
+                                        <span className="font-bold text-sm md:text-base">
+                                          {term.name}
+                                        </span>
                                       </div>
                                       <div className={`text-[9px] md:text-[10px] font-bold px-2 py-0.5 rounded-full uppercase w-fit ${
-                                        ownedCount > 0 ? 'bg-theme-accent/10 text-theme-accent' : 'bg-theme-muted text-theme-text-muted'
+                                        isOwned ? 'bg-theme-accent/10 text-theme-accent' : 'bg-theme-muted text-theme-text-muted'
                                       }`}>
-                                        {ownedCount > 0 ? `x${ownedCount}` : '未所持'}
+                                        {isOwned ? `x${ownedCount}` : '未所持'}
                                       </div>
                                     </div>
                                   </td>
@@ -2631,14 +2716,130 @@ export default function App() {
                                   </td>
                                 </tr>
                               );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
+                            });
+                          })()}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
-                );
-              })}
+                </div>
+              ) : (
+                quizCategories.filter(c => c.id === activeCollectionTab).map(category => {
+                  const categoryTerms = category.subcategories
+                    .filter(sub => !activeSubcollectionTab || sub.id === activeSubcollectionTab)
+                    .flatMap(sub => sub.terms.map(t => ({ ...t, subId: sub.id })));
+                  
+                  const displayTerms = categoryTerms
+                    .filter(term => !termPerformanceSearchTerm || term.name.includes(termPerformanceSearchTerm))
+                    .map(term => {
+                      const stat = termStats[term.name] || { correct: 0, total: 0 };
+                      const rate = stat.total > 0 ? (stat.correct / stat.total) * 100 : 0;
+                      const ownedCount = ownedCards[term.name] || 0;
+                      return { term, stat, rate, ownedCount };
+                    });
+
+                  if (termSortOrder) {
+                    displayTerms.sort((a, b) => {
+                      if (a.rate !== b.rate) {
+                        return termSortOrder === 'asc' ? a.rate - b.rate : b.rate - a.rate;
+                      }
+                      const aSec = a.stat.correct - a.stat.total;
+                      const bSec = b.stat.correct - b.stat.total;
+                      return termSortOrder === 'asc' ? aSec - bSec : bSec - aSec;
+                    });
+                  }
+
+                  if (displayTerms.length === 0) return null;
+
+                  return (
+                    <div key={category.id} className="space-y-6">
+                      <div className="flex items-center gap-4">
+                        <h3 className={`text-xl md:text-2xl font-bold ${getCategoryColor(category.id).text}`}>{category.title}</h3>
+                        <div className="flex-1 h-px bg-theme-border" />
+                      </div>
+
+                      <div className="bg-theme-card rounded-[2rem] border border-theme-border overflow-hidden shadow-sm">
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-xs md:text-sm min-w-[700px]">
+                            <thead className="bg-theme-muted text-theme-text-muted border-b border-theme-border">
+                              <tr>
+                                <th className="p-4 md:p-6 font-bold w-24 md:w-32 text-center">正答率</th>
+                                <th className="p-4 md:p-6 font-bold w-32 md:w-48">用語</th>
+                                <th className="p-4 md:p-6 font-bold">説明文</th>
+                                <th className="p-4 md:p-6 font-bold w-24 md:w-32 text-center">正解 / 出題</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-theme-border">
+                              {displayTerms.map(({ term, stat, rate, ownedCount }) => {
+                                const descriptions = allTermsMap[term.name]?.descriptions || ["説明がありません。"];
+                                const currentIndex = termPerformanceDescIndexes[term.name] || 0;
+                                const isOwned = ownedCount > 0;
+                                
+                                return (
+                                  <tr 
+                                    key={term.name} 
+                                    className={`transition-colors ${isOwned && ownedCount > 1 ? 'hover:bg-theme-muted/50 cursor-pointer' : 'hover:bg-theme-muted/30'}`}
+                                    onClick={() => {
+                                      if (isOwned && ownedCount > 1) {
+                                        const unlockedCount = Math.min(ownedCount, descriptions.length);
+                                        if (unlockedCount > 1) {
+                                          setTermPerformanceDescIndexes(prev => ({
+                                            ...prev,
+                                            [term.name]: (currentIndex + 1) % unlockedCount
+                                          }));
+                                        }
+                                      }
+                                    }}
+                                  >
+                                    <td className="p-4 md:p-6 text-center align-middle">
+                                      <div className={`inline-flex flex-col items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl ${
+                                        stat.total === 0 ? 'bg-theme-muted text-theme-text-muted' :
+                                        rate < 40 ? 'bg-red-50 text-red-600 border border-red-100' :
+                                        rate < 70 ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                                        'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                                      }`}>
+                                        <span className="text-sm md:text-lg font-mono font-bold leading-none">{rate.toFixed(1)}</span>
+                                        <span className="text-[8px] font-bold uppercase mt-1">%</span>
+                                      </div>
+                                    </td>
+                                    <td className="p-4 md:p-6 align-top">
+                                      <div className="space-y-1">
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-bold text-sm md:text-base">
+                                            {term.name}
+                                          </span>
+                                        </div>
+                                        <div className={`text-[9px] md:text-[10px] font-bold px-2 py-0.5 rounded-full uppercase w-fit ${
+                                          isOwned ? 'bg-theme-accent/10 text-theme-accent' : 'bg-theme-muted text-theme-text-muted'
+                                        }`}>
+                                          {isOwned ? `x${ownedCount}` : '未所持'}
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td className="p-4 md:p-6 align-top">
+                                      <div className="space-y-3">
+                                        <p className="text-xs md:text-sm text-theme-text leading-relaxed">
+                                          {descriptions[currentIndex]}
+                                        </p>
+                                      </div>
+                                    </td>
+                                    <td className="p-4 md:p-6 text-center align-middle">
+                                      <div className="space-y-1">
+                                        <p className="text-xs md:text-sm font-mono font-bold">{stat.correct} / {stat.total}</p>
+                                        <p className="text-[8px] md:text-[10px] font-bold text-theme-text-muted uppercase tracking-widest">Correct / Total</p>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </motion.div>
         )}
@@ -2757,9 +2958,17 @@ export default function App() {
             className="max-w-6xl mx-auto p-6 py-12"
           >
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-              <div>
-                <h2 className="text-4xl font-theme-heading font-bold mb-2">IT Card Collection</h2>
-                <p className="text-theme-text-muted">知識をカードとして集めよう。{allTerms.length}枚のカードを収録。</p>
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => setGameState('START')}
+                  className="p-3 bg-theme-card rounded-2xl border border-theme-border hover:bg-theme-muted transition-all"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+                <div>
+                  <h2 className="text-4xl font-theme-heading font-bold mb-2">IT Card Collection</h2>
+                  <p className="text-theme-text-muted">知識をカードとして集めよう。{allTerms.length}枚のカードを収録。</p>
+                </div>
               </div>
               <div className="flex bg-theme-bg p-1 rounded-xl w-fit">
                 <button
@@ -2780,23 +2989,57 @@ export default function App() {
             {/* Search & Tabs */}
             <div className="bg-theme-card p-6 rounded-[2rem] shadow-sm border border-theme-border mb-12">
               <div className="relative mb-8">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-theme-text-muted" size={20} />
+                <button 
+                  onClick={() => {
+                    if (!searchTerm) {
+                      setIsCollectionSearchingAll(true);
+                    }
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-theme-text-muted hover:text-theme-accent transition-colors"
+                >
+                  <Search size={20} />
+                </button>
                 <input 
                   type="text" 
                   placeholder="カードの名前で検索..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    if (e.target.value) {
+                      setIsCollectionSearchingAll(true);
+                    } else {
+                      setIsCollectionSearchingAll(false);
+                    }
+                  }}
                   className="w-full pl-12 pr-4 py-4 bg-theme-bg rounded-2xl border-none focus:ring-2 focus:ring-theme-accent transition-all text-lg"
                 />
               </div>
 
               <div className="flex flex-wrap gap-1.5 md:gap-2 mb-4 md:mb-6">
+                <button
+                  onClick={() => {
+                    setIsCollectionSearchingAll(true);
+                    setSearchTerm('');
+                  }}
+                  className={`px-3 py-2 md:px-6 md:py-3 rounded-lg md:rounded-xl text-xs md:text-base font-bold transition-all ${
+                    isCollectionSearchingAll && !searchTerm
+                      ? 'bg-theme-accent text-white shadow-lg scale-105'
+                      : 'bg-theme-border text-theme-text-muted hover:bg-theme-border-strong'
+                  }`}
+                >
+                  すべてのデータ
+                </button>
                 {quizCategories.map(cat => (
                   <button
                     key={cat.id}
-                    onClick={() => setActiveCollectionTab(cat.id)}
+                    onClick={() => {
+                      setActiveCollectionTab(cat.id);
+                      setActiveSubcollectionTab(null);
+                      setIsCollectionSearchingAll(false);
+                      setSearchTerm('');
+                    }}
                     className={`px-3 py-2 md:px-6 md:py-3 rounded-lg md:rounded-xl text-xs md:text-base font-bold transition-all ${
-                      activeCollectionTab === cat.id 
+                      !isCollectionSearchingAll && activeCollectionTab === cat.id 
                         ? `${getCategoryColor(cat.id).accent} text-white shadow-lg scale-105` 
                         : 'bg-theme-border text-theme-text-muted hover:bg-theme-border-strong'
                     }`}
@@ -2807,7 +3050,7 @@ export default function App() {
               </div>
 
               {/* Subcategory Tabs */}
-              {quizCategories.find(c => c.id === activeCollectionTab)?.subcategories.length! > 0 && (
+              {!isCollectionSearchingAll && quizCategories.find(c => c.id === activeCollectionTab)?.subcategories.length! > 0 && (
                 <div className="flex flex-wrap gap-1.5 md:gap-2 pt-4 md:pt-6 border-t border-theme-border">
                   {quizCategories.find(c => c.id === activeCollectionTab)?.subcategories.map(sub => (
                     <button
@@ -2828,7 +3071,131 @@ export default function App() {
 
             {/* Grouped Collection */}
             <div className="space-y-20">
-              {quizCategories.filter(c => c.id === activeCollectionTab).map(category => {
+              {isCollectionSearchingAll ? (
+                <div className="space-y-8">
+                  <div className="flex items-center gap-4">
+                    <h3 className="text-xl md:text-2xl font-bold text-theme-accent">
+                      {searchTerm ? `検索結果: ${searchTerm}` : 'すべてのデータ'}
+                    </h3>
+                    <div className="flex-1 h-px bg-theme-border" />
+                  </div>
+                  {collectionMode === 'card' ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8">
+                      {filteredTerms.map(({ term }, index) => {
+                        const rarity = allTermsMap[term]?.rarity || 'C';
+                        const styles = getRarityStyles(rarity);
+                        const isOwned = !!ownedCards[term];
+                        const count = ownedCards[term] || 0;
+                        
+                        return (
+                          <div key={term} className="relative h-full" style={{ isolation: 'isolate' }}>
+                            {isOwned && count > 1 && (
+                              <div className={`absolute inset-0 rounded-2xl border-2 ${styles.border} bg-theme-card translate-x-1.5 -translate-y-1.5 rotate-2 -z-10 opacity-60`} />
+                            )}
+                            {isOwned && count > 2 && (
+                              <div className={`absolute inset-0 rounded-2xl border-2 ${styles.border} bg-theme-card translate-x-3 -translate-y-3 rotate-6 -z-20 opacity-30`} />
+                            )}
+                            
+                            <motion.div 
+                              ref={el => { cardRefs.current[term] = el; }}
+                              layout
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.05 }}
+                              whileHover={isOwned ? { scale: 1.05 } : {}}
+                              onClick={() => handleCardClick(term)}
+                              className={`relative h-full flex flex-col rounded-2xl overflow-hidden ${isOwned ? 'cursor-pointer' : 'cursor-not-allowed grayscale opacity-50'} group ${isOwned ? styles.border : 'border-2 border-dashed border-theme-border-strong'} ${isOwned ? styles.glow : ''} bg-theme-card`}
+                            >
+                              <div className={`absolute inset-0 ${isOwned ? styles.bg : 'bg-theme-border'} opacity-10 group-hover:opacity-20 transition-opacity`} />
+                              {isOwned && styles.pulse && (
+                                <div className={`absolute inset-0 ${styles.bg} opacity-15 ${styles.pulse} z-0`} />
+                              )}
+                              <div className="flex-1 flex flex-col bg-transparent relative z-10" style={{ perspective: 1000 }}>
+                                <div className={`px-2 py-1.5 md:px-3 md:py-2 flex justify-between items-center shrink-0 ${isOwned && rarity !== 'C' ? styles.bg : 'bg-theme-muted'} ${isOwned && rarity !== 'C' ? 'text-white' : 'text-theme-text-muted'}`}>
+                                  <span className="text-[8px] md:text-[10px] font-bold tracking-widest uppercase drop-shadow-sm">{isOwned ? styles.label : 'LOCKED'}</span>
+                                  {isOwned && count > 1 && (
+                                    <span className="text-[8px] md:text-[10px] font-bold bg-theme-card/20 px-1.5 py-0.5 rounded-full">x{count}</span>
+                                  )}
+                                </div>
+                                <div className="flex-1 p-3 md:p-4 flex flex-col items-center justify-start text-center space-y-2 md:space-y-3">
+                                  <div className={`hidden md:flex w-12 h-12 shrink-0 rounded-xl items-center justify-center ${isOwned ? styles.bg : 'bg-theme-border'} ${isOwned ? (rarity === 'C' ? 'text-theme-text' : 'text-white') : 'text-theme-text-muted'} shadow-inner`}>
+                                    {isOwned ? getTermIcon(term, 20) : <Lock size={20} />}
+                                  </div>
+                                  <div className="space-y-0.5 w-full shrink-0">
+                                    <h3 className={`text-sm md:text-base font-bold leading-tight ${isOwned ? 'text-theme-text' : 'text-theme-text-muted'} break-words drop-shadow-sm`}>{isOwned ? term : '???'}</h3>
+                                  </div>
+                                  {isOwned && (
+                                    <motion.div 
+                                      key={pickedCard?.term === term ? pickedCard.descriptionIndex : 0}
+                                      initial={{ opacity: 0, scale: 0.9 }}
+                                      animate={{ opacity: 1, scale: 1 }}
+                                      exit={{ opacity: 0, scale: 0.9 }}
+                                      transition={{ duration: 0.5, ease: "easeInOut" }}
+                                      className="pt-2 md:pt-3 border-t border-theme-border w-full flex-1 flex flex-col justify-between"
+                                    >
+                                      <p className="text-[10px] md:text-xs text-theme-text leading-relaxed text-left mb-1 drop-shadow-sm font-bold">
+                                        {(allTermsMap[term]?.descriptions || ["説明がありません。"])[pickedCard?.term === term ? pickedCard.descriptionIndex : 0]}
+                                      </p>
+                                      <div className="flex justify-center gap-1 mt-auto pb-1">
+                                        {[...Array(Math.min(allTermsMap[term]?.descriptions?.length || 1, 3))].map((_, i) => (
+                                          <div key={i} className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${(pickedCard?.term === term ? i === pickedCard.descriptionIndex : i === 0) ? (isOwned ? styles.bg : 'bg-theme-text-muted') : (i < count ? 'bg-theme-border-strong' : 'bg-theme-border')}`} />
+                                        ))}
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </div>
+                              </div>
+                            </motion.div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="bg-theme-card rounded-2xl border border-theme-border overflow-x-auto">
+                      <table className="w-full text-left text-sm md:text-base min-w-[600px]">
+                        <thead className="bg-theme-muted text-theme-text-muted">
+                          <tr>
+                            <th className="p-4 font-bold w-24 md:w-48">Term</th>
+                            <th className="p-4 font-bold">Description</th>
+                            <th className="p-4 font-bold">Flavor Text</th>
+                            <th className="p-4 font-bold w-16 text-center">Rarity</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-theme-border">
+                          {filteredTerms.map(({ term }) => {
+                            const rarity = allTermsMap[term]?.rarity || 'C';
+                            const styles = getRarityStyles(rarity);
+                            const isOwned = !!ownedCards[term];
+                            const count = ownedCards[term] || 0;
+                            const currentIndex = wordModeIndexes[term] || 0;
+                            return (
+                              <tr key={term} className={`${isOwned ? 'hover:bg-theme-muted/50 cursor-pointer' : 'opacity-50'} transition-colors`}>
+                                <td className="p-4 font-bold align-top">
+                                  {isOwned ? term : '???'}
+                                </td>
+                                <td className="p-4">
+                                  {isOwned ? (allTermsMap[term]?.descriptions || ["説明がありません。"])[currentIndex] : '???'}
+                                </td>
+                                <td className="p-4 text-theme-text-muted italic text-xs md:text-sm">
+                                  {isOwned ? (Array.isArray(allTermsMap[term]?.flavorTexts) ? allTermsMap[term]?.flavorTexts[currentIndex % allTermsMap[term]?.flavorTexts.length] : allTermsMap[term]?.flavorTexts) : '???'}
+                                </td>
+                                <td className="p-4 text-center">
+                                  {isOwned ? (
+                                    <span className={`inline-block px-2 py-1 rounded text-[10px] font-bold tracking-widest uppercase ${styles.bg} ${rarity === 'C' ? 'text-theme-text' : 'text-white'}`}>
+                                      {styles.label}
+                                    </span>
+                                  ) : <Lock size={16} className="mx-auto" />}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                quizCategories.filter(c => c.id === activeCollectionTab).map(category => {
                 const categoryTerms = filteredTerms.filter(t => t.category === category.title);
                 const colors = getCategoryColor(category.id);
                 
@@ -3038,7 +3405,8 @@ export default function App() {
                     )}
                   </div>
                 );
-              })}
+              })
+            )}
             </div>
 
             {filteredTerms.length === 0 && (
@@ -3057,7 +3425,13 @@ export default function App() {
             exit={{ opacity: 0 }}
             className="max-w-4xl mx-auto p-6 py-12"
           >
-            <div className="flex items-center justify-between mb-12">
+            <div className="flex items-center gap-4 mb-12">
+              <button 
+                onClick={() => setGameState('START')}
+                className="p-3 bg-theme-card rounded-2xl border border-theme-border hover:bg-theme-muted transition-all"
+              >
+                <ChevronLeft size={24} />
+              </button>
               <h2 className="text-3xl font-theme-heading font-bold">単元を選択</h2>
             </div>
 
@@ -3253,8 +3627,14 @@ export default function App() {
                     let buttonClass = 'bg-white/5 border-white/10 hover:border-amber-400 hover:bg-white/10';
                     if (feedback === 'CORRECT' && isCorrect) {
                       buttonClass = 'bg-green-500/20 border-green-500 text-green-400';
-                    } else if (feedback === 'WRONG' && isSelected) {
-                      buttonClass = 'bg-red-500/20 border-red-500 text-red-400';
+                    } else if (feedback === 'WRONG') {
+                      if (isCorrect) {
+                        buttonClass = 'bg-green-500/20 border-green-500 text-green-400';
+                      } else if (isSelected) {
+                        buttonClass = 'bg-red-500/20 border-red-500 text-red-400';
+                      } else {
+                        buttonClass = 'bg-white/5 border-white/10 opacity-30';
+                      }
                     }
 
                     return (
