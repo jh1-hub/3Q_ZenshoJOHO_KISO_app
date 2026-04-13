@@ -927,25 +927,38 @@ export default function App() {
         }
       });
 
-      // Compression logic
+      // Compression logic (Version 4: Base64 encoding for smaller payload)
       const compressData = () => {
         let compressed = "";
-        // termStats: T + ID(3 hex) + Correct(4 hex) + Total(4 hex) = 12 chars
+        
+        // Helper to convert number to base64 string
+        const toB64 = (num: number, padding: number) => {
+          const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+          let str = '';
+          let n = num;
+          do {
+            str = chars[n % 64] + str;
+            n = Math.floor(n / 64);
+          } while (n > 0);
+          return str.padStart(padding, 'A');
+        };
+
+        // termStats: T + ID(2 chars) + Correct(3 chars) + Total(3 chars) = 9 chars
         Object.entries(filteredTermStats).forEach(([name, stat]) => {
           const term = allTermsMap[name];
           if (term) {
-            const id = term.id.toString(16).padStart(3, '0');
-            const correct = Math.min(65535, stat.correct).toString(16).padStart(4, '0');
-            const total = Math.min(65535, stat.total).toString(16).padStart(4, '0');
+            const id = toB64(term.id, 2);
+            const correct = toB64(Math.min(262143, stat.correct), 3); // 64^3 - 1
+            const total = toB64(Math.min(262143, stat.total), 3);
             compressed += `T${id}${correct}${total}`;
           }
         });
-        // ownedCards: C + ID(3 hex) + Count(2 hex) = 6 chars
+        // ownedCards: C + ID(2 chars) + Count(1 char) = 4 chars
         Object.entries(ownedCards).forEach(([name, count]) => {
           const term = allTermsMap[name];
           if (term && count > 0) {
-            const id = term.id.toString(16).padStart(3, '0');
-            const c = Math.min(255, count).toString(16).padStart(2, '0');
+            const id = toB64(term.id, 2);
+            const c = toB64(Math.min(63, count), 1);
             compressed += `C${id}${c}`;
           }
         });
@@ -953,7 +966,7 @@ export default function App() {
       };
 
       const data = {
-        v: 3, // Version 3: Compressed with 16-bit counts
+        v: 4, // Version 4: Base64 compression
         u: userName,
         p: userProfile,
         s: stats,
@@ -999,8 +1012,8 @@ export default function App() {
       
       let finalData: any = {};
 
-      if (decryptedData.v === 2 || decryptedData.v === 3) {
-        // Decompress version 2 or 3
+      if (decryptedData.v >= 2 && decryptedData.v <= 4) {
+        // Decompress version 2, 3, or 4
         const idToName: Record<number, string> = {};
         Object.values(allTermsMap).forEach(t => idToName[t.id] = t.name);
 
@@ -1009,32 +1022,57 @@ export default function App() {
         const d = decryptedData.d || "";
         const version = decryptedData.v;
         
+        // Helper to parse base64 string to number
+        const fromB64 = (str: string) => {
+          const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+          let num = 0;
+          for (let i = 0; i < str.length; i++) {
+            num = num * 64 + chars.indexOf(str[i]);
+          }
+          return num;
+        };
+        
         let i = 0;
         while (i < d.length) {
           const type = d[i];
           if (type === 'T') {
-            const id = parseInt(d.substring(i + 1, i + 4), 16);
-            let correct, total, step;
+            let id, correct, total, step;
             
-            if (version === 3) {
-              correct = parseInt(d.substring(i + 4, i + 8), 16);
-              total = parseInt(d.substring(i + 8, i + 12), 16);
-              step = 12;
+            if (version === 4) {
+              id = fromB64(d.substring(i + 1, i + 3));
+              correct = fromB64(d.substring(i + 3, i + 6));
+              total = fromB64(d.substring(i + 6, i + 9));
+              step = 9;
             } else {
-              correct = parseInt(d.substring(i + 4, i + 6), 16);
-              total = parseInt(d.substring(i + 6, i + 8), 16);
-              step = 8;
+              id = parseInt(d.substring(i + 1, i + 4), 16);
+              if (version === 3) {
+                correct = parseInt(d.substring(i + 4, i + 8), 16);
+                total = parseInt(d.substring(i + 8, i + 12), 16);
+                step = 12;
+              } else {
+                correct = parseInt(d.substring(i + 4, i + 6), 16);
+                total = parseInt(d.substring(i + 6, i + 8), 16);
+                step = 8;
+              }
             }
             
             const name = idToName[id];
             if (name) stats[name] = { correct, total };
             i += step;
           } else if (type === 'C') {
-            const id = parseInt(d.substring(i + 1, i + 4), 16);
-            const count = parseInt(d.substring(i + 4, i + 6), 16);
+            let id, count, step;
+            if (version === 4) {
+              id = fromB64(d.substring(i + 1, i + 3));
+              count = fromB64(d.substring(i + 3, i + 4));
+              step = 4;
+            } else {
+              id = parseInt(d.substring(i + 1, i + 4), 16);
+              count = parseInt(d.substring(i + 4, i + 6), 16);
+              step = 6;
+            }
             const name = idToName[id];
             if (name) owned[name] = count;
-            i += 6;
+            i += step;
           } else {
             i++;
           }
