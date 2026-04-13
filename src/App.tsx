@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, Component } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import domtoimage from 'dom-to-image-more';
 import { 
@@ -385,6 +385,56 @@ const StoryCardOverlay = ({ card, onClose }: { card: StoryCard; onClose: () => v
     </motion.div>
   );
 };
+
+// Error Boundary Component
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("ErrorBoundary caught an error", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-6 bg-red-50 border-2 border-red-100 rounded-3xl text-center space-y-4">
+          <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto">
+            <AlertTriangle size={32} />
+          </div>
+          <h2 className="text-xl font-bold text-red-600">エラーが発生しました</h2>
+          <p className="text-sm text-red-500">
+            申し訳ありません。予期せぬエラーが発生しました。<br />
+            {this.state.error?.message.includes('too large') ? 'データ量が多すぎてQRコードを作成できません。' : 'アプリを再読み込みしてください。'}
+          </p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-6 py-2 bg-red-600 text-white rounded-xl font-bold"
+          >
+            再読み込み
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 export default function App() {
   const statsRef = useRef<HTMLDivElement>(null);
@@ -859,26 +909,48 @@ export default function App() {
   };
 
   const exportData = () => {
-    const data = {
-      userName,
-      userProfile,
-      stats,
-      ownedCards,
-      termStats,
-      hasBonusTicket,
-      quizCount,
-      speedStarStats: {
-        maxCombo: speedStarMaxCombo,
-        maxCorrect: speedStarMaxCorrect,
-        challenges: speedStarChallenges
-      },
-      lastDailyChallengeId,
-      dailyStreak,
-      timestamp: Date.now()
-    };
-    const jsonString = JSON.stringify(data);
-    const encrypted = CryptoJS.AES.encrypt(jsonString, 'it-quiz-master-secret-key').toString();
-    setMigrationQR(encrypted);
+    try {
+      // Filter termStats to only include terms with actual data to reduce size
+      const filteredTermStats: TermStats = {};
+      Object.entries(termStats).forEach(([term, stat]) => {
+        const s = stat as TermStat;
+        if (s.correct > 0 || s.total > 0) {
+          filteredTermStats[term] = s;
+        }
+      });
+
+      const data = {
+        userName,
+        userProfile,
+        stats,
+        ownedCards,
+        termStats: filteredTermStats,
+        hasBonusTicket,
+        quizCount,
+        speedStarStats: {
+          maxCombo: speedStarMaxCombo,
+          maxCorrect: speedStarMaxCorrect,
+          challenges: speedStarChallenges
+        },
+        lastDailyChallengeId,
+        dailyStreak,
+        timestamp: Date.now()
+      };
+      const jsonString = JSON.stringify(data);
+      const encrypted = CryptoJS.AES.encrypt(jsonString, 'it-quiz-master-secret-key').toString();
+      
+      // QR code data limit check (approximate)
+      if (encrypted.length > 4000) {
+        setMigrationError("データ量が多すぎるため、QRコードを発行できません。一部のデータを整理するか、開発者にお問い合わせください。");
+        return;
+      }
+      
+      setMigrationQR(encrypted);
+      setMigrationError(null);
+    } catch (err) {
+      console.error("Export error:", err);
+      setMigrationError("データの書き出し中にエラーが発生しました。");
+    }
   };
 
   const processMigrationData = (encryptedData: string) => {
@@ -2694,7 +2766,7 @@ export default function App() {
                               )}
                               
                               <motion.div 
-                                ref={el => cardRefs.current[term] = el}
+                                ref={el => { cardRefs.current[term] = el; }}
                                 layout
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -4174,19 +4246,33 @@ export default function App() {
 
               {migrationQR && (
                 <div className="space-y-6 text-center">
-                  <div className="bg-white p-6 rounded-3xl inline-block shadow-inner border-4 border-theme-accent/20">
-                    <QRCodeSVG value={migrationQR} size={256} level="L" includeMargin={true} />
-                  </div>
+                  <ErrorBoundary>
+                    <div className="bg-white p-6 rounded-3xl inline-block shadow-inner border-4 border-theme-accent/20">
+                      <QRCodeSVG value={migrationQR} size={256} level="L" includeMargin={true} />
+                    </div>
+                  </ErrorBoundary>
                   <div className="space-y-2">
                     <p className="font-bold text-theme-accent">QRコードが発行されました</p>
                     <p className="text-xs text-theme-text-muted">このQRコードを移行先のデバイスで読み取ってください。</p>
                   </div>
-                  <button 
-                    onClick={() => setMigrationQR(null)}
-                    className="w-full py-4 bg-theme-border text-theme-text rounded-2xl font-bold hover:bg-theme-border-strong transition-all"
-                  >
-                    戻る
-                  </button>
+                  <div className="flex flex-col gap-3">
+                    <button 
+                      onClick={() => setMigrationQR(null)}
+                      className="w-full py-4 bg-theme-border text-theme-text rounded-2xl font-bold hover:bg-theme-border-strong transition-all"
+                    >
+                      戻る
+                    </button>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(migrationQR).then(() => {
+                          alert("データをクリップボードにコピーしました。");
+                        });
+                      }}
+                      className="w-full py-2 text-xs text-theme-text-muted hover:text-theme-accent transition-colors"
+                    >
+                      テキストとしてコピー（QRコードが読めない場合）
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -4197,12 +4283,23 @@ export default function App() {
                     <p className="font-bold">スキャン中...</p>
                     <p className="text-xs text-theme-text-muted">移行元のQRコードをカメラにかざしてください。</p>
                   </div>
-                  <button 
-                    onClick={() => setIsScanning(false)}
-                    className="w-full py-4 bg-theme-border text-theme-text rounded-2xl font-bold hover:bg-theme-border-strong transition-all"
-                  >
-                    キャンセル
-                  </button>
+                  <div className="flex flex-col gap-3">
+                    <button 
+                      onClick={() => setIsScanning(false)}
+                      className="w-full py-4 bg-theme-border text-theme-text rounded-2xl font-bold hover:bg-theme-border-strong transition-all"
+                    >
+                      キャンセル
+                    </button>
+                    <button 
+                      onClick={() => {
+                        const text = prompt("コピーしたテキストを貼り付けてください：");
+                        if (text) processMigrationData(text);
+                      }}
+                      className="w-full py-2 text-xs text-theme-text-muted hover:text-theme-accent transition-colors"
+                    >
+                      テキストから読み込む
+                    </button>
+                  </div>
                 </div>
               )}
 
