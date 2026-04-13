@@ -448,6 +448,7 @@ export default function App() {
   const [migrationQR, setMigrationQR] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [migrationError, setMigrationError] = useState<string | null>(null);
+  const [isQRFullscreen, setIsQRFullscreen] = useState(false);
   const [pendingMigrationData, setPendingMigrationData] = useState<any | null>(null);
   const [termStats, setTermStats] = useState<TermStats>(() => {
     const saved = localStorage.getItem('it_quiz_term_stats');
@@ -4263,7 +4264,7 @@ export default function App() {
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              className="bg-theme-card w-full max-w-lg p-8 rounded-[2.5rem] shadow-2xl border border-theme-border space-y-6 relative max-h-[90vh] overflow-y-auto"
+              className={`bg-theme-card w-full ${isQRFullscreen && migrationQR ? 'max-w-none h-full' : 'max-w-lg'} p-8 rounded-[2.5rem] shadow-2xl border border-theme-border space-y-6 relative ${isQRFullscreen && migrationQR ? '' : 'max-h-[90vh] overflow-y-auto'}`}
             >
               <button 
                 onClick={() => {
@@ -4272,19 +4273,22 @@ export default function App() {
                   setIsScanning(false);
                   setMigrationError(null);
                   setPendingMigrationData(null);
+                  setIsQRFullscreen(false);
                 }}
-                className="absolute top-6 right-6 p-2 hover:bg-theme-muted rounded-full transition-colors"
+                className="absolute top-6 right-6 p-2 hover:bg-theme-muted rounded-full transition-colors z-10"
               >
                 <X size={24} />
               </button>
 
-              <div className="text-center space-y-2">
-                <div className="w-16 h-16 bg-theme-accent/10 text-theme-accent rounded-3xl flex items-center justify-center mx-auto mb-2">
-                  <RefreshCw size={32} />
+              {!isQRFullscreen && (
+                <div className="text-center space-y-2">
+                  <div className="w-16 h-16 bg-theme-accent/10 text-theme-accent rounded-3xl flex items-center justify-center mx-auto mb-2">
+                    <RefreshCw size={32} />
+                  </div>
+                  <h2 className="text-2xl font-bold">データ移行</h2>
+                  <p className="text-theme-text-muted text-sm">他のデバイスへデータを引き継いだり、読み込んだりできます。</p>
                 </div>
-                <h2 className="text-2xl font-bold">データ移行</h2>
-                <p className="text-theme-text-muted text-sm">他のデバイスへデータを引き継いだり、読み込んだりできます。</p>
-              </div>
+              )}
 
               {!migrationQR && !isScanning && !pendingMigrationData && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -4328,34 +4332,56 @@ export default function App() {
               )}
 
               {migrationQR && (
-                <div className="space-y-6 text-center">
+                <div className={`space-y-6 text-center ${isQRFullscreen ? 'h-full flex flex-col justify-center items-center' : ''}`}>
                   <ErrorBoundary>
-                    <div className="bg-white p-6 rounded-3xl inline-block shadow-inner border-4 border-theme-accent/20">
-                      <QRCodeSVG value={migrationQR} size={256} level="L" includeMargin={true} />
+                    <div 
+                      onClick={() => setIsQRFullscreen(!isQRFullscreen)}
+                      className={`bg-white p-6 rounded-3xl inline-block shadow-inner border-4 border-theme-accent/20 cursor-pointer transition-all ${isQRFullscreen ? 'scale-110 sm:scale-125' : 'hover:scale-105'}`}
+                    >
+                      <QRCodeSVG 
+                        value={migrationQR} 
+                        size={isQRFullscreen ? (window.innerWidth < 640 ? 280 : 400) : 256} 
+                        level="L" 
+                        includeMargin={true} 
+                      />
                     </div>
                   </ErrorBoundary>
-                  <div className="space-y-2">
-                    <p className="font-bold text-theme-accent">QRコードが発行されました</p>
-                    <p className="text-xs text-theme-text-muted">このQRコードを移行先のデバイスで読み取ってください。</p>
-                  </div>
-                  <div className="flex flex-col gap-3">
-                    <button 
-                      onClick={() => setMigrationQR(null)}
-                      className="w-full py-4 bg-theme-border text-theme-text rounded-2xl font-bold hover:bg-theme-border-strong transition-all"
-                    >
-                      戻る
-                    </button>
-                    <button 
-                      onClick={() => {
-                        navigator.clipboard.writeText(migrationQR).then(() => {
-                          alert("データをクリップボードにコピーしました。");
-                        });
-                      }}
-                      className="w-full py-2 text-xs text-theme-text-muted hover:text-theme-accent transition-colors"
-                    >
-                      テキストとしてコピー（QRコードが読めない場合）
-                    </button>
-                  </div>
+                  
+                  {!isQRFullscreen ? (
+                    <>
+                      <div className="space-y-2">
+                        <p className="font-bold text-theme-accent">QRコードが発行されました</p>
+                        <p className="text-xs text-theme-text-muted">このQRコードを移行先のデバイスで読み取ってください。<br/>タップすると拡大表示します。</p>
+                      </div>
+                      <div className="flex flex-col gap-3">
+                        <button 
+                          onClick={() => setMigrationQR(null)}
+                          className="w-full py-4 bg-theme-border text-theme-text rounded-2xl font-bold hover:bg-theme-border-strong transition-all"
+                        >
+                          戻る
+                        </button>
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(migrationQR).then(() => {
+                              alert("データをクリップボードにコピーしました。");
+                            });
+                          }}
+                          className="w-full py-2 text-xs text-theme-text-muted hover:text-theme-accent transition-colors"
+                        >
+                          テキストとしてコピー（QRコードが読めない場合）
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="mt-8">
+                      <button 
+                        onClick={() => setIsQRFullscreen(false)}
+                        className="px-8 py-3 bg-theme-accent text-white rounded-full font-bold shadow-lg"
+                      >
+                        拡大を解除
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
