@@ -90,6 +90,7 @@ import {
 import { QRCodeSVG } from 'qrcode.react';
 import { Html5Qrcode } from 'html5-qrcode';
 import CryptoJS from 'crypto-js';
+import LZString from 'lz-string';
 import { storage } from './lib/storage';
 import { quizCategories, Category, Subcategory, allTermsMap, allTerms, Rarity } from './data/quizData';
 import { storyCards, StoryCard } from './data/storyData';
@@ -927,7 +928,9 @@ export default function App() {
         }
       });
 
-      // Compression logic (Version 4: Base64 encoding for smaller payload)
+      const catIds = ['all', ...quizCategories.map(c => c.id), ...quizCategories.flatMap(c => c.subcategories.map(s => s.id))];
+
+      // Compression logic (Version 5: Base64 encoding + Category Stats + LZString)
       const compressData = () => {
         let compressed = "";
         
@@ -942,6 +945,14 @@ export default function App() {
           } while (n > 0);
           return str.padStart(padding, 'A');
         };
+
+        // stats: S + catIndex(1 char) + highScore(3 chars) + attempts(3 chars) + totalScore(3 chars) = 10 chars
+        Object.entries(stats).forEach(([id, stat]) => {
+          const index = catIds.indexOf(id);
+          if (index !== -1 && (stat.attempts > 0 || stat.highScore > 0)) {
+            compressed += `S${toB64(index, 1)}${toB64(Math.min(262143, stat.highScore), 3)}${toB64(Math.min(262143, stat.attempts), 3)}${toB64(Math.min(262143, stat.totalScore), 3)}`;
+          }
+        });
 
         // termStats: T + ID(2 chars) + Correct(3 chars) + Total(3 chars) = 9 chars
         Object.entries(filteredTermStats).forEach(([name, stat]) => {
@@ -966,10 +977,9 @@ export default function App() {
       };
 
       const data = {
-        v: 4, // Version 4: Base64 compression
+        v: 5, // Version 5: LZString + Compressed Stats
         u: userName,
         p: userProfile,
-        s: stats,
         d: compressData(),
         bt: hasBonusTicket,
         qc: quizCount,
@@ -983,9 +993,11 @@ export default function App() {
         t: Date.now()
       };
       const jsonString = JSON.stringify(data);
-      const encrypted = CryptoJS.AES.encrypt(jsonString, 'it-quiz-master-v3-key').toString();
       
-      // QR code data limit check (approximate)
+      // Use LZString for compression and obfuscation instead of AES
+      const encrypted = LZString.compressToEncodedURIComponent(jsonString);
+      
+      // QR code data limit check (approximate, alphanumeric mode max is ~4200)
       if (encrypted.length > 4200) {
         setMigrationError("データ量が多すぎるため、QRコードを発行できません。テキストコピー機能をご利用ください。");
         return;
@@ -1001,26 +1013,38 @@ export default function App() {
 
   const processMigrationData = (encryptedData: string) => {
     try {
-      let bytes;
-      try {
-        bytes = CryptoJS.AES.decrypt(encryptedData, 'it-quiz-master-v3-key');
-      } catch (e) {
-        // Try legacy key if v3 fails
-        bytes = CryptoJS.AES.decrypt(encryptedData, 'it-quiz-master-secret-key');
+      let decryptedData;
+      
+      // Try Version 5 (LZString) first
+      const lzDecoded = LZString.decompressFromEncodedURIComponent(encryptedData);
+      if (lzDecoded && lzDecoded.includes('"v":5')) {
+        decryptedData = JSON.parse(lzDecoded);
+      } else {
+        // Fallback to AES (Versions <= 4)
+        let bytes;
+        try {
+          bytes = CryptoJS.AES.decrypt(encryptedData, 'it-quiz-master-v3-key');
+        } catch (e) {
+          // Try legacy key if v3 fails
+          bytes = CryptoJS.AES.decrypt(encryptedData, 'it-quiz-master-secret-key');
+        }
+        decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
       }
-      const decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
       
       let finalData: any = {};
 
-      if (decryptedData.v >= 2 && decryptedData.v <= 4) {
-        // Decompress version 2, 3, or 4
+      if (decryptedData.v >= 2 && decryptedData.v <= 5) {
+        // Decompress version 2, 3, 4, or 5
         const idToName: Record<number, string> = {};
         Object.values(allTermsMap).forEach(t => idToName[t.id] = t.name);
 
-        const stats: TermStats = {};
+        const parsedStats: TermStats = {};
+        const parsedCategoryStats: Record<string, UnitStats> = {};
         const owned: Record<string, number> = {};
         const d = decryptedData.d || "";
         const version = decryptedData.v;
+        
+        const catIds = ['all', ...quizCategories.map(c => c.id), ...quizCategories.flatMap(c => c.subcategories.map(s => s.id))];
         
         // Helper to parse base64 string to number
         const fromB64 = (str: string) => {
@@ -1035,10 +1059,20 @@ export default function App() {
         let i = 0;
         while (i < d.length) {
           const type = d[i];
-          if (type === 'T') {
+          if (type === 'S') {
+            const index = fromB64(d.substring(i + 1, i + 2));
+            const highScore = fromB64(d.substring(i + 2, i + 5));
+            const attempts = fromB64(d.substring(i + 5, i + 8));
+            const totalScore = fromB64(d.substring(i + 8, i + 11));
+            const id = catIds[index];
+            if (id) {
+              parsedCategoryStats[id] = { highScore, attempts, totalScore };
+            }
+            i += 11;
+          } else if (type === 'T') {
             let id, correct, total, step;
             
-            if (version === 4) {
+            if (version >= 4) {
               id = fromB64(d.substring(i + 1, i + 3));
               correct = fromB64(d.substring(i + 3, i + 6));
               total = fromB64(d.substring(i + 6, i + 9));
@@ -1057,11 +1091,11 @@ export default function App() {
             }
             
             const name = idToName[id];
-            if (name) stats[name] = { correct, total };
+            if (name) parsedStats[name] = { correct, total };
             i += step;
           } else if (type === 'C') {
             let id, count, step;
-            if (version === 4) {
+            if (version >= 4) {
               id = fromB64(d.substring(i + 1, i + 3));
               count = fromB64(d.substring(i + 3, i + 4));
               step = 4;
@@ -1081,9 +1115,9 @@ export default function App() {
         finalData = {
           userName: decryptedData.u,
           userProfile: decryptedData.p,
-          stats: decryptedData.s,
+          stats: version >= 5 ? parsedCategoryStats : decryptedData.s,
           ownedCards: owned,
-          termStats: stats,
+          termStats: parsedStats,
           hasBonusTicket: decryptedData.bt,
           quizCount: decryptedData.qc,
           speedStarStats: {
