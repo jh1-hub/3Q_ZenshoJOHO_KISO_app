@@ -928,13 +928,13 @@ export default function App() {
       // Compression logic
       const compressData = () => {
         let compressed = "";
-        // termStats: T + ID(3 hex) + Correct(2 hex) + Total(2 hex) = 8 chars
+        // termStats: T + ID(3 hex) + Correct(4 hex) + Total(4 hex) = 12 chars
         Object.entries(filteredTermStats).forEach(([name, stat]) => {
           const term = allTermsMap[name];
           if (term) {
             const id = term.id.toString(16).padStart(3, '0');
-            const correct = Math.min(255, stat.correct).toString(16).padStart(2, '0');
-            const total = Math.min(255, stat.total).toString(16).padStart(2, '0');
+            const correct = Math.min(65535, stat.correct).toString(16).padStart(4, '0');
+            const total = Math.min(65535, stat.total).toString(16).padStart(4, '0');
             compressed += `T${id}${correct}${total}`;
           }
         });
@@ -951,7 +951,7 @@ export default function App() {
       };
 
       const data = {
-        v: 2, // Version 2: Compressed
+        v: 3, // Version 3: Compressed with 16-bit counts
         u: userName,
         p: userProfile,
         s: stats,
@@ -991,25 +991,36 @@ export default function App() {
       
       let finalData: any = {};
 
-      if (decryptedData.v === 2) {
-        // Decompress version 2
+      if (decryptedData.v === 2 || decryptedData.v === 3) {
+        // Decompress version 2 or 3
         const idToName: Record<number, string> = {};
         Object.values(allTermsMap).forEach(t => idToName[t.id] = t.name);
 
         const stats: TermStats = {};
         const owned: Record<string, number> = {};
         const d = decryptedData.d || "";
+        const version = decryptedData.v;
         
         let i = 0;
         while (i < d.length) {
           const type = d[i];
           if (type === 'T') {
             const id = parseInt(d.substring(i + 1, i + 4), 16);
-            const correct = parseInt(d.substring(i + 4, i + 6), 16);
-            const total = parseInt(d.substring(i + 6, i + 8), 16);
+            let correct, total, step;
+            
+            if (version === 3) {
+              correct = parseInt(d.substring(i + 4, i + 8), 16);
+              total = parseInt(d.substring(i + 8, i + 12), 16);
+              step = 12;
+            } else {
+              correct = parseInt(d.substring(i + 4, i + 6), 16);
+              total = parseInt(d.substring(i + 6, i + 8), 16);
+              step = 8;
+            }
+            
             const name = idToName[id];
             if (name) stats[name] = { correct, total };
-            i += 8;
+            i += step;
           } else if (type === 'C') {
             const id = parseInt(d.substring(i + 1, i + 4), 16);
             const count = parseInt(d.substring(i + 4, i + 6), 16);
