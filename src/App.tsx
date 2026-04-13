@@ -96,6 +96,9 @@ import { quizCategories, Category, Subcategory, allTermsMap, allTerms, Rarity } 
 import { storyCards, StoryCard } from './data/storyData';
 import { generateQuestion, Question, QuestionType } from './services/geminiService';
 
+const idToNameMap: Record<number, string> = {};
+Object.values(allTermsMap).forEach(t => idToNameMap[t.id] = t.name);
+
 type GameState = 'START' | 'CATEGORY_SELECT' | 'QUIZ' | 'RESULT' | 'COLLECTION' | 'STATS' | 'SPEED_STAR' | 'STORY' | 'TERM_PERFORMANCE';
 
 interface UnitStats {
@@ -454,7 +457,25 @@ export default function App() {
   const [pendingMigrationData, setPendingMigrationData] = useState<any | null>(null);
   const [termStats, setTermStats] = useState<TermStats>(() => {
     const saved = storage.getItem('it_quiz_term_stats');
-    return saved ? JSON.parse(saved) : {};
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        const nameBasedStats: TermStats = {};
+        Object.entries(parsed).forEach(([key, value]) => {
+          if (isNaN(Number(key))) {
+            nameBasedStats[key] = value as TermStat;
+          } else {
+            const termId = Number(key);
+            const termName = idToNameMap[termId];
+            if (termName) nameBasedStats[termName] = value as TermStat;
+          }
+        });
+        return nameBasedStats;
+      } catch (e) {
+        return {};
+      }
+    }
+    return {};
   });
   const [selectedSubcategory, setSelectedSubcategory] = useState<Subcategory | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -557,7 +578,13 @@ export default function App() {
     const savedName = storage.getItem('it_quiz_username');
     const savedProfile = storage.getItem('it_quiz_user_profile');
     if (savedName) setUserName(savedName);
-    if (savedProfile) setUserProfile(JSON.parse(savedProfile));
+    if (savedProfile) {
+      try {
+        setUserProfile(JSON.parse(savedProfile));
+      } catch (e) {
+        console.error("Failed to parse user profile", e);
+      }
+    }
 
     const savedStats = storage.getItem('it_quiz_stats');
     if (savedStats) {
@@ -589,7 +616,18 @@ export default function App() {
     const savedCollection = storage.getItem('it_quiz_collection');
     if (savedCollection) {
       try {
-        setOwnedCards(JSON.parse(savedCollection));
+        const parsed = JSON.parse(savedCollection);
+        const nameBasedCollection: Record<string, number> = {};
+        Object.entries(parsed).forEach(([key, value]) => {
+          if (isNaN(Number(key))) {
+            nameBasedCollection[key] = value as number;
+          } else {
+            const termId = Number(key);
+            const termName = idToNameMap[termId];
+            if (termName) nameBasedCollection[termName] = value as number;
+          }
+        });
+        setOwnedCards(nameBasedCollection);
       } catch (e) {
         console.error("Failed to parse collection", e);
       }
@@ -604,7 +642,14 @@ export default function App() {
       cappedCollection[term] = Math.min(255, count);
     });
     setOwnedCards(cappedCollection);
-    storage.setItem('it_quiz_collection', JSON.stringify(cappedCollection));
+    
+    // Convert to ID-based map for storage
+    const idBasedCollection: Record<number, number> = {};
+    Object.entries(cappedCollection).forEach(([termName, count]) => {
+      const term = allTermsMap[termName];
+      if (term) idBasedCollection[term.id] = count;
+    });
+    storage.setItem('it_quiz_collection', JSON.stringify(idBasedCollection));
   };
 
   const takeScreenshot = () => {
@@ -791,7 +836,15 @@ export default function App() {
         total: Math.min(255, current.total + 1)
       };
       const newStats = { ...prev, [term]: next };
-      storage.setItem('it_quiz_term_stats', JSON.stringify(newStats));
+      
+      // Convert to ID-based map for storage
+      const idBasedStats: Record<number, TermStat> = {};
+      Object.entries(newStats).forEach(([termName, stat]) => {
+        const t = allTermsMap[termName];
+        if (t) idBasedStats[t.id] = stat;
+      });
+      storage.setItem('it_quiz_term_stats', JSON.stringify(idBasedStats));
+      
       return newStats;
     });
   };
@@ -1149,10 +1202,23 @@ export default function App() {
       setUserName(pendingMigrationData.userName);
       setUserProfile(pendingMigrationData.userProfile);
       setStats(pendingMigrationData.stats);
+      
       setOwnedCards(pendingMigrationData.ownedCards);
+      const idBasedCollection: Record<number, number> = {};
+      Object.entries(pendingMigrationData.ownedCards).forEach(([termName, count]) => {
+        const t = allTermsMap[termName];
+        if (t) idBasedCollection[t.id] = count as number;
+      });
+      storage.setItem('it_quiz_collection', JSON.stringify(idBasedCollection));
+
       if (pendingMigrationData.termStats) {
         setTermStats(pendingMigrationData.termStats);
-        storage.setItem('it_quiz_term_stats', JSON.stringify(pendingMigrationData.termStats));
+        const idBasedStats: Record<number, TermStat> = {};
+        Object.entries(pendingMigrationData.termStats).forEach(([termName, stat]) => {
+          const t = allTermsMap[termName];
+          if (t) idBasedStats[t.id] = stat as TermStat;
+        });
+        storage.setItem('it_quiz_term_stats', JSON.stringify(idBasedStats));
       }
       
       // New fields
@@ -1183,7 +1249,6 @@ export default function App() {
       storage.setItem('it_quiz_username', pendingMigrationData.userName || '');
       storage.setItem('it_quiz_user_profile', JSON.stringify(pendingMigrationData.userProfile));
       storage.setItem('it_quiz_stats', JSON.stringify(pendingMigrationData.stats));
-      storage.setItem('it_quiz_collection', JSON.stringify(pendingMigrationData.ownedCards));
       
       setPendingMigrationData(null);
       setShowMigrationModal(false);
@@ -1411,6 +1476,21 @@ export default function App() {
     return { term: resultTerm, rarity: selectedRarity };
   };
 
+  const gachaTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (gameState !== 'RESULT') {
+      if (gachaTimeoutRef.current) {
+        clearTimeout(gachaTimeoutRef.current);
+        gachaTimeoutRef.current = null;
+      }
+      setIsGachaRolling(false);
+      setCurrentGachaCard(null);
+      setGachaQueue(0);
+      setGachaHistory([]);
+    }
+  }, [gameState]);
+
   const pullGacha = () => {
     if (isGachaRolling) return;
     
@@ -1425,7 +1505,7 @@ export default function App() {
     const isDuplicate = (ownedCards[firstDraw.term] || 0) > 0;
     const maxRedraws = firstDraw.rarity === 'UR' ? 3 : firstDraw.rarity === 'SR' ? 2 : 1;
 
-    setTimeout(() => {
+    gachaTimeoutRef.current = setTimeout(() => {
       setCurrentGachaCard({
         term: firstDraw.term,
         initialRarity: firstDraw.rarity,
@@ -1463,7 +1543,7 @@ export default function App() {
       const isDuplicate = (newCollection[nextDraw.term] || 0) > 0;
       const maxRedraws = nextDraw.rarity === 'UR' ? 3 : nextDraw.rarity === 'SR' ? 2 : 1;
 
-      setTimeout(() => {
+      gachaTimeoutRef.current = setTimeout(() => {
         setCurrentGachaCard({
           term: nextDraw.term,
           initialRarity: nextDraw.rarity,
@@ -1492,7 +1572,7 @@ export default function App() {
     const redraw = drawSingleCard(ownedCards);
     const isDuplicate = (ownedCards[redraw.term] || 0) > 0;
 
-    setTimeout(() => {
+    gachaTimeoutRef.current = setTimeout(() => {
       setCurrentGachaCard({
         term: redraw.term,
         initialRarity: currentGachaCard.initialRarity,
