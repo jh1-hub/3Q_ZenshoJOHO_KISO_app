@@ -595,8 +595,12 @@ export default function App() {
 
   // Save collection to localStorage
   const saveCollection = (newCollection: Record<string, number>) => {
-    setOwnedCards(newCollection);
-    localStorage.setItem('it_quiz_collection', JSON.stringify(newCollection));
+    const cappedCollection: Record<string, number> = {};
+    Object.entries(newCollection).forEach(([term, count]) => {
+      cappedCollection[term] = Math.min(255, count);
+    });
+    setOwnedCards(cappedCollection);
+    localStorage.setItem('it_quiz_collection', JSON.stringify(cappedCollection));
   };
 
   const takeScreenshot = () => {
@@ -777,9 +781,10 @@ export default function App() {
     if (!term || term === 'undefined' || term === 'null') return;
     setTermStats(prev => {
       const current = prev[term] || { correct: 0, total: 0 };
+      // Cap at 255 (FF in hex)
       const next = {
-        correct: current.correct + (isCorrect ? 1 : 0),
-        total: current.total + 1
+        correct: Math.min(255, current.correct + (isCorrect ? 1 : 0)),
+        total: Math.min(255, current.total + 1)
       };
       const newStats = { ...prev, [term]: next };
       localStorage.setItem('it_quiz_term_stats', JSON.stringify(newStats));
@@ -919,29 +924,54 @@ export default function App() {
         }
       });
 
+      // Compression logic
+      const compressData = () => {
+        let compressed = "";
+        // termStats: T + ID(3 hex) + Correct(2 hex) + Total(2 hex) = 8 chars
+        Object.entries(filteredTermStats).forEach(([name, stat]) => {
+          const term = allTermsMap[name];
+          if (term) {
+            const id = term.id.toString(16).padStart(3, '0');
+            const correct = Math.min(255, stat.correct).toString(16).padStart(2, '0');
+            const total = Math.min(255, stat.total).toString(16).padStart(2, '0');
+            compressed += `T${id}${correct}${total}`;
+          }
+        });
+        // ownedCards: C + ID(3 hex) + Count(2 hex) = 6 chars
+        Object.entries(ownedCards).forEach(([name, count]) => {
+          const term = allTermsMap[name];
+          if (term && count > 0) {
+            const id = term.id.toString(16).padStart(3, '0');
+            const c = Math.min(255, count).toString(16).padStart(2, '0');
+            compressed += `C${id}${c}`;
+          }
+        });
+        return compressed;
+      };
+
       const data = {
-        userName,
-        userProfile,
-        stats,
-        ownedCards,
-        termStats: filteredTermStats,
-        hasBonusTicket,
-        quizCount,
-        speedStarStats: {
-          maxCombo: speedStarMaxCombo,
-          maxCorrect: speedStarMaxCorrect,
-          challenges: speedStarChallenges
+        v: 2, // Version 2: Compressed
+        u: userName,
+        p: userProfile,
+        s: stats,
+        d: compressData(),
+        bt: hasBonusTicket,
+        qc: quizCount,
+        ss: {
+          c: speedStarMaxCombo,
+          m: speedStarMaxCorrect,
+          a: speedStarChallenges
         },
-        lastDailyChallengeId,
-        dailyStreak,
-        timestamp: Date.now()
+        ld: lastDailyChallengeId,
+        ds: dailyStreak,
+        t: Date.now()
       };
       const jsonString = JSON.stringify(data);
       const encrypted = CryptoJS.AES.encrypt(jsonString, 'it-quiz-master-secret-key').toString();
       
       // QR code data limit check (approximate)
       if (encrypted.length > 4000) {
-        setMigrationError("データ量が多すぎるため、QRコードを発行できません。一部のデータを整理するか、開発者にお問い合わせください。");
+        setMigrationError("データ量が多すぎるため、QRコードを発行できません。テキストコピー機能をご利用ください。");
         return;
       }
       
@@ -958,8 +988,61 @@ export default function App() {
       const bytes = CryptoJS.AES.decrypt(encryptedData, 'it-quiz-master-secret-key');
       const decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
       
-      if (decryptedData.userName && decryptedData.stats && decryptedData.ownedCards) {
-        setPendingMigrationData(decryptedData);
+      let finalData: any = {};
+
+      if (decryptedData.v === 2) {
+        // Decompress version 2
+        const idToName: Record<number, string> = {};
+        Object.values(allTermsMap).forEach(t => idToName[t.id] = t.name);
+
+        const stats: TermStats = {};
+        const owned: Record<string, number> = {};
+        const d = decryptedData.d || "";
+        
+        let i = 0;
+        while (i < d.length) {
+          const type = d[i];
+          if (type === 'T') {
+            const id = parseInt(d.substring(i + 1, i + 4), 16);
+            const correct = parseInt(d.substring(i + 4, i + 6), 16);
+            const total = parseInt(d.substring(i + 6, i + 8), 16);
+            const name = idToName[id];
+            if (name) stats[name] = { correct, total };
+            i += 8;
+          } else if (type === 'C') {
+            const id = parseInt(d.substring(i + 1, i + 4), 16);
+            const count = parseInt(d.substring(i + 4, i + 6), 16);
+            const name = idToName[id];
+            if (name) owned[name] = count;
+            i += 6;
+          } else {
+            i++;
+          }
+        }
+
+        finalData = {
+          userName: decryptedData.u,
+          userProfile: decryptedData.p,
+          stats: decryptedData.s,
+          ownedCards: owned,
+          termStats: stats,
+          hasBonusTicket: decryptedData.bt,
+          quizCount: decryptedData.qc,
+          speedStarStats: {
+            maxCombo: decryptedData.ss?.c || 0,
+            maxCorrect: decryptedData.ss?.m || 0,
+            challenges: decryptedData.ss?.a || 0
+          },
+          lastDailyChallengeId: decryptedData.ld,
+          dailyStreak: decryptedData.ds
+        };
+      } else {
+        // Legacy version 1
+        finalData = decryptedData;
+      }
+      
+      if (finalData.userName && finalData.stats && finalData.ownedCards) {
+        setPendingMigrationData(finalData);
         setMigrationError(null);
       } else {
         setMigrationError("無効なデータ形式です。");

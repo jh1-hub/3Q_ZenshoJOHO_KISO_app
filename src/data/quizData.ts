@@ -2,6 +2,7 @@
 export type Rarity = 'C' | 'R' | 'SR' | 'UR';
 
 export interface TermData {
+  id: number;
   name: string;
   descriptions: string[];
   rarity: Rarity;
@@ -30,6 +31,7 @@ export const quizCategories: Category[] = [
         "title": "情報処理の重要性",
         "terms": [
           {
+            "id": 1,
             "name": "データ",
             "descriptions": [
               "事実や数値などをそのまま記録したもので、加工される前の素材のこと。",
@@ -44,6 +46,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 2,
             "name": "情報",
             "descriptions": [
               "データを特定の目的に沿って加工し、判断や行動に役立つようにしたもの。",
@@ -58,6 +61,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 3,
             "name": "情報処理",
             "descriptions": [
               "コンピュータなどを用いて、データを加工して情報を作り出す一連の過程。",
@@ -72,6 +76,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 4,
             "name": "情報通信技術（ICT）",
             "descriptions": [
               "情報処理技術と通信技術を組み合わせた、情報の伝達や共有を可能にする技術の総称。",
@@ -86,6 +91,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 5,
             "name": "高度情報通信社会",
             "descriptions": [
               "ICTが社会のあらゆる分野に浸透し、情報の価値が飛躍的に高まった社会。",
@@ -100,6 +106,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 6,
             "name": "情報システム",
             "descriptions": [
               "情報の収集、処理、蓄積、伝達を効率的に行うための仕組み。",
@@ -114,6 +121,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 7,
             "name": "サーバ",
             "descriptions": [
               "ネットワークを通じて、他のコンピュータ（クライアント）にサービスや機能を提供するコンピュータ。",
@@ -128,6 +136,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 8,
             "name": "データベース",
             "descriptions": [
               "大量のデータを整理・統合し、検索や更新が容易にできるように蓄積したもの。",
@@ -142,6 +151,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 9,
             "name": "ビッグデータ",
             "descriptions": [
               "従来のデータベース管理システムでは扱うのが困難なほど、巨大で多様なデータの集まり。",
@@ -156,6 +166,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 10,
             "name": "クラウドコンピューティング",
             "descriptions": [
               "インターネット経由で、必要な時に必要な分だけコンピュータ資源を利用する形態。",
@@ -170,6 +181,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 11,
             "name": "機械学習",
             "descriptions": [
               "コンピュータに大量のデータを与え、データに潜むパターンやルールを自ら学習させる手法。",
@@ -184,6 +196,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 12,
             "name": "人工知能（AI）",
             "descriptions": [
               "人間の知的な活動（推論、学習、判断など）をコンピュータに模倣させる技術の総称。",
@@ -198,6 +211,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 13,
             "name": "データマイニング",
             "descriptions": [
               "大量のデータから、統計的手法やAIを用いて有用な知識や法則を掘り起こすこと。",
@@ -212,6 +226,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 14,
             "name": "バーコード",
             "descriptions": [
               "太さの異なる縞模様で数字や文字を表し、光学スキャナで読み取る識別符号。",
@@ -226,6 +241,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 15,
             "name": "非接触型 IC",
             "descriptions": [
               "電波を利用して、リーダ・ライタにかざすだけでデータのやり取りができる集積回路。",
@@ -240,6 +256,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 16,
             "name": "GPS",
             "descriptions": [
               "人工衛星からの電波を受信して、現在地の正確な緯度・経度を測定するシステム。",
@@ -254,6 +271,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 17,
             "name": "インターネットバンキング",
             "descriptions": [
               "銀行の店舗に行かず、パソコンやスマホから振込や残高照会ができるサービス。",
@@ -268,6 +286,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 18,
             "name": "オンラインショッピング",
             "descriptions": [
               "インターネット上のWebサイトを通じて、商品やサービスを購入すること。",
@@ -282,6 +301,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 19,
             "name": "電子発注システム（EOS）",
             "descriptions": [
               "企業間で発注データをオンラインでやり取りし、事務作業を自動化するシステム。",
@@ -296,6 +316,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 20,
             "name": "電子商取引（EC）",
             "descriptions": [
               "インターネットなどのネットワークを利用して、商品やサービスの売買を行うこと。",
@@ -310,6 +331,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 21,
             "name": "仮想現実（VR）",
             "descriptions": [
               "コンピュータで作られた仮想的な空間を、あたかも現実であるかのように体験させる技術。",
@@ -324,6 +346,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 22,
             "name": "拡張現実（AR）",
             "descriptions": [
               "現実の風景に、コンピュータで作ったデジタル情報を重ね合わせて表示する技術。",
@@ -338,6 +361,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 23,
             "name": "複合現実（MR）",
             "descriptions": [
               "現実世界と仮想世界を密接に融合させ、デジタル情報を現実の物体のように操作できる技術。",
@@ -352,6 +376,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 24,
             "name": "IoT",
             "descriptions": [
               "身の回りのあらゆるモノがインターネットにつながり、情報をやり取りする仕組み。",
@@ -366,6 +391,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 25,
             "name": "SNS",
             "descriptions": [
               "インターネット上で、利用者同士が交流したり情報を発信したりできるサービス。",
@@ -386,6 +412,7 @@ export const quizCategories: Category[] = [
         "title": "コミュニケーションと情報デザイン",
         "terms": [
           {
+            "id": 26,
             "name": "メディアの特性",
             "descriptions": [
               "文字、音声、画像など、情報を伝える媒体がそれぞれ持つ長所や短所のこと。",
@@ -400,6 +427,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 27,
             "name": "ユーザインタフェース",
             "descriptions": [
               "コンピュータと利用者の間で、情報のやり取りを行うための接点や仕組み。",
@@ -414,6 +442,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 28,
             "name": "ユニバーサルデザイン",
             "descriptions": [
               "年齢、性別、国籍、障害の有無に関わらず、すべての人が利用しやすいように設計すること。",
@@ -428,6 +457,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 29,
             "name": "ユーザビリティ",
             "descriptions": [
               "特定の利用者が、特定の目的を達成するために、どれだけ効率的・満足に使えるかという度合い。",
@@ -442,6 +472,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 30,
             "name": "アクセシビリティ",
             "descriptions": [
               "高齢者や障害者を含め、あらゆる人が情報やサービスに支障なく到達・利用できること。",
@@ -456,6 +487,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 31,
             "name": "ピクトグラム",
             "descriptions": [
               "言葉を使わず、形や色だけで意味を伝える視覚記号（絵文字）。",
@@ -470,6 +502,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 32,
             "name": "可読性",
             "descriptions": [
               "文字や文章が、どれだけ読みやすいかという度合い。",
@@ -484,6 +517,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 33,
             "name": "視認性",
             "descriptions": [
               "対象物が、パッと見た瞬間に目に飛び込んでくるかどうかという度合い。",
@@ -498,6 +532,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 34,
             "name": "判読性",
             "descriptions": [
               "文字や記号が、他のものと見間違えることなく正確に識別できるかという度合い。",
@@ -512,6 +547,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 35,
             "name": "フォント",
             "descriptions": [
               "同じデザイン方針で作られた、文字の書体の一揃いのこと。",
@@ -526,6 +562,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 36,
             "name": "ポイント",
             "descriptions": [
               "文字の大きさを表す単位で、1ポイントは約0.35ミリメートル。",
@@ -540,6 +577,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 37,
             "name": "色相",
             "descriptions": [
               "赤、青、黄といった、色の種類や色みの違いのこと。",
@@ -554,6 +592,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 38,
             "name": "明度",
             "descriptions": [
               "色の明るさの度合いのことで、白に近いほど高く、黒に近いほど低い。",
@@ -568,6 +607,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 39,
             "name": "彩度",
             "descriptions": [
               "色の鮮やかさの度合いのことで、混じりけがないほど高く、グレーに近いほど低い。",
@@ -582,6 +622,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 40,
             "name": "色彩",
             "descriptions": [
               "色相、明度、彩度の三属性を組み合わせた、色の総合的な見え方のこと。",
@@ -596,6 +637,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 41,
             "name": "色相環",
             "descriptions": [
               "色相を円状に並べて、色の変化を連続的に表した図のこと。",
@@ -610,6 +652,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 42,
             "name": "補色",
             "descriptions": [
               "色相環で正反対の位置にある色の組み合わせで、混ぜると無彩色になる関係。",
@@ -624,6 +667,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 43,
             "name": "ドット",
             "descriptions": [
               "画像を構成する最小単位である「点」のこと。",
@@ -638,6 +682,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 44,
             "name": "画素",
             "descriptions": [
               "デジタル画像を構成する最小単位で、色情報（RGBなど）を持つ点のこと。",
@@ -652,6 +697,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 45,
             "name": "dpi",
             "descriptions": [
               "1インチ（約2.54cm）の中に、どれだけのドットが含まれるかを表す解像度の単位。",
@@ -666,6 +712,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 46,
             "name": "ppi",
             "descriptions": [
               "1インチ（約2.54cm）の中に、どれだけの画素（ピクセル）が含まれるかを表す単位。",
@@ -680,6 +727,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 47,
             "name": "光の三原色",
             "descriptions": [
               "赤（Red）、緑（Green）、青（Blue）の3色のことで、混ぜるほど明るくなる。",
@@ -694,6 +742,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 48,
             "name": "色の三原色",
             "descriptions": [
               "シアン（Cyan）、マゼンタ（Magenta）、イエロー（Yellow）の3色のこと。",
@@ -714,6 +763,7 @@ export const quizCategories: Category[] = [
         "title": "情報モラル",
         "terms": [
           {
+            "id": 49,
             "name": "情報モラル",
             "descriptions": [
               "情報社会において、適切に活動するために求められる倫理観や道徳心。",
@@ -728,6 +778,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 50,
             "name": "フィッシング詐欺",
             "descriptions": [
               "実在する企業を装った偽メールを送り、偽サイトに誘導して個人情報を盗み出す手口。",
@@ -742,6 +793,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 51,
             "name": "ワンクリック詐欺",
             "descriptions": [
               "Webサイトのリンクをクリックしただけで、一方的に高額な契約成立を装い請求する手口。",
@@ -756,6 +808,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 52,
             "name": "有害サイト",
             "descriptions": [
               "暴力的な表現、アダルトコンテンツ、犯罪を助長する情報などを含むWebサイト。",
@@ -770,6 +823,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 53,
             "name": "ユーザ ID",
             "descriptions": [
               "システムやサービスを利用する際に、個人を識別するために使われる符号。",
@@ -784,6 +838,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 54,
             "name": "パスワード",
             "descriptions": [
               "本人であることを証明するために、ユーザIDと組み合わせて入力する秘密の文字列。",
@@ -798,6 +853,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 55,
             "name": "なりすまし",
             "descriptions": [
               "他人のユーザIDやパスワードを盗用し、その人のふりをしてシステムを利用する行為。",
@@ -812,6 +868,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 56,
             "name": "不正アクセス禁止法",
             "descriptions": [
               "他人のID・パスワードの無断使用や、セキュリティの脆弱性を突いた侵入を禁止する法律。",
@@ -826,6 +883,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 57,
             "name": "プライバシー",
             "descriptions": [
               "個人の私生活に関する情報を、みだりに公開されない権利。",
@@ -840,6 +898,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 58,
             "name": "肖像権",
             "descriptions": [
               "自分の顔や姿を、無断で写真に撮られたり公表されたりしない権利。",
@@ -854,6 +913,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 59,
             "name": "個人情報保護法",
             "descriptions": [
               "個人情報の適切な取り扱いを定め、個人の権利と利益を守るための法律。",
@@ -868,6 +928,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 60,
             "name": "個人識別符号",
             "descriptions": [
               "指紋データやマイナンバーなど、それ単体で特定の個人を識別できる文字や数字の列。",
@@ -882,6 +943,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 61,
             "name": "オプトイン",
             "descriptions": [
               "あらかじめ利用者の同意を得てから、情報の収集やメール送信などを行う方式。",
@@ -896,6 +958,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 62,
             "name": "オプトアウト",
             "descriptions": [
               "事前の同意なしに開始し、利用者が拒否の意思を示した時に停止する方式。",
@@ -910,6 +973,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 63,
             "name": "知的財産権",
             "descriptions": [
               "人間の知的な創作活動によって生み出された成果物に与えられる、法的な権利の総称。",
@@ -924,6 +988,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 64,
             "name": "著作権",
             "descriptions": [
               "小説、音楽、絵画などの著作物を創作した人が、その利用を独占できる権利。",
@@ -938,6 +1003,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 65,
             "name": "著作権法",
             "descriptions": [
               "著作物の公正な利用に留意しつつ、著作者の権利を保護することを目的とした法律。",
@@ -952,6 +1018,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 66,
             "name": "クリエイティブ・コモンズ",
             "descriptions": [
               "著作者が「この条件を守れば自由に使って良い」という意思表示をするためのライセンス。",
@@ -978,6 +1045,7 @@ export const quizCategories: Category[] = [
         "title": "コンピュータシステムの概要",
         "terms": [
           {
+            "id": 67,
             "name": "ハードウェア",
             "descriptions": [
               "コンピュータを構成する物理的な機械や装置の総称。",
@@ -992,6 +1060,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 68,
             "name": "五大装置",
             "descriptions": [
               "コンピュータを構成する主要な5つの機能（入力、制御、記憶、演算、出力）のこと。",
@@ -1006,6 +1075,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 69,
             "name": "入力装置",
             "descriptions": [
               "データや命令をコンピュータに読み込ませるための装置。",
@@ -1020,6 +1090,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 70,
             "name": "制御装置",
             "descriptions": [
               "プログラムの命令を解読し、他の装置に指示を出して全体の動作を調整する装置。",
@@ -1034,6 +1105,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 71,
             "name": "記憶装置",
             "descriptions": [
               "データやプログラムを蓄えておくための装置。",
@@ -1048,6 +1120,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 72,
             "name": "演算装置",
             "descriptions": [
               "データの四則演算や論理演算などの計算処理を行う装置。",
@@ -1062,6 +1135,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 73,
             "name": "出力装置",
             "descriptions": [
               "コンピュータの処理結果を、人間がわかる形（文字、画像、音など）で提示する装置。",
@@ -1076,6 +1150,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 74,
             "name": "中央処理装置（CPU）",
             "descriptions": [
               "制御装置と演算装置を合わせたもので、コンピュータの「頭脳」にあたる中心的な部品。",
@@ -1090,6 +1165,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 75,
             "name": "主記憶装置",
             "descriptions": [
               "CPUが直接アクセスして、実行中のプログラムやデータを一時的に置いておくメモリ。",
@@ -1104,6 +1180,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 76,
             "name": "補助記憶装置",
             "descriptions": [
               "電源を切ってもデータが消えない、長期的な保存を目的とした記憶装置。",
@@ -1118,6 +1195,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 77,
             "name": "HDD",
             "descriptions": [
               "磁気ディスクを高速回転させ、磁気ヘッドでデータを読み書きする補助記憶装置。",
@@ -1132,6 +1210,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 78,
             "name": "SSD",
             "descriptions": [
               "フラッシュメモリを用いてデータを記録する、高速で衝撃に強い補助記憶装置。",
@@ -1146,6 +1225,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 79,
             "name": "光学ドライブ",
             "descriptions": [
               "レーザー光を利用して、CD、DVD、ブルーレイディスクなどのデータを読み書きする装置。",
@@ -1160,6 +1240,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 80,
             "name": "USB メモリ",
             "descriptions": [
               "USBコネクタを備えた、小型で持ち運びに便利なフラッシュメモリ型の記憶装置。",
@@ -1174,6 +1255,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 81,
             "name": "SD メモリカード",
             "descriptions": [
               "デジタルカメラやスマートフォンなどで広く使われる、切手サイズの小型記憶カード。",
@@ -1188,6 +1270,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 82,
             "name": "解像度",
             "descriptions": [
               "画面や画像のきめ細かさを表す尺度で、画素（ピクセル）の密度や総数のこと。",
@@ -1202,6 +1285,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 83,
             "name": "デジタルカメラ",
             "descriptions": [
               "レンズから入った光をイメージセンサで電気信号に変え、デジタルデータとして記録するカメラ。",
@@ -1216,6 +1300,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 84,
             "name": "スマートデバイス",
             "descriptions": [
               "スマートフォンやタブレットなど、多機能でインターネット接続が可能なモバイル機器の総称。",
@@ -1230,6 +1315,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 85,
             "name": "インタフェース",
             "descriptions": [
               "コンピュータと周辺機器、あるいは人間と機械を接続するための規格や接点。",
@@ -1244,6 +1330,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 86,
             "name": "RFID",
             "descriptions": [
               "電波を用いて、ICタグの情報を非接触で読み書きする自動認識技術。",
@@ -1258,6 +1345,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 87,
             "name": "Bluetooth",
             "descriptions": [
               "数メートル程度の近距離で、デジタル機器同士をワイヤレスで接続する無線通信規格。",
@@ -1272,6 +1360,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 88,
             "name": "HDMI",
             "descriptions": [
               "映像と音声を1本のケーブルでデジタル伝送できる、AV機器向けの接続規格。",
@@ -1286,6 +1375,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 89,
             "name": "USB",
             "descriptions": [
               "パソコンと周辺機器を接続するための、最も普及している汎用的なインタフェース規格。",
@@ -1300,6 +1390,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 90,
             "name": "集積回路（IC）",
             "descriptions": [
               "シリコンなどの半導体基板上に、多数の電子部品を微細に詰め込んだ回路部品。",
@@ -1314,6 +1405,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 91,
             "name": "RAM",
             "descriptions": [
               "データの読み書きが自由に行える、揮発性の主記憶装置（メモリ）。",
@@ -1328,6 +1420,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 92,
             "name": "ROM",
             "descriptions": [
               "原則として読み出し専用で、電源を切っても内容が消えない不揮発性の記憶装置。",
@@ -1342,6 +1435,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 93,
             "name": "ビデオボード",
             "descriptions": [
               "画像や映像の処理を専門に行い、ディスプレイに表示するための拡張カード。",
@@ -1356,6 +1450,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 94,
             "name": "VRAM",
             "descriptions": [
               "ビデオボードに搭載されている、画像表示専用のメモリ。",
@@ -1370,6 +1465,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 95,
             "name": "フラッシュメモリ",
             "descriptions": [
               "電源を切ってもデータが消えず、電気的に書き換えが可能な不揮発性メモリ。",
@@ -1384,6 +1480,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 96,
             "name": "デジタル",
             "descriptions": [
               "情報を「0」と「1」のような、不連続な数値で表現すること。",
@@ -1398,6 +1495,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 97,
             "name": "アナログ",
             "descriptions": [
               "情報を、長さや角度、電圧などの連続的に変化する量で表現すること。",
@@ -1412,6 +1510,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 98,
             "name": "ビット",
             "descriptions": [
               "コンピュータが扱う情報の最小単位で、「0」か「1」の2通りの状態を表す。",
@@ -1426,6 +1525,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 99,
             "name": "バイト",
             "descriptions": [
               "ビットを8個集めた単位で、1バイトは256通りの情報を表現できる。",
@@ -1440,6 +1540,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 100,
             "name": "2進数",
             "descriptions": [
               "「0」と「1」の2種類の数字だけを使って、数値を表現する方法。",
@@ -1454,6 +1555,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 101,
             "name": "基数変換",
             "descriptions": [
               "ある進数で表された数値を、別の進数（10進数から2進数など）に書き換えること。",
@@ -1468,6 +1570,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 102,
             "name": "ms",
             "descriptions": [
               "時間の単位「ミリ秒」のことで、1000分の1秒を表す。",
@@ -1482,6 +1585,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 103,
             "name": "μs",
             "descriptions": [
               "時間の単位「マイクロ秒」のことで、100万分の1秒を表す。",
@@ -1496,6 +1600,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 104,
             "name": "ns",
             "descriptions": [
               "時間の単位「ナノ秒」のことで、10億分の1秒を表す。",
@@ -1510,6 +1615,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 105,
             "name": "ps",
             "descriptions": [
               "時間の単位「ピコ秒」のことで、1兆分の1秒を表す。",
@@ -1524,6 +1630,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 106,
             "name": "fs",
             "descriptions": [
               "時間の単位「フェムト秒」のことで、1000兆分の1秒を表す。",
@@ -1538,6 +1645,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 107,
             "name": "KB",
             "descriptions": [
               "記憶容量の単位「キロバイト」のことで、約1000バイト（正確には1024バイト）を表す。",
@@ -1552,6 +1660,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 108,
             "name": "MB",
             "descriptions": [
               "記憶容量の単位「メガバイト」のことで、約100万バイトを表す。",
@@ -1566,6 +1675,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 109,
             "name": "GB",
             "descriptions": [
               "記憶容量の単位「ギガバイト」のことで、約10億バイトを表す。",
@@ -1580,6 +1690,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 110,
             "name": "TB",
             "descriptions": [
               "記憶容量の単位「テラバイト」のことで、約1兆バイトを表す。",
@@ -1594,6 +1705,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 111,
             "name": "PB",
             "descriptions": [
               "記憶容量の単位「ペタバイト」のことで、約1000兆バイトを表す。",
@@ -1608,6 +1720,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 112,
             "name": "標本化",
             "descriptions": [
               "アナログ信号を、一定の時間間隔で区切って取り出すこと。",
@@ -1622,6 +1735,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 113,
             "name": "量子化",
             "descriptions": [
               "標本化で得られた値を、あらかじめ決められた段階的な数値に当てはめること。",
@@ -1636,6 +1750,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 114,
             "name": "符号化",
             "descriptions": [
               "量子化された数値を、コンピュータが扱える「0」と「1」の2進数に変換すること。",
@@ -1650,6 +1765,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 115,
             "name": "ソフトウェア",
             "descriptions": [
               "コンピュータを動かすためのプログラムや命令、データの総称。",
@@ -1664,6 +1780,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 116,
             "name": "アイコン",
             "descriptions": [
               "ファイルや機能の内容を、直感的にわかるように図記号化したもの。",
@@ -1678,6 +1795,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 117,
             "name": "オペレーティングシステム（OS）",
             "descriptions": [
               "ハードウェアの管理やアプリの実行を制御する、コンピュータの最も基本的なソフトウェア。",
@@ -1692,6 +1810,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 118,
             "name": "アプリケーションソフトウェア",
             "descriptions": [
               "ワープロや表計算、ゲームなど、特定の目的のために作られたソフトウェア。",
@@ -1706,6 +1825,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 119,
             "name": "アンインストール",
             "descriptions": [
               "コンピュータに導入されたソフトウェアを削除し、元の状態に戻すこと。",
@@ -1720,6 +1840,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 120,
             "name": "インストール",
             "descriptions": [
               "ソフトウェアをコンピュータに導入し、使用できる状態にセットアップすること。",
@@ -1734,6 +1855,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 121,
             "name": "オープンソースソフトウェア（OSS）",
             "descriptions": [
               "ソースコードが公開されており、誰でも自由に改良や再配布ができるソフトウェア。",
@@ -1748,6 +1870,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 122,
             "name": "フリーウェア",
             "descriptions": [
               "作者の好意などにより、無償で利用できるソフトウェアのこと。",
@@ -1762,6 +1885,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 123,
             "name": "シェアウェア",
             "descriptions": [
               "一定の試用期間は無料だが、継続して使う場合には料金を支払う必要があるソフトウェア。",
@@ -1776,6 +1900,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 124,
             "name": "サイトライセンス",
             "descriptions": [
               "企業や学校などの特定の場所（サイト）内であれば、台数を問わず利用できる契約形態。",
@@ -1790,6 +1915,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 125,
             "name": "デバイスドライバ",
             "descriptions": [
               "OSが周辺機器を制御するために必要な、仲介役となるソフトウェア。",
@@ -1804,6 +1930,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 126,
             "name": "バグ",
             "descriptions": [
               "プログラムに含まれる誤りや不具合のことで、予期しない動作の原因となるもの。",
@@ -1818,6 +1945,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 127,
             "name": "パッチ",
             "descriptions": [
               "プログラムのバグ修正や機能追加のために配布される、更新用の小さなデータ。",
@@ -1832,6 +1960,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 128,
             "name": "ファイル",
             "descriptions": [
               "コンピュータで扱うデータを、名前を付けて保存したひとまとまりの単位。",
@@ -1846,6 +1975,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 129,
             "name": "ファイル名",
             "descriptions": [
               "ファイルを識別するために付けられる名前で、通常は「名前.拡張子」の形式になる。",
@@ -1860,6 +1990,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 130,
             "name": "テキストファイル",
             "descriptions": [
               "文字データ（文字コード）だけで構成された、メモ帳などで開けるファイル。",
@@ -1874,6 +2005,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 131,
             "name": "バイナリファイル",
             "descriptions": [
               "テキスト形式以外で、画像や音声、実行プログラムなどのデータを含むファイル。",
@@ -1888,6 +2020,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 132,
             "name": "フォーマット",
             "descriptions": [
               "HDDやUSBメモリなどの記憶媒体を、OSが使えるように初期化すること。",
@@ -1902,6 +2035,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 133,
             "name": "フォルダ",
             "descriptions": [
               "複数のファイルを分類してまとめておくための、入れ物のような仕組み。",
@@ -1916,6 +2050,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 134,
             "name": "拡張子",
             "descriptions": [
               "ファイル名の末尾に付く「.txt」や「.jpg」などの、ファイルの種類を表す文字列。",
@@ -1936,6 +2071,7 @@ export const quizCategories: Category[] = [
         "title": "情報通信ネットワークの仕組みと構成",
         "terms": [
           {
+            "id": 135,
             "name": "情報通信ネットワーク",
             "descriptions": [
               "コンピュータや端末を通信回線で結び、情報をやり取りできるようにした仕組み。",
@@ -1950,6 +2086,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 136,
             "name": "データ通信",
             "descriptions": [
               "コンピュータ間で、デジタル化された情報をやり取りすること。",
@@ -1964,6 +2101,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 137,
             "name": "アナログ回線",
             "descriptions": [
               "音声をそのままの波形（アナログ信号）として伝える通信回線。",
@@ -1978,6 +2116,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 138,
             "name": "デジタル回線",
             "descriptions": [
               "情報を「0」と「1」のデジタル信号に変えて伝える通信回線。",
@@ -1992,6 +2131,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 139,
             "name": "LAN",
             "descriptions": [
               "同じ建物内や敷地内など、限定された範囲で構築されるコンピュータネットワーク。",
@@ -2006,6 +2146,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 140,
             "name": "無線 LAN",
             "descriptions": [
               "電波を利用して、ケーブルなしで機器同士を接続するLANの形態。",
@@ -2020,6 +2161,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 141,
             "name": "有線 LAN",
             "descriptions": [
               "LANケーブル（イーサネットケーブル）を用いて、機器を物理的に接続するLAN。",
@@ -2034,6 +2176,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 142,
             "name": "WAN",
             "descriptions": [
               "通信事業者の回線を利用して、離れた場所にあるLAN同士を結ぶ広域ネットワーク。",
@@ -2048,6 +2191,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 143,
             "name": "光ファイバ",
             "descriptions": [
               "ガラスやプラスチックの細い繊維で、光信号を使って高速・大容量の通信を行う伝送路。",
@@ -2062,6 +2206,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 144,
             "name": "Wi-Fi",
             "descriptions": [
               "無線LANの規格の一つで、IEEE 802.11規格を用いた無線通信のこと。",
@@ -2076,6 +2221,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 145,
             "name": "アクセスポイント",
             "descriptions": [
               "無線LANにおいて、端末と有線ネットワークを中継する機器のこと。",
@@ -2090,6 +2236,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 146,
             "name": "インターネット",
             "descriptions": [
               "世界中のネットワークを相互に接続した、地球規模の巨大なコンピュータネットワーク。",
@@ -2104,6 +2251,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 147,
             "name": "WWW",
             "descriptions": [
               "インターネット上で、ハイパーテキスト形式の情報を公開・閲覧できる仕組み。",
@@ -2118,6 +2266,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 148,
             "name": "プロバイダ",
             "descriptions": [
               "個人や企業に対して、インターネットへの接続サービスを提供する事業者。",
@@ -2132,6 +2281,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 149,
             "name": "サーバ名",
             "descriptions": [
               "ネットワーク上の特定のコンピュータ（サーバ）を識別するために付けられた名前。",
@@ -2146,6 +2296,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 150,
             "name": "ドメイン名",
             "descriptions": [
               "インターネット上の住所にあたるIPアドレスを、人間が覚えやすい文字に置き換えたもの。",
@@ -2160,6 +2311,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 151,
             "name": "IP アドレス",
             "descriptions": [
               "ネットワーク上の個々のコンピュータを識別するために割り振られた、固有の番号。",
@@ -2174,6 +2326,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 152,
             "name": "DNS",
             "descriptions": [
               "ドメイン名とIPアドレスを対応させ、相互に変換するためのシステム。",
@@ -2188,6 +2341,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 153,
             "name": "Web ページ",
             "descriptions": [
               "ブラウザで閲覧できる、文字や画像、リンクなどが配置された個々の文書。",
@@ -2202,6 +2356,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 154,
             "name": "ブラウザ",
             "descriptions": [
               "Webページを閲覧するためのソフトウェアで、HTMLを解析して画面に表示する。",
@@ -2216,6 +2371,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 155,
             "name": "URL",
             "descriptions": [
               "インターネット上のWebページやファイルの場所を示す、情報の住所（所在）。",
@@ -2230,6 +2386,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 156,
             "name": "Web サーバ",
             "descriptions": [
               "ブラウザからの要求に応じて、Webページのデータ（HTMLなど）を送信するコンピュータ。",
@@ -2244,6 +2401,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 157,
             "name": "ハイパーリンク",
             "descriptions": [
               "Webページ内の特定の場所をクリックすると、別のページやファイルに移動する仕組み。",
@@ -2258,6 +2416,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 158,
             "name": "HTML",
             "descriptions": [
               "Webページを作成するための標準的なマークアップ言語。",
@@ -2272,6 +2431,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 159,
             "name": "電子メール",
             "descriptions": [
               "ネットワークを通じて、文字メッセージやファイルをやり取りする仕組み。",
@@ -2286,6 +2446,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 160,
             "name": "HTML メール",
             "descriptions": [
               "HTML形式で記述され、文字の装飾や画像の埋め込みが可能な電子メール。",
@@ -2300,6 +2461,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 161,
             "name": "Web メール",
             "descriptions": [
               "専用のソフトを使わず、Webブラウザ上で送受信や管理を行うメールサービス。",
@@ -2314,6 +2476,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 162,
             "name": "メールサーバ",
             "descriptions": [
               "電子メールの送受信や保管を行う、ネットワーク上のコンピュータ。",
@@ -2328,6 +2491,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 163,
             "name": "メールボックス",
             "descriptions": [
               "受信したメールを一時的に保管しておく、サーバ上の専用領域のこと。",
@@ -2342,6 +2506,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 164,
             "name": "プロトコル",
             "descriptions": [
               "コンピュータ同士が通信を行うための、共通の約束事や手順（通信規約）。",
@@ -2362,6 +2527,7 @@ export const quizCategories: Category[] = [
         "title": "情報通信ネットワークの活用",
         "terms": [
           {
+            "id": 165,
             "name": "アップロード",
             "descriptions": [
               "自分のコンピュータにあるデータを、ネットワーク上のサーバへ転送すること。",
@@ -2376,6 +2542,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 166,
             "name": "ダウンロード",
             "descriptions": [
               "ネットワーク上のサーバにあるデータを、自分のコンピュータへ取り込むこと。",
@@ -2390,6 +2557,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 167,
             "name": "検索エンジン",
             "descriptions": [
               "インターネット上の膨大な情報から、キーワードに関連するWebサイトを探し出すシステム。",
@@ -2404,6 +2572,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 168,
             "name": "コンテンツフィルタリング",
             "descriptions": [
               "不適切なWebサイトへのアクセスを制限し、表示されないようにする技術。",
@@ -2418,6 +2587,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 169,
             "name": "ブラックリスト方式",
             "descriptions": [
               "アクセスを禁止する対象をリストアップし、それ以外はすべて許可する制限方式。",
@@ -2432,6 +2602,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 170,
             "name": "ホワイトリスト方式",
             "descriptions": [
               "アクセスを許可する対象だけをリストアップし、それ以外はすべて禁止する制限方式。",
@@ -2446,6 +2617,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 171,
             "name": "メーリングリスト",
             "descriptions": [
               "特定のメールアドレスに送信すると、登録者全員に同じメールが配信される仕組み。",
@@ -2460,6 +2632,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 172,
             "name": "TO",
             "descriptions": [
               "電子メールの宛先のうち、返信や処理を求めるメインの送信先を指定する欄。",
@@ -2474,6 +2647,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 173,
             "name": "CC",
             "descriptions": [
               "電子メールの宛先のうち、参考として内容を確認してほしい人を指定する欄。",
@@ -2488,6 +2662,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 174,
             "name": "BCC",
             "descriptions": [
               "電子メールの宛先のうち、他の受信者にアドレスを知られずに送信したい人を指定する欄。",
@@ -2502,6 +2677,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 175,
             "name": "添付ファイル",
             "descriptions": [
               "電子メールの本文と一緒に送られる、画像や文書などのデータファイル。",
@@ -2516,6 +2692,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 176,
             "name": "圧縮",
             "descriptions": [
               "データの意味を保ったまま、ファイルサイズを小さくすること。",
@@ -2530,6 +2707,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 177,
             "name": "解凍",
             "descriptions": [
               "圧縮されたファイルを元の状態に戻し、利用できるようにすること。",
@@ -2550,6 +2728,7 @@ export const quizCategories: Category[] = [
         "title": "情報セキュリティの確保と法規",
         "terms": [
           {
+            "id": 178,
             "name": "サイバー攻撃",
             "descriptions": [
               "ネットワークを通じて、コンピュータシステムを破壊したり情報を盗んだりする攻撃。",
@@ -2564,6 +2743,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 179,
             "name": "マルウェア",
             "descriptions": [
               "コンピュータウイルスやスパイウェアなど、悪意のあるソフトウェアの総称。",
@@ -2578,6 +2758,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 180,
             "name": "コンピュータウイルス",
             "descriptions": [
               "他のプログラムに寄生して自己増殖し、破壊活動や予期せぬ動作を行うプログラム。",
@@ -2592,6 +2773,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 181,
             "name": "セキュリティホール",
             "descriptions": [
               "OSやソフトウェアに含まれる、セキュリティ上の欠陥や弱点のこと。",
@@ -2606,6 +2788,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 182,
             "name": "インシデント",
             "descriptions": [
               "情報セキュリティ上の事故や、その原因となる出来事のこと。",
@@ -2620,6 +2803,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 183,
             "name": "迷惑メール",
             "descriptions": [
               "受信者の同意なく一方的に送りつけられる、広告や詐欺目的の電子メール。",
@@ -2634,6 +2818,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 184,
             "name": "スパムメール",
             "descriptions": [
               "営利目的などで、不特定多数に大量にばらまかれる迷惑メールのこと。",
@@ -2648,6 +2833,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 185,
             "name": "スパイウェア",
             "descriptions": [
               "コンピュータ内の個人情報や操作履歴を、こっそり外部に送信するマルウェア。",
@@ -2662,6 +2848,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 186,
             "name": "トロイの木馬",
             "descriptions": [
               "一見便利なソフトを装ってインストールさせ、裏で破壊活動や情報収集を行うマルウェア。",
@@ -2676,6 +2863,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 187,
             "name": "ワーム",
             "descriptions": [
               "他のファイルに寄生せず、単独で動作してネットワーク経由で自己増殖を繰り返すマルウェア。",
@@ -2690,6 +2878,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 188,
             "name": "ランサムウェア",
             "descriptions": [
               "データを勝手に暗号化して使えなくし、復元と引き換えに金銭（身代金）を要求するマルウェア。",
@@ -2704,6 +2893,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 189,
             "name": "アドウェア",
             "descriptions": [
               "画面に広告を強制的に表示させるソフトウェアで、一部はスパイウェアのような動きもする。",
@@ -2718,6 +2908,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 190,
             "name": "情報セキュリティ",
             "descriptions": [
               "情報の機密性、完全性、可用性を維持し、脅威から守ること。",
@@ -2732,6 +2923,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 191,
             "name": "機密性",
             "descriptions": [
               "許可された人だけが、その情報にアクセスできるようにすること。",
@@ -2746,6 +2938,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 192,
             "name": "完全性",
             "descriptions": [
               "情報が正確で、改ざんや破壊がされていない状態を維持すること。",
@@ -2760,6 +2953,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 193,
             "name": "可用性",
             "descriptions": [
               "必要な時に、いつでも支障なく情報やシステムが利用できる状態であること。",
@@ -2774,6 +2968,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 194,
             "name": "バックアップ",
             "descriptions": [
               "データの紛失や破損に備えて、別の場所に複製を保存しておくこと。",
@@ -2788,6 +2983,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 195,
             "name": "ウイルス対策ソフトウェア",
             "descriptions": [
               "コンピュータ内のマルウェアを検出し、駆除や隔離を行うためのソフトウェア。",
@@ -2802,6 +2998,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 196,
             "name": "パターンファイル",
             "descriptions": [
               "既知のウイルスの特徴を記録したデータベースで、ウイルス対策ソフトが照合に使う。",
@@ -2816,6 +3013,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 197,
             "name": "アップデート",
             "descriptions": [
               "ソフトウェアを最新の状態に更新し、不具合の修正や機能追加を行うこと。",
@@ -2830,6 +3028,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 198,
             "name": "セキュリティパッチ",
             "descriptions": [
               "OSやアプリの脆弱性を修正するために配布される、緊急の更新プログラム。",
@@ -2844,6 +3043,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 199,
             "name": "認証",
             "descriptions": [
               "アクセスしようとしている人が、本人であるかどうかを確認するプロセス。",
@@ -2858,6 +3058,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 200,
             "name": "ログイン",
             "descriptions": [
               "ユーザIDとパスワードを入力し、コンピュータやサービスの利用を開始すること。",
@@ -2872,6 +3073,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 201,
             "name": "ログアウト",
             "descriptions": [
               "コンピュータやサービスの利用を終了し、認証状態を解除すること。",
@@ -2886,6 +3088,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 202,
             "name": "ワンタイムパスワード",
             "descriptions": [
               "一度しか使えない、短時間で無効になる使い捨てのパスワード。",
@@ -2900,6 +3103,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 203,
             "name": "アクセス権",
             "descriptions": [
               "ファイルやフォルダに対して、読み書きや実行ができる権限のこと。",
@@ -2914,6 +3118,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 204,
             "name": "暗号化",
             "descriptions": [
               "データを一定のルールに従って、第三者には意味がわからない状態に変換すること。",
@@ -2928,6 +3133,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 205,
             "name": "復号",
             "descriptions": [
               "暗号化されたデータを、元の読める状態（平文）に戻すこと。",
@@ -2942,6 +3148,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 206,
             "name": "暗号文",
             "descriptions": [
               "暗号化によって、そのままでは内容が理解できなくなったデータのこと。",
@@ -2968,6 +3175,7 @@ export const quizCategories: Category[] = [
         "title": "ビジネスと統計",
         "terms": [
           {
+            "id": 207,
             "name": "統計分析",
             "descriptions": [
               "大量のデータを収集・整理・分析し、その背後にある規則性や傾向を明らかにする手法。",
@@ -2982,6 +3190,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 208,
             "name": "量的データ",
             "descriptions": [
               "数値として測定可能で、足し算や引き算などの計算ができるデータ（身長、売上など）。",
@@ -2996,6 +3205,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 209,
             "name": "質的データ",
             "descriptions": [
               "数値ではなく、分類や属性を表すデータ（血液型、性別、アンケートの感想など）。",
@@ -3010,6 +3220,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 210,
             "name": "尺度水準",
             "descriptions": [
               "データの性質を、名目・順序・間隔・比率の4つの段階で分類した基準。",
@@ -3024,6 +3235,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 211,
             "name": "全数調査",
             "descriptions": [
               "調査対象となる集団のすべてを漏れなく調べる方法（国勢調査など）。",
@@ -3038,6 +3250,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 212,
             "name": "標本調査",
             "descriptions": [
               "母集団から一部を抜き出して調査し、その結果から全体の状態を推測する方法。",
@@ -3052,6 +3265,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 213,
             "name": "母集団",
             "descriptions": [
               "統計調査において、分析や推測の対象となる集団全体のこと。",
@@ -3066,6 +3280,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 214,
             "name": "標本",
             "descriptions": [
               "母集団から調査のために抽出された、一部の個体の集まり。",
@@ -3080,6 +3295,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 215,
             "name": "標本誤差",
             "descriptions": [
               "母集団全体を調べた結果と、標本から推測した結果との間に生じる数値のズレ。",
@@ -3094,6 +3310,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 216,
             "name": "外れ値",
             "descriptions": [
               "他のデータから極端に離れた値のことで、測定ミスや特殊な要因で発生する。",
@@ -3108,6 +3325,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 217,
             "name": "欠損値",
             "descriptions": [
               "アンケートの未回答など、本来あるべきデータが欠けている状態のこと。",
@@ -3122,6 +3340,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 218,
             "name": "代表値",
             "descriptions": [
               "データの集団全体の特徴を、一つの数値で代表させたもの（平均値、中央値、最頻値）。",
@@ -3136,6 +3355,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 219,
             "name": "偏差",
             "descriptions": [
               "個々のデータが、平均値からどれだけ離れているかを表す数値。",
@@ -3150,6 +3370,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 220,
             "name": "分散",
             "descriptions": [
               "データの散らばり具合を表す指標で、偏差を2乗したものの平均値。",
@@ -3164,6 +3385,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 221,
             "name": "標準偏差",
             "descriptions": [
               "分散の正の平方根をとったもので、データのバラツキを元の単位で表した指標。",
@@ -3178,6 +3400,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 222,
             "name": "度数分布表",
             "descriptions": [
               "データをいくつかの階級に分け、それぞれの階級に属するデータの数（度数）をまとめた表。",
@@ -3192,6 +3415,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 223,
             "name": "ヒストグラム",
             "descriptions": [
               "度数分布表をグラフ化したもので、横軸に階級、縦軸に度数をとった柱状グラフ。",
@@ -3206,6 +3430,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 224,
             "name": "箱ひげ図",
             "descriptions": [
               "データの分布を、最小値、最大値、四分位数（中央値など）を用いて箱と線で表した図。",
@@ -3220,6 +3445,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 225,
             "name": "散布図",
             "descriptions": [
               "2つの項目の関係を調べるために、横軸と縦軸に値をとり、データを点として打った図。",
@@ -3234,6 +3460,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 226,
             "name": "相関",
             "descriptions": [
               "2つの変数の間に、一方が変化するともう一方も変化するという関係があること。",
@@ -3248,6 +3475,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 227,
             "name": "ABC 分析",
             "descriptions": [
               "重要度や売上高などの順に並べ、累積構成比によってA・B・Cの3グループに分ける分析手法。",
@@ -3262,6 +3490,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 228,
             "name": "パレート図",
             "descriptions": [
               "値を大きい順に並べた棒グラフと、その累積構成比を表す折れ線グラフを組み合わせた図。",
@@ -3276,6 +3505,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 229,
             "name": "時系列分析",
             "descriptions": [
               "時間の経過とともに変化するデータを分析し、過去の傾向から将来を予測する手法。",
@@ -3296,6 +3526,7 @@ export const quizCategories: Category[] = [
         "title": "表・グラフの作成と情報の分析",
         "terms": [
           {
+            "id": 230,
             "name": "棒グラフ",
             "descriptions": [
               "項目の大きさを棒の長さで表し、項目間の数量を比較するのに適したグラフ。",
@@ -3310,6 +3541,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 231,
             "name": "円グラフ",
             "descriptions": [
               "全体に対する各項目の割合（シェア）を、円の扇形の面積で表したグラフ。",
@@ -3324,6 +3556,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 232,
             "name": "折れ線グラフ",
             "descriptions": [
               "データの変化を点で打ち、それらを線で結んで推移や変動の様子を表したグラフ。",
@@ -3338,6 +3571,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 233,
             "name": "複合グラフ",
             "descriptions": [
               "棒グラフと折れ線グラフなど、異なる種類のグラフを一つの図に重ねて表示したもの。",
@@ -3352,6 +3586,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 234,
             "name": "レーダーチャート",
             "descriptions": [
               "中心から放射状に伸びる軸に値をとり、複数の項目のバランスを多角形で表したグラフ。",
@@ -3366,6 +3601,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 235,
             "name": "Ｚグラフ",
             "descriptions": [
               "月次売上、売上累計、移動合計の3つの線を組み合わせ、売上の傾向を分析するグラフ。",
@@ -3386,6 +3622,7 @@ export const quizCategories: Category[] = [
         "title": "問題の発見と解決の方法",
         "terms": [
           {
+            "id": 236,
             "name": "ロジカルシンキング",
             "descriptions": [
               "論理的な思考に基づいて、複雑な問題を整理し、矛盾なく結論を導き出す考え方。",
@@ -3400,6 +3637,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 237,
             "name": "ロジックツリー",
             "descriptions": [
               "大きな問題をツリー状に分解し、原因や解決策を漏れなくダブりなく整理する手法。",
@@ -3414,6 +3652,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 238,
             "name": "MECE",
             "descriptions": [
               "「漏れなく、ダブりなく」という意味で、論理的な整理を行う際の基本原則。",
@@ -3428,6 +3667,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 239,
             "name": "デシジョンテーブル",
             "descriptions": [
               "複雑な条件の組み合わせと、それに対応する動作を整理した一覧表（決定表）。",
@@ -3442,6 +3682,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 240,
             "name": "ガントチャート",
             "descriptions": [
               "横軸に時間、縦軸に作業項目をとり、計画と実績を棒状の線で表した工程管理図。",
@@ -3456,6 +3697,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 241,
             "name": "SWOT 分析",
             "descriptions": [
               "強み、弱み、機会、脅威の4つの視点から、自社の現状を分析する経営戦略手法。",
@@ -3470,6 +3712,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 242,
             "name": "特性要因図",
             "descriptions": [
               "結果（特性）に対して、どのような原因（要因）が影響しているかを魚の骨のような図で表したもの。",
@@ -3484,6 +3727,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 243,
             "name": "PDCA",
             "descriptions": [
               "計画（Plan）、実行（Do）、評価（Check）、改善（Action）を繰り返す管理サイクル。",
@@ -3498,6 +3742,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 244,
             "name": "ブレーンストーミング",
             "descriptions": [
               "複数人で自由にアイデアを出し合い、批判を禁止することで独創的な発想を促す会議手法。",
@@ -3512,6 +3757,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 245,
             "name": "KJ 法",
             "descriptions": [
               "バラバラなアイデアをカードに書き、グループ化して図解することで問題を整理する手法。",
@@ -3526,6 +3772,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 246,
             "name": "PPM 分析",
             "descriptions": [
               "市場成長率と市場占有率の2軸で、自社の事業を4つの区分に分類して資源配分を決める手法。",
@@ -3540,6 +3787,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 247,
             "name": "シミュレーション",
             "descriptions": [
               "現実の状況をモデル化し、コンピュータ上で模擬実験を行って結果を予測すること。",
@@ -3554,6 +3802,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 248,
             "name": "モデル化",
             "descriptions": [
               "複雑な現実の事象から本質的な要素だけを抽出し、簡略化した模型（モデル）を作ること。",
@@ -3568,6 +3817,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 249,
             "name": "動的モデル",
             "descriptions": [
               "時間の経過とともに状態が変化する現象を表現したモデル。",
@@ -3582,6 +3832,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 250,
             "name": "静的モデル",
             "descriptions": [
               "ある一時点での状態や構造を固定して表現したモデル。",
@@ -3596,6 +3847,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 251,
             "name": "確定的モデル",
             "descriptions": [
               "入力が決まれば、偶然に左右されず必ず同じ結果が導き出されるモデル。",
@@ -3610,6 +3862,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 252,
             "name": "確率的モデル",
             "descriptions": [
               "サイコロの目のように、偶然や確率的な変動要素を含んだモデル。",
@@ -3624,6 +3877,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 253,
             "name": "モンテカルロ法",
             "descriptions": [
               "乱数を用いたシミュレーションを何度も繰り返し、近似解を求める計算手法。",
@@ -3638,6 +3892,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 254,
             "name": "アルゴリズム",
             "descriptions": [
               "問題を解決するための、明確に定義された手順や計算方法のこと。",
@@ -3652,6 +3907,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 255,
             "name": "プログラム",
             "descriptions": [
               "アルゴリズムを、コンピュータが理解できる言語で記述したもの。",
@@ -3666,6 +3922,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 256,
             "name": "プログラム言語",
             "descriptions": [
               "人間がコンピュータに命令を伝えるために使う、独自の文法を持った言語。",
@@ -3680,6 +3937,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 257,
             "name": "プログラミング",
             "descriptions": [
               "プログラム言語を用いて、ソフトウェアを作成したりアルゴリズムを記述したりする活動。",
@@ -3694,6 +3952,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 258,
             "name": "順次構造",
             "descriptions": [
               "プログラムにおいて、命令を上から下へ順番に実行していく最も基本的な構造。",
@@ -3708,6 +3967,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 259,
             "name": "選択構造",
             "descriptions": [
               "条件によって、次に実行する処理を切り替えるプログラムの構造。",
@@ -3722,6 +3982,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 260,
             "name": "繰り返し構造",
             "descriptions": [
               "特定の条件が満たされている間、同じ処理を何度も実行するプログラムの構造。",
@@ -3736,6 +3997,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 261,
             "name": "トレース",
             "descriptions": [
               "プログラムの実行過程を、一行ずつ手作業やツールで追いかけて確認すること。",
@@ -3750,6 +4012,7 @@ export const quizCategories: Category[] = [
             ]
           },
           {
+            "id": 262,
             "name": "流れ図",
             "descriptions": [
               "アルゴリズムの処理手順を、特定の記号（○や◇など）と矢印で視覚化した図。",
