@@ -111,20 +111,66 @@ export const useGameData = () => {
     setIsLoaded(true);
   }, []);
 
+  // Save stats
+  useEffect(() => {
+    if (!isLoaded) return;
+    storage.setItem('it_quiz_stats', JSON.stringify(stats));
+  }, [stats, isLoaded]);
+
+  // Save collection
+  useEffect(() => {
+    if (!isLoaded) return;
+    const idBasedCollection: Record<number, number> = {};
+    Object.entries(ownedCards).forEach(([termName, count]) => {
+      const term = allTermsMap[termName];
+      if (term) idBasedCollection[term.id] = count;
+    });
+    storage.setItem('it_quiz_collection', JSON.stringify(idBasedCollection));
+  }, [ownedCards, isLoaded]);
+
+  // Save term stats
+  useEffect(() => {
+    if (!isLoaded) return;
+    const idBasedStats: Record<number, TermStat> = {};
+    Object.entries(termStats).forEach(([termName, stat]) => {
+      const t = allTermsMap[termName];
+      if (t) idBasedStats[t.id] = stat;
+    });
+    storage.setItem('it_quiz_term_stats', JSON.stringify(idBasedStats));
+  }, [termStats, isLoaded]);
+
   // Save speed star stats
   useEffect(() => {
     if (!isLoaded) return;
-    const stats = {
+    const speedStats = {
       maxCombo: speedStarMaxCombo,
       maxCorrect: speedStarMaxCorrect,
       challenges: speedStarChallenges
     };
-    storage.setItem('it_quiz_speed_star_stats', JSON.stringify(stats));
+    storage.setItem('it_quiz_speed_star_stats', JSON.stringify(speedStats));
   }, [speedStarMaxCombo, speedStarMaxCorrect, speedStarChallenges, isLoaded]);
+
+  // Save daily challenge info
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (lastDailyChallengeId) storage.setItem('it_quiz_last_daily_id', lastDailyChallengeId);
+    storage.setItem('it_quiz_daily_streak', dailyStreak.toString());
+  }, [lastDailyChallengeId, dailyStreak, isLoaded]);
+
+  // Save quiz count
+  useEffect(() => {
+    if (!isLoaded) return;
+    storage.setItem('it_quiz_count', quizCount.toString());
+  }, [quizCount, isLoaded]);
+
+  // Save bonus ticket
+  useEffect(() => {
+    if (!isLoaded) return;
+    storage.setItem('it_quiz_bonus_ticket', hasBonusTicket.toString());
+  }, [hasBonusTicket, isLoaded]);
 
   const saveStats = useCallback((newStats: GameStats) => {
     setStats(newStats);
-    storage.setItem('it_quiz_stats', JSON.stringify(newStats));
   }, []);
 
   const saveUserProfile = useCallback((profile: { grade: string; classNum: string; attendanceNum: string; userName: string }) => {
@@ -138,20 +184,13 @@ export const useGameData = () => {
     if (!term || term === 'undefined' || term === 'null') return;
     setTermStats(prev => {
       const current = prev[term] || { correct: 0, total: 0 };
-      const next = {
-        correct: Math.min(255, current.correct + (isCorrect ? 1 : 0)),
-        total: Math.min(255, current.total + 1)
+      return {
+        ...prev,
+        [term]: {
+          correct: Math.min(255, current.correct + (isCorrect ? 1 : 0)),
+          total: Math.min(255, current.total + 1)
+        }
       };
-      const newStats = { ...prev, [term]: next };
-      
-      const idBasedStats: Record<number, TermStat> = {};
-      Object.entries(newStats).forEach(([termName, stat]) => {
-        const t = allTermsMap[termName];
-        if (t) idBasedStats[t.id] = stat;
-      });
-      storage.setItem('it_quiz_term_stats', JSON.stringify(idBasedStats));
-      
-      return newStats;
     });
   }, []);
 
@@ -166,7 +205,6 @@ export const useGameData = () => {
         totalScore: unitStats.totalScore + newScore
       };
       
-      storage.setItem('it_quiz_stats', JSON.stringify(currentStats));
       return currentStats;
     });
   }, []);
@@ -177,13 +215,6 @@ export const useGameData = () => {
       cappedCollection[term] = Math.min(255, count);
     });
     setOwnedCards(cappedCollection);
-    
-    const idBasedCollection: Record<number, number> = {};
-    Object.entries(cappedCollection).forEach(([termName, count]) => {
-      const term = allTermsMap[termName];
-      if (term) idBasedCollection[term.id] = count;
-    });
-    storage.setItem('it_quiz_collection', JSON.stringify(idBasedCollection));
   }, []);
 
   const userLevel = useMemo(() => calculateLevel(ownedCards), [ownedCards]);

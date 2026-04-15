@@ -182,20 +182,29 @@ export const useQuiz = (
     setIsLoading(true);
     resetQuizState();
 
-    let subcategory: Subcategory;
+    let quizTerms: any[] = [];
+    let selectedItem: any = item;
+
     if ('subcategories' in item) {
-      // It's a Category - pick a random subcategory
-      subcategory = item.subcategories[Math.floor(Math.random() * item.subcategories.length)];
+      // It's a Category - include all terms from all subcategories
+      quizTerms = item.subcategories.flatMap(sub => sub.terms);
+      // Create a dummy subcategory for the UI
+      selectedItem = {
+        id: item.id,
+        title: `${item.title} (全単元)`,
+        terms: quizTerms
+      };
     } else {
-      subcategory = item;
+      quizTerms = item.terms;
+      selectedItem = item;
     }
 
-    setSelectedSubcategory(subcategory);
+    setSelectedSubcategory(selectedItem);
 
     try {
       const generatedQuestions = await Promise.all(
-        subcategory.terms.map(term => 
-          generateQuestion(term.name, subcategory.terms.map(t => t.name), allTerms)
+        quizTerms.map(term => 
+          generateQuestion(term.name, quizTerms.map(t => t.name), allTerms)
         )
       );
 
