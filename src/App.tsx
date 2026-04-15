@@ -140,12 +140,22 @@ export default function App() {
   const [showLevelUp, setShowLevelUp] = useState<number | null>(null);
   const [showStoryCard, setShowStoryCard] = useState<StoryCard | null>(null);
   const [showMigrationModal, setShowMigrationModal] = useState(false);
+  const [migrationMode, setMigrationMode] = useState<'scan' | 'export' | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<Subcategory | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [termPerformanceSearchTerm, setTermPerformanceSearchTerm] = useState('');
   const [targetCardId, setTargetCardId] = useState<string | null>(null);
   const [resetStep, setResetStep] = useState(0);
   const [resetCooldown, setResetCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resetCooldown > 0) {
+      const timer = setInterval(() => {
+        setResetCooldown(prev => prev - 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [resetCooldown]);
   const [isDailyChallenge, setIsDailyChallenge] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
@@ -416,7 +426,10 @@ export default function App() {
         resetQuizState={resetQuizState}
         deferredPrompt={deferredPrompt}
         handleInstallClick={handleInstallClick}
-        setShowMigrationModal={setShowMigrationModal}
+        onOpenMigration={(mode) => {
+          if (mode) setMigrationMode(mode);
+          setShowMigrationModal(true);
+        }}
       />
 
       <AnimatePresence mode="wait">
@@ -639,7 +652,10 @@ export default function App() {
         <ProfileSetupView 
           saveUserProfile={saveUserProfile} 
           showToast={showToast}
-          onOpenMigration={() => setShowMigrationModal(true)}
+          onOpenMigration={() => {
+            setMigrationMode('scan');
+            setShowMigrationModal(true);
+          }}
         />
       )}
 
@@ -654,9 +670,18 @@ export default function App() {
       {/* Migration Modal */}
       <MigrationModal
         isOpen={showMigrationModal}
-        onClose={() => setShowMigrationModal(false)}
+        onClose={() => {
+          setShowMigrationModal(false);
+          setMigrationMode(null);
+        }}
         onConfirmMigration={confirmMigration}
         currentData={getMigrationData()}
+        initialMode={migrationMode}
+        onReset={() => {
+          setShowMigrationModal(false);
+          setMigrationMode(null);
+          setResetStep(1);
+        }}
       />
 
       {/* Reset Confirmation Modal */}

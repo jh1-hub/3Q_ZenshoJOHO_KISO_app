@@ -10,13 +10,17 @@ interface MigrationModalProps {
   onClose: () => void;
   currentData: MigrationData;
   onConfirmMigration: (data: any) => void;
+  onReset: () => void;
+  initialMode?: 'scan' | 'export' | null;
 }
 
 export const MigrationModal: React.FC<MigrationModalProps> = ({
   isOpen,
   onClose,
   currentData,
-  onConfirmMigration
+  onConfirmMigration,
+  onReset,
+  initialMode = null
 }) => {
   const [migrationQR, setMigrationQR] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
@@ -25,6 +29,12 @@ export const MigrationModal: React.FC<MigrationModalProps> = ({
   const [pendingMigrationData, setPendingMigrationData] = useState<any | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
+
+  useEffect(() => {
+    if (isOpen && initialMode === 'scan') {
+      setIsScanning(true);
+    }
+  }, [isOpen, initialMode]);
 
   const handleExport = () => {
     const encrypted = exportMigrationData(currentData);
@@ -174,6 +184,14 @@ export const MigrationModal: React.FC<MigrationModalProps> = ({
               </div>
               <div className="font-bold">QRコード読み取り</div>
               <div className="text-xs text-theme-text-muted">他のデバイスのQRコードを読み込みます。</div>
+            </button>
+
+            <button 
+              onClick={onReset}
+              className="col-span-1 sm:col-span-2 p-4 bg-rose-50 border-2 border-rose-100 rounded-2xl hover:bg-rose-100 transition-all flex items-center justify-center gap-2 text-rose-600 font-bold text-sm"
+            >
+              <RefreshCw size={18} />
+              データをすべてリセットする
             </button>
           </div>
         )}

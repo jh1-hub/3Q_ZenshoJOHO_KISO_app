@@ -11,7 +11,7 @@ interface GlobalHeaderProps {
   resetQuizState: () => void;
   deferredPrompt: any;
   handleInstallClick: () => void;
-  setShowMigrationModal: (show: boolean) => void;
+  onOpenMigration: (mode?: 'scan' | 'export') => void;
 }
 
 export const GlobalHeader: React.FC<GlobalHeaderProps> = ({
@@ -23,7 +23,7 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({
   resetQuizState,
   deferredPrompt,
   handleInstallClick,
-  setShowMigrationModal
+  onOpenMigration
 }) => {
   if (!userName || gameState === 'QUIZ') return null;
 
@@ -80,7 +80,7 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({
             </button>
           )}
           <button 
-            onClick={() => setShowMigrationModal(true)}
+            onClick={() => onOpenMigration()}
             className="p-2 md:px-4 md:py-2 bg-theme-card rounded-xl border border-theme-border hover:bg-theme-muted transition-all flex items-center gap-2 group"
             title="データ移行"
           >
