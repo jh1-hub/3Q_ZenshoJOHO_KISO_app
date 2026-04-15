@@ -1,13 +1,14 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { UserCheck } from 'lucide-react';
+import { UserCheck, QrCode } from 'lucide-react';
 
 interface ProfileSetupViewProps {
   saveUserProfile: (profile: { grade: string; classNum: string; attendanceNum: string; userName: string }) => void;
   showToast: (message: string, type: 'success' | 'error' | 'info') => void;
+  onOpenMigration: () => void;
 }
 
-export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ saveUserProfile, showToast }) => {
+export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ saveUserProfile, showToast, onOpenMigration }) => {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -17,7 +18,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ saveUserProf
       <motion.div
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
-        className="bg-theme-card w-full max-w-md p-8 rounded-[2.5rem] shadow-2xl border border-theme-border space-y-8"
+        className="bg-theme-card w-full max-w-md p-8 rounded-[2.5rem] shadow-2xl border border-theme-border space-y-8 max-h-[90vh] overflow-y-auto"
       >
         <div className="text-center space-y-2">
           <div className="w-16 h-16 bg-theme-accent/10 text-theme-accent rounded-3xl flex items-center justify-center mx-auto mb-2">
@@ -25,6 +26,20 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ saveUserProf
           </div>
           <h2 className="text-2xl font-bold">ユーザー登録</h2>
           <p className="text-theme-text-muted text-xs">情報を入力して冒険を始めましょう。</p>
+        </div>
+
+        <div className="p-4 bg-theme-muted rounded-2xl border border-theme-border flex items-center justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-xs font-bold">以前のデータがありますか？</p>
+            <p className="text-[10px] text-theme-text-muted">QRコードからデータを引き継げます。</p>
+          </div>
+          <button 
+            onClick={onOpenMigration}
+            className="flex items-center gap-2 px-4 py-2 bg-theme-accent/10 text-theme-accent rounded-xl text-xs font-bold hover:bg-theme-accent/20 transition-all"
+          >
+            <QrCode size={16} />
+            データ移行
+          </button>
         </div>
 
         <form 

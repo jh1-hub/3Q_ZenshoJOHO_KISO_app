@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RefreshCw, X, QrCode, Scan, Download, Copy, Check, Maximize2, Minimize2, AlertCircle } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -24,6 +24,7 @@ export const MigrationModal: React.FC<MigrationModalProps> = ({
   const [isQRFullscreen, setIsQRFullscreen] = useState(false);
   const [pendingMigrationData, setPendingMigrationData] = useState<any | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
 
   const handleExport = () => {
     const encrypted = exportMigrationData(currentData);
@@ -61,8 +62,6 @@ export const MigrationModal: React.FC<MigrationModalProps> = ({
   };
 
   useEffect(() => {
-    let html5QrCode: Html5Qrcode | null = null;
-    
     if (isScanning && isOpen) {
       const startScanner = async () => {
         try {
@@ -72,22 +71,35 @@ export const MigrationModal: React.FC<MigrationModalProps> = ({
             return;
           }
 
-          await new Promise(resolve => setTimeout(resolve, 300));
+          // Wait a bit for the DOM element to be available
+          await new Promise(resolve => setTimeout(resolve, 500));
           const element = document.getElementById("qr-reader");
-          if (!element) return;
+          if (!element) {
+            console.error("QR reader element not found");
+            return;
+          }
 
-          html5QrCode = new Html5Qrcode("qr-reader");
-          await html5QrCode.start(
+          if (scannerRef.current) {
+            await scannerRef.current.stop().catch(() => {});
+            scannerRef.current = null;
+          }
+
+          scannerRef.current = new Html5Qrcode("qr-reader");
+          await scannerRef.current.start(
             { facingMode: "environment" },
             { fps: 10, qrbox: { width: 250, height: 250 } },
             (decodedText) => {
               processDecodedData(decodedText);
               setIsScanning(false);
-              html5QrCode?.stop().catch(console.error);
+              if (scannerRef.current) {
+                scannerRef.current.stop().catch(console.error);
+                scannerRef.current = null;
+              }
             },
             () => {}
           );
         } catch (err: any) {
+          console.error("Scanner error:", err);
           setMigrationError("カメラの起動に失敗しました。権限を確認してください。");
           setIsScanning(false);
         }
@@ -96,8 +108,9 @@ export const MigrationModal: React.FC<MigrationModalProps> = ({
     }
 
     return () => {
-      if (html5QrCode) {
-        html5QrCode.stop().catch(console.error);
+      if (scannerRef.current) {
+        scannerRef.current.stop().catch(console.error);
+        scannerRef.current = null;
       }
     };
   }, [isScanning, isOpen]);
@@ -167,7 +180,10 @@ export const MigrationModal: React.FC<MigrationModalProps> = ({
 
         {migrationQR && !pendingMigrationData && (
           <div className={`flex flex-col items-center space-y-6 ${isQRFullscreen ? 'h-full justify-center' : ''}`}>
-            <div className={`relative bg-white p-4 rounded-3xl shadow-inner ${isQRFullscreen ? 'w-[min(80vh,80vw)] h-[min(80vh,80vw)]' : ''}`}>
+            <div 
+              onClick={() => setIsQRFullscreen(!isQRFullscreen)}
+              className={`relative bg-white p-4 rounded-3xl shadow-inner cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] ${isQRFullscreen ? 'w-[min(80vh,80vw)] h-[min(80vh,80vw)]' : ''}`}
+            >
               <QRCodeSVG 
                 value={migrationQR} 
                 size={isQRFullscreen ? undefined : 256} 
@@ -175,13 +191,6 @@ export const MigrationModal: React.FC<MigrationModalProps> = ({
                 level="L"
                 includeMargin={true}
               />
-              <button 
-                onClick={() => setIsQRFullscreen(!isQRFullscreen)}
-                className="absolute bottom-2 right-2 p-2 bg-black/10 hover:bg-black/20 rounded-lg transition-colors"
-                title={isQRFullscreen ? "縮小" : "全画面表示"}
-              >
-                {isQRFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
-              </button>
             </div>
             
             {!isQRFullscreen && (

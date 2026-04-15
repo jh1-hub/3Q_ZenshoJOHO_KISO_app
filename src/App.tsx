@@ -639,6 +639,7 @@ export default function App() {
         <ProfileSetupView 
           saveUserProfile={saveUserProfile} 
           showToast={showToast}
+          onOpenMigration={() => setShowMigrationModal(true)}
         />
       )}
 
