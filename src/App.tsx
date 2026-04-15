@@ -685,18 +685,22 @@ export default function App() {
       />
 
       {/* Reset Confirmation Modal */}
-      <ResetConfirmationModal
-        resetStep={resetStep}
-        resetCooldown={resetCooldown}
-        onNextStep={() => {
-          if (resetStep < 3) {
-            setResetStep(prev => prev + 1);
-            setResetCooldown(3);
-          }
-        }}
-        onCancel={() => setResetStep(0)}
-        onConfirm={handleReset}
-      />
+      <AnimatePresence>
+        {resetStep > 0 && (
+          <ResetConfirmationModal
+            resetStep={resetStep}
+            resetCooldown={resetCooldown}
+            onNextStep={() => {
+              if (resetStep < 7) {
+                setResetStep(prev => prev + 1);
+                setResetCooldown(3);
+              }
+            }}
+            onCancel={() => setResetStep(0)}
+            onConfirm={handleReset}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

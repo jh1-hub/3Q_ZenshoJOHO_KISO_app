@@ -17,8 +17,6 @@ export const ResetConfirmationModal: React.FC<ResetConfirmationModalProps> = ({
   onCancel,
   onConfirm
 }) => {
-  if (resetStep === 0) return null;
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -46,11 +44,11 @@ export const ResetConfirmationModal: React.FC<ResetConfirmationModalProps> = ({
           {resetStep === 1 && "本当によろしいですか？"}
           {resetStep === 2 && "もとに戻せませんよ？"}
           {resetStep === 3 && "(もどせないったら！)"}
-          {resetStep === 4 && "(こうかいしませんね？)"}
+          {resetStep >= 4 && "(こうかいしませんね？)"}
         </p>
 
         <div className="flex flex-col gap-3">
-          {resetStep < 4 ? (
+          {resetStep < 7 ? (
             <>
               <button 
                 onClick={onNextStep}

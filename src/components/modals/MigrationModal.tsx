@@ -72,6 +72,17 @@ export const MigrationModal: React.FC<MigrationModalProps> = ({
   };
 
   useEffect(() => {
+    if (!isOpen) {
+      // Reset states when modal closes
+      setMigrationQR(null);
+      setIsScanning(false);
+      setMigrationError(null);
+      setPendingMigrationData(null);
+      setIsQRFullscreen(false);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
     if (isScanning && isOpen) {
       const startScanner = async () => {
         try {
@@ -83,6 +94,8 @@ export const MigrationModal: React.FC<MigrationModalProps> = ({
 
           // Wait a bit for the DOM element to be available
           await new Promise(resolve => setTimeout(resolve, 500));
+          if (!isOpen || !isScanning) return;
+
           const element = document.getElementById("qr-reader");
           if (!element) {
             console.error("QR reader element not found");
@@ -125,29 +138,23 @@ export const MigrationModal: React.FC<MigrationModalProps> = ({
     };
   }, [isScanning, isOpen]);
 
-  if (!isOpen) return null;
-
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[600] flex items-center justify-center bg-black/80 backdrop-blur-md p-6"
-    >
-      <motion.div
-        initial={{ scale: 0.9, y: 20 }}
-        animate={{ scale: 1, y: 0 }}
-        className={`bg-theme-card w-full ${isQRFullscreen && migrationQR ? 'max-w-none h-full' : 'max-w-lg'} p-8 rounded-[2.5rem] shadow-2xl border border-theme-border space-y-6 relative ${isQRFullscreen && migrationQR ? '' : 'max-h-[90vh] overflow-y-auto'}`}
-      >
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[600] flex items-center justify-center bg-black/80 backdrop-blur-md p-6"
+        >
+          <motion.div
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className={`bg-theme-card w-full ${isQRFullscreen && migrationQR ? 'max-w-none h-full' : 'max-w-lg'} p-8 rounded-[2.5rem] shadow-2xl border border-theme-border space-y-6 relative ${isQRFullscreen && migrationQR ? '' : 'max-h-[90vh] overflow-y-auto'}`}
+          >
         <button 
-          onClick={() => {
-            onClose();
-            setMigrationQR(null);
-            setIsScanning(false);
-            setMigrationError(null);
-            setPendingMigrationData(null);
-            setIsQRFullscreen(false);
-          }}
+          onClick={onClose}
           className="absolute top-6 right-6 p-2 hover:bg-theme-muted rounded-full transition-colors z-10"
         >
           <X size={24} />
@@ -302,5 +309,7 @@ export const MigrationModal: React.FC<MigrationModalProps> = ({
         )}
       </motion.div>
     </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
