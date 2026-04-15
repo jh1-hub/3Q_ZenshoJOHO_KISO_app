@@ -50,11 +50,15 @@ export const useQuiz = (
     
     if (gameState === 'SPEED_STAR') {
       updateTermStats(currentQuestion.term, isCorrect);
+      const nextCombo = isCorrect ? combo + 1 : 0;
+      const nextMaxCombo = Math.max(maxCombo, nextCombo);
+      const nextCorrectCount = speedStarCorrectCount + (isCorrect ? 1 : 0);
+
       if (isCorrect) {
         setScore(prev => prev + 200);
-        setSpeedStarCorrectCount(prev => prev + 1);
-        setCombo(prev => prev + 1);
-        setMaxCombo(prev => Math.max(prev, combo + 1));
+        setSpeedStarCorrectCount(nextCorrectCount);
+        setCombo(nextCombo);
+        setMaxCombo(nextMaxCombo);
         setTimeLeft(prev => Math.min(30, prev + 2));
         setFeedback('CORRECT');
       } else {
@@ -69,19 +73,21 @@ export const useQuiz = (
         if (currentQuestionIndex < questions.length - 1 && timeLeft > 0) {
           setCurrentQuestionIndex(prev => prev + 1);
         } else {
-          setSpeedStarMaxCombo(prev => Math.max(prev, Math.max(maxCombo, combo + (isCorrect ? 1 : 0))));
-          setSpeedStarMaxCorrect(prev => Math.max(prev, speedStarCorrectCount + (isCorrect ? 1 : 0)));
+          setSpeedStarMaxCombo(prev => Math.max(prev, nextMaxCombo));
+          setSpeedStarMaxCorrect(prev => Math.max(prev, nextCorrectCount));
           setGameState('RESULT');
         }
       }, 500);
       return;
     }
 
+    let nextScore = score;
     if (isCorrect) {
       updateTermStats(currentQuestion.term, true);
       const timeBonus = Math.floor(timeLeft * 2.5);
       const comboBonus = combo * 20;
-      setScore(prev => prev + 100 + timeBonus + comboBonus);
+      nextScore = score + 100 + timeBonus + comboBonus;
+      setScore(nextScore);
       setCombo(prev => prev + 1);
       setMaxCombo(prev => Math.max(prev, combo + 1));
       setCorrectCount(prev => prev + 1);
@@ -104,7 +110,7 @@ export const useQuiz = (
         setTimeLeft(60);
       } else {
         if (selectedSubcategory) {
-          updateStats(selectedSubcategory.id, score);
+          updateStats(selectedSubcategory.id, nextScore);
         }
         
         if (isDailyChallenge) {
@@ -153,7 +159,7 @@ export const useQuiz = (
       timer = window.setInterval(() => {
         setTimeLeft(prev => Math.max(0, prev - 0.1));
       }, 100);
-    } else if (timeLeft === 0 && (gameState === 'QUIZ' || gameState === 'SPEED_STAR') && !feedback) {
+    } else if (timeLeft <= 0 && (gameState === 'QUIZ' || gameState === 'SPEED_STAR') && !feedback) {
       if (gameState === 'SPEED_STAR') {
         setSpeedStarMaxCombo(prev => Math.max(prev, maxCombo));
         setSpeedStarMaxCorrect(prev => Math.max(prev, speedStarCorrectCount));
@@ -179,6 +185,7 @@ export const useQuiz = (
   }, [penaltyActive, penaltyTime]);
 
   const startQuiz = async (item: Subcategory | Category) => {
+    if (isLoading) return;
     setIsLoading(true);
     resetQuizState();
 
@@ -218,7 +225,9 @@ export const useQuiz = (
   };
 
   const startComprehensiveQuiz = async (title: string) => {
+    if (isLoading) return;
     setIsLoading(true);
+    resetQuizState();
     setSelectedSubcategory({ id: 'all', title, terms: [] });
 
     const allSubcategories = quizCategories.flatMap(cat => cat.subcategories);
@@ -250,7 +259,6 @@ export const useQuiz = (
         generatedQuestions.push(q);
       }
 
-      resetQuizState();
       setQuestions(generatedQuestions);
       setGameState('QUIZ');
     } catch (error) {
@@ -261,6 +269,7 @@ export const useQuiz = (
   };
 
   const startDailyChallenge = async () => {
+    if (isLoading) return;
     setIsLoading(true);
     resetQuizState();
     setIsDailyChallenge(true);
@@ -289,6 +298,7 @@ export const useQuiz = (
   };
 
   const startSpeedStar = async () => {
+    if (isLoading) return;
     setIsLoading(true);
     resetQuizState();
     setSelectedSubcategory(null);

@@ -7,7 +7,7 @@ import { MigrationData } from '../lib/migration';
 const idToNameMap: Record<number, string> = {};
 Object.values(allTermsMap).forEach(t => idToNameMap[t.id] = t.name);
 
-export const useGameData = () => {
+export const useGameData = (showToast?: (message: string, type?: any) => void) => {
   const [userName, setUserName] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<{ grade: string; classNum: string; attendanceNum: string } | null>(null);
   const [stats, setStats] = useState<GameStats>({});
@@ -319,7 +319,11 @@ export const useGameData = () => {
         storage.setItem('it_quiz_speed_star_stats', JSON.stringify(data.speedStarStats));
       }
 
-      alert("データの移行が完了しました！");
+      if (showToast) {
+        showToast("データの移行が完了しました！", "success");
+      } else {
+        alert("データの移行が完了しました！");
+      }
       window.location.reload();
     }
   }, []);

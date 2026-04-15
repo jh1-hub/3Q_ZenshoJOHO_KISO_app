@@ -4,9 +4,10 @@ import { UserCheck } from 'lucide-react';
 
 interface ProfileSetupViewProps {
   saveUserProfile: (profile: { grade: string; classNum: string; attendanceNum: string; userName: string }) => void;
+  showToast: (message: string, type: 'success' | 'error' | 'info') => void;
 }
 
-export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ saveUserProfile }) => {
+export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ saveUserProfile, showToast }) => {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -36,19 +37,19 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ saveUserProf
             const userNameInput = (formData.get('username') as string).trim();
             
             if (!grade || !classNum || !attendanceNum || !userNameInput) {
-              alert("すべての項目を入力してください。");
+              showToast("すべての項目を入力してください。", "error");
               return;
             }
             if (parseInt(classNum) < 1 || parseInt(attendanceNum) < 1) {
-              alert("クラスと出席番号は1以上の数値を入力してください。");
+              showToast("クラスと出席番号は1以上の数値を入力してください。", "error");
               return;
             }
             if (userNameInput.length > 12) {
-              alert("名前は12文字以内で入力してください。");
+              showToast("名前は12文字以内で入力してください。", "error");
               return;
             }
             if (/[<>/\\;]/.test(userNameInput)) {
-              alert("名前に使用できない文字が含まれています。");
+              showToast("名前に使用できない文字が含まれています。", "error");
               return;
             }
             saveUserProfile({ grade, classNum, attendanceNum, userName: userNameInput });

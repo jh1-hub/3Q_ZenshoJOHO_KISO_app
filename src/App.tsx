@@ -117,6 +117,7 @@ import { useQuiz } from './hooks/useQuiz';
 
 import { GlobalHeader } from './components/layout/GlobalHeader';
 import { FeedbackOverlays } from './components/layout/FeedbackOverlays';
+import { Toast, ToastType } from './components/ui/Toast';
 import { ProfileSetupView } from './components/views/ProfileSetupView';
 import { CardPickupModal } from './components/modals/CardPickupModal';
 import { LevelUpOverlay } from './components/modals/LevelUpOverlay';
@@ -161,6 +162,20 @@ export default function App() {
 
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
+  const [toast, setToast] = useState<{ message: string; type: ToastType; isVisible: boolean }>({
+    message: '',
+    type: 'info',
+    isVisible: false
+  });
+
+  const showToast = useCallback((message: string, type: ToastType = 'info') => {
+    setToast({ message, type, isVisible: true });
+  }, []);
+
+  const hideToast = useCallback(() => {
+    setToast(prev => ({ ...prev, isVisible: false }));
+  }, []);
+
   const {
     userName, setUserName,
     userProfile, setUserProfile,
@@ -188,7 +203,7 @@ export default function App() {
     resetAllData,
     getMigrationData,
     confirmMigration
-  } = useGameData();
+  } = useGameData(showToast);
 
   const { rarityOwned, rarityTotals, rarityOwnedCopies, rarityTotalCopies, hasAnyDuplicate } = rarityStats;
 
@@ -347,7 +362,8 @@ export default function App() {
 
   const handleReset = () => {
     resetAllData();
-    alert("すべてのデータがリセットされました。");
+    setGameState('START');
+    showToast("すべてのデータがリセットされました。", "success");
   };
 
   const resetAllStats = () => {
@@ -586,6 +602,13 @@ export default function App() {
 
       <FeedbackOverlays isLoading={isLoading} feedback={feedback} />
 
+      <Toast 
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
+
       {/* Card Pickup Modal */}
       <CardPickupModal
         pickedCard={pickedCard}
@@ -613,7 +636,10 @@ export default function App() {
 
       {/* Username Modal */}
       {!userName && gameState === 'START' && (
-        <ProfileSetupView saveUserProfile={saveUserProfile} />
+        <ProfileSetupView 
+          saveUserProfile={saveUserProfile} 
+          showToast={showToast}
+        />
       )}
 
       {/* Install Prompt Modal (Mobile) */}
