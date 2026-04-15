@@ -191,10 +191,12 @@ export const useQuiz = (
 
     let quizTerms: any[] = [];
     let selectedItem: any = item;
+    let targetCount = 5;
 
     if ('subcategories' in item) {
       // It's a Category - include all terms from all subcategories
       quizTerms = item.subcategories.flatMap(sub => sub.terms);
+      targetCount = 10;
       // Create a dummy subcategory for the UI
       selectedItem = {
         id: item.id,
@@ -203,14 +205,19 @@ export const useQuiz = (
       };
     } else {
       quizTerms = item.terms;
+      targetCount = 5;
       selectedItem = item;
     }
+
+    // Shuffle and slice to target count
+    const shuffledTerms = [...quizTerms].sort(() => 0.5 - Math.random());
+    const selectedTerms = shuffledTerms.slice(0, targetCount);
 
     setSelectedSubcategory(selectedItem);
 
     try {
       const generatedQuestions = await Promise.all(
-        quizTerms.map(term => 
+        selectedTerms.map(term => 
           generateQuestion(term.name, quizTerms.map(t => t.name), allTerms)
         )
       );
