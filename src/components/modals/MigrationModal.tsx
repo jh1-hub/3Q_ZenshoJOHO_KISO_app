@@ -93,31 +93,38 @@ export const MigrationModal: React.FC<MigrationModalProps> = ({
           }
 
           // Wait a bit for the DOM element to be available
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise(resolve => setTimeout(resolve, 800));
           if (!isOpen || !isScanning) return;
 
           const element = document.getElementById("qr-reader");
           if (!element) {
             console.error("QR reader element not found");
-            return;
+            // If element is not found but we should be scanning, try one more time after a short delay
+            await new Promise(resolve => setTimeout(resolve, 500));
+            if (!document.getElementById("qr-reader") || !isOpen || !isScanning) {
+              setIsScanning(false);
+              return;
+            }
           }
 
           if (scannerRef.current) {
-            await scannerRef.current.stop().catch(() => {});
+            try {
+              await scannerRef.current.stop();
+            } catch (e) {}
             scannerRef.current = null;
           }
 
-          scannerRef.current = new Html5Qrcode("qr-reader");
-          await scannerRef.current.start(
+          const html5QrCode = new Html5Qrcode("qr-reader");
+          scannerRef.current = html5QrCode;
+          
+          await html5QrCode.start(
             { facingMode: "environment" },
             { fps: 10, qrbox: { width: 250, height: 250 } },
             (decodedText) => {
               processDecodedData(decodedText);
               setIsScanning(false);
-              if (scannerRef.current) {
-                scannerRef.current.stop().catch(console.error);
-                scannerRef.current = null;
-              }
+              html5QrCode.stop().catch(console.error);
+              scannerRef.current = null;
             },
             () => {}
           );
