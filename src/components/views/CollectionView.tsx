@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, LayoutGrid, List, Search, Lock } from 'lucide-react';
-import { getTermIcon } from '../../lib/termIcon';
+import { ChevronLeft, LayoutGrid, List, Search } from 'lucide-react';
+import { CardItem } from '../collection/CardItem';
+import { WordRow } from '../collection/WordRow';
 
 interface CollectionViewProps {
   setGameState: (state: any) => void;
@@ -56,6 +57,72 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
   wordModeIndexes,
   setWordModeIndexes
 }) => {
+  const handleWordRowClick = (term: string) => {
+    const isOwned = !!ownedCards[term];
+    const count = ownedCards[term] || 0;
+    const currentIndex = wordModeIndexes[term] || 0;
+    const maxDescriptions = Math.min(allTermsMap[term]?.descriptions?.length || 1, 3);
+    
+    if (isOwned && count > 1 && maxDescriptions > 1) {
+      setWordModeIndexes(prev => ({
+        ...prev,
+        [term]: (currentIndex + 1) % Math.min(count, maxDescriptions)
+      }));
+    }
+  };
+
+  const renderCardList = (terms: { term: string; subId: string }[]) => (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
+      {terms.map(({ term, subId }) => (
+        <CardItem
+          key={`${term}-${subId}`}
+          term={term}
+          subId={subId}
+          rarity={allTermsMap[term]?.rarity || 'C'}
+          styles={getRarityStyles(allTermsMap[term]?.rarity || 'C')}
+          isOwned={!!ownedCards[term]}
+          count={ownedCards[term] || 0}
+          isTarget={targetCardId === term}
+          pickedCard={pickedCard}
+          allTermsMap={allTermsMap}
+          handleCardClick={handleCardClick}
+          cardRefs={cardRefs}
+        />
+      ))}
+    </div>
+  );
+
+  const renderWordTable = (terms: { term: string; subId: string }[]) => (
+    <div className="bg-theme-card rounded-2xl border border-theme-border overflow-x-auto">
+      <table className="w-full text-left text-sm md:text-base min-w-[600px]">
+        <thead className="bg-theme-muted text-theme-text-muted">
+          <tr>
+            <th className="p-4 font-bold w-24 md:w-48">Term</th>
+            <th className="p-4 font-bold">Description</th>
+            <th className="p-4 font-bold">Flavor Text</th>
+            <th className="p-4 font-bold w-16 text-center">Rarity</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-theme-border">
+          {terms.map(({ term, subId }) => (
+            <WordRow
+              key={`${term}-${subId}`}
+              term={term}
+              subId={subId}
+              rarity={allTermsMap[term]?.rarity || 'C'}
+              styles={getRarityStyles(allTermsMap[term]?.rarity || 'C')}
+              isOwned={!!ownedCards[term]}
+              count={ownedCards[term] || 0}
+              currentIndex={wordModeIndexes[term] || 0}
+              allTermsMap={allTermsMap}
+              onRowClick={() => handleWordRowClick(term)}
+            />
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
   return (
     <motion.div 
       key="collection"
@@ -186,207 +253,13 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
             <div className="flex-1 h-px bg-theme-border" />
           </div>
 
-          {collectionMode === 'card' ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
-              {filteredTerms.map(({ term, subId }) => {
-                const rarity = allTermsMap[term]?.rarity || 'C';
-                const styles = getRarityStyles(rarity);
-                const isOwned = !!ownedCards[term];
-                const count = ownedCards[term] || 0;
-                
-                return (
-                  <div 
-                    key={term} 
-                    ref={el => {
-                      if (cardRefs.current) {
-                        cardRefs.current[term] = el;
-                      }
-                    }}
-                    className={`aspect-[3/4] relative ${targetCardId === term ? 'ring-4 ring-amber-400 ring-offset-4 ring-offset-theme-bg rounded-2xl z-10 scale-105 transition-all' : ''}`}
-                  >
-                    <motion.div
-                      whileHover={isOwned ? { scale: 1.05, y: -5 } : {}}
-                      onClick={() => handleCardClick(term)}
-                      className={`relative h-full flex flex-col rounded-2xl overflow-hidden ${isOwned ? 'cursor-pointer' : 'cursor-not-allowed grayscale opacity-50'} group ${isOwned ? styles.border : 'border-2 border-dashed border-theme-border-strong'} ${isOwned ? styles.glow : ''} bg-theme-card`}
-                    >
-                      {/* Card Backgrounds */}
-                      <div className={`absolute inset-0 ${isOwned ? styles.bg : 'bg-theme-border'} opacity-10 group-hover:opacity-20 transition-opacity`} />
-                    
-                    {/* Pulse Effect (Behind Content) */}
-                    {isOwned && styles.pulse && (
-                      <div className={`absolute inset-0 ${styles.bg} opacity-15 ${styles.pulse} z-0`} />
-                    )}
-
-                    <div className="flex-1 flex flex-col bg-transparent relative z-10" style={{ perspective: 1000 }}>
-                      {/* Card Header */}
-                      <div className={`px-2 py-1.5 md:px-3 md:py-2 flex justify-between items-center shrink-0 ${isOwned && rarity !== 'C' ? styles.bg : 'bg-theme-muted'} ${isOwned && rarity !== 'C' ? 'text-white' : 'text-theme-text-muted'}`}>
-                        <span className="text-[8px] md:text-[10px] font-bold tracking-widest uppercase drop-shadow-sm">{isOwned ? styles.label : 'LOCKED'}</span>
-                        {isOwned && count > 1 && (
-                          <span className="text-[8px] md:text-[10px] font-bold bg-theme-card/20 px-1.5 py-0.5 rounded-full">x{count}</span>
-                        )}
-                      </div>
-
-                      {/* Card Content */}
-                      <div className="flex-1 p-3 md:p-4 flex flex-col items-center justify-start text-center space-y-2 md:space-y-3">
-                        <div className={`hidden md:flex w-12 h-12 shrink-0 rounded-xl items-center justify-center ${isOwned ? styles.bg : 'bg-theme-border'} ${isOwned ? (rarity === 'C' ? 'text-theme-text' : 'text-white') : 'text-theme-text-muted'} shadow-inner`}>
-                          {isOwned ? getTermIcon(term, 20) : <Lock size={20} />}
-                        </div>
-                        
-                        <div className="space-y-0.5 w-full shrink-0">
-                          <h3 className={`text-sm md:text-base font-bold leading-tight ${isOwned ? 'text-theme-text' : 'text-theme-text-muted'} break-words drop-shadow-sm`}>{isOwned ? term : '???'}</h3>
-                        </div>
-
-                        {isOwned && (
-                            <motion.div 
-                              key={pickedCard?.term === term ? pickedCard.descriptionIndex : 0}
-                              initial={{ opacity: 0, scale: 0.9 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, scale: 0.9 }}
-                              transition={{ duration: 0.5, ease: "easeInOut" }}
-                              className="pt-2 md:pt-3 border-t border-theme-border w-full flex-1 flex flex-col justify-between"
-                            >
-                            <p className="text-[10px] md:text-xs text-theme-text leading-relaxed text-left mb-1 drop-shadow-sm font-bold">
-                              {(allTermsMap[term]?.descriptions || ["説明がありません。"])[pickedCard?.term === term ? pickedCard.descriptionIndex : 0]}
-                            </p>
-                            {allTermsMap[term]?.flavorTexts && (
-                              <p className="text-[8px] md:text-[10px] text-theme-text-muted leading-relaxed text-left mb-2 italic">
-                                {(() => {
-                                  const flavor = allTermsMap[term]?.flavorTexts;
-                                  const idx = pickedCard?.term === term ? pickedCard.descriptionIndex : 0;
-                                  if (Array.isArray(flavor)) {
-                                    return flavor[idx % flavor.length];
-                                  }
-                                  return flavor;
-                                })()}
-                              </p>
-                            )}
-                            <div className="flex justify-center gap-1 mt-auto pb-1">
-                              {[...Array(Math.min(allTermsMap[term]?.descriptions?.length || 1, 3))].map((_, i) => (
-                                <div 
-                                  key={i} 
-                                  className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${
-                                    (pickedCard?.term === term ? i === pickedCard.descriptionIndex : i === 0)
-                                      ? (isOwned ? styles.bg : 'bg-theme-text-muted') 
-                                      : (i < count ? 'bg-theme-border-strong' : 'bg-theme-border')
-                                  }`} 
-                                />
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </div>
-                    </div>
-                  </motion.div>
-                </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="bg-theme-card rounded-2xl border border-theme-border overflow-x-auto">
-              <table className="w-full text-left text-sm md:text-base min-w-[600px]">
-                <thead className="bg-theme-muted text-theme-text-muted">
-                  <tr>
-                    <th className="p-4 font-bold w-24 md:w-48">Term</th>
-                    <th className="p-4 font-bold">Description</th>
-                    <th className="p-4 font-bold">Flavor Text</th>
-                    <th className="p-4 font-bold w-16 text-center">Rarity</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-theme-border">
-                  {filteredTerms.map(({ term }, index) => {
-                    const rarity = allTermsMap[term]?.rarity || 'C';
-                    const styles = getRarityStyles(rarity);
-                    const isOwned = !!ownedCards[term];
-                    const count = ownedCards[term] || 0;
-                    const currentIndex = wordModeIndexes[term] || 0;
-                    
-                    const handleRowClick = () => {
-                      const maxDescriptions = Math.min(allTermsMap[term]?.descriptions?.length || 1, 3);
-                      if (isOwned && count > 1 && maxDescriptions > 1) {
-                        setWordModeIndexes(prev => ({
-                          ...prev,
-                          [term]: (currentIndex + 1) % Math.min(count, maxDescriptions)
-                        }));
-                      }
-                    };
-
-                    // Helper to wrap term every 6 characters for mobile
-                    const formatTerm = (t: string) => {
-                      if (!t) return '';
-                      const chunks = [];
-                      for (let i = 0; i < t.length; i += 6) {
-                        chunks.push(t.substring(i, i + 6));
-                      }
-                      return chunks.join('\n');
-                    };
-
-                    return (
-                      <tr 
-                        key={term} 
-                        onClick={handleRowClick}
-                        className={`${isOwned ? 'hover:bg-theme-muted/50 cursor-pointer' : 'opacity-50'} transition-colors`}
-                      >
-                        <td className="p-4 font-bold align-top">
-                          {isOwned ? (
-                            <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
-                              <span className="hidden md:inline">{term}</span>
-                              <span className="md:hidden whitespace-pre-wrap leading-tight">{formatTerm(term)}</span>
-                              {count > 1 && (
-                                <span className="text-[10px] bg-theme-border px-1.5 py-0.5 rounded-full text-theme-text-muted w-fit">x{count}</span>
-                              )}
-                            </div>
-                          ) : '???'}
-                        </td>
-                        <td className="p-4">
-                          {isOwned ? (
-                            <div className="flex flex-col gap-1">
-                              <span>{(allTermsMap[term]?.descriptions || ["説明がありません。"])[currentIndex]}</span>
-                              {Math.min(count, allTermsMap[term]?.descriptions?.length || 1, 3) > 1 && (
-                                <div className="flex gap-1 mt-1">
-                                  {[...Array(Math.min(count, allTermsMap[term]?.descriptions?.length || 1, 3))].map((_, i) => (
-                                    <div 
-                                      key={i} 
-                                      className={`w-1.5 h-1.5 rounded-full ${i === currentIndex ? styles.bg : 'bg-theme-border-strong'}`} 
-                                    />
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          ) : '???'}
-                        </td>
-                        <td className="p-4 text-theme-text-muted italic text-xs md:text-sm">
-                          {isOwned ? (
-                            (() => {
-                              const flavor = allTermsMap[term]?.flavorTexts;
-                              if (Array.isArray(flavor)) {
-                                return flavor[currentIndex % flavor.length];
-                              }
-                              return flavor;
-                            })()
-                          ) : '???'}
-                        </td>
-                        <td className="p-4 text-center">
-                          {isOwned ? (
-                            <span className={`inline-block px-2 py-1 rounded text-[10px] font-bold tracking-widest uppercase ${styles.bg} ${rarity === 'C' ? 'text-theme-text' : 'text-white'}`}>
-                              {styles.label}
-                            </span>
-                          ) : (
-                            <span className="text-theme-text-muted"><Lock size={16} className="mx-auto" /></span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+          {collectionMode === 'card' ? renderCardList(filteredTerms) : renderWordTable(filteredTerms)}
         </div>
       ) : (
         quizCategories.filter(c => c.id === activeCollectionTab).map(category => {
           const categoryTerms = category.subcategories
             .filter((sub: any) => !activeSubcollectionTab || sub.id === activeSubcollectionTab)
-            .flatMap((sub: any) => sub.terms.map((t: any) => ({ ...t, subId: sub.id })));
+            .flatMap((sub: any) => sub.terms.map((t: any) => ({ term: t.name, subId: sub.id })));
           
           if (categoryTerms.length === 0) return null;
 
@@ -397,201 +270,7 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
                 <div className="flex-1 h-px bg-theme-border" />
               </div>
 
-              {collectionMode === 'card' ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
-                  {categoryTerms.map(({ term, subId }: any) => {
-                    const rarity = allTermsMap[term]?.rarity || 'C';
-                    const styles = getRarityStyles(rarity);
-                    const isOwned = !!ownedCards[term];
-                    const count = ownedCards[term] || 0;
-                    
-                    return (
-                      <div 
-                        key={term} 
-                        ref={el => {
-                          if (cardRefs.current) {
-                            cardRefs.current[term] = el;
-                          }
-                        }}
-                        className={`aspect-[3/4] relative ${targetCardId === term ? 'ring-4 ring-amber-400 ring-offset-4 ring-offset-theme-bg rounded-2xl z-10 scale-105 transition-all' : ''}`}
-                      >
-                        <motion.div
-                          whileHover={isOwned ? { scale: 1.05, y: -5 } : {}}
-                          onClick={() => handleCardClick(term)}
-                          className={`relative h-full flex flex-col rounded-2xl overflow-hidden ${isOwned ? 'cursor-pointer' : 'cursor-not-allowed grayscale opacity-50'} group ${isOwned ? styles.border : 'border-2 border-dashed border-theme-border-strong'} ${isOwned ? styles.glow : ''} bg-theme-card`}
-                        >
-                          {/* Card Backgrounds */}
-                          <div className={`absolute inset-0 ${isOwned ? styles.bg : 'bg-theme-border'} opacity-10 group-hover:opacity-20 transition-opacity`} />
-                        
-                        {/* Pulse Effect (Behind Content) */}
-                        {isOwned && styles.pulse && (
-                          <div className={`absolute inset-0 ${styles.bg} opacity-15 ${styles.pulse} z-0`} />
-                        )}
-
-                        <div className="flex-1 flex flex-col bg-transparent relative z-10" style={{ perspective: 1000 }}>
-                          {/* Card Header */}
-                          <div className={`px-2 py-1.5 md:px-3 md:py-2 flex justify-between items-center shrink-0 ${isOwned && rarity !== 'C' ? styles.bg : 'bg-theme-muted'} ${isOwned && rarity !== 'C' ? 'text-white' : 'text-theme-text-muted'}`}>
-                            <span className="text-[8px] md:text-[10px] font-bold tracking-widest uppercase drop-shadow-sm">{isOwned ? styles.label : 'LOCKED'}</span>
-                            {isOwned && count > 1 && (
-                              <span className="text-[8px] md:text-[10px] font-bold bg-theme-card/20 px-1.5 py-0.5 rounded-full">x{count}</span>
-                            )}
-                          </div>
-
-                          {/* Card Content */}
-                          <div className="flex-1 p-3 md:p-4 flex flex-col items-center justify-start text-center space-y-2 md:space-y-3">
-                            <div className={`hidden md:flex w-12 h-12 shrink-0 rounded-xl items-center justify-center ${isOwned ? styles.bg : 'bg-theme-border'} ${isOwned ? (rarity === 'C' ? 'text-theme-text' : 'text-white') : 'text-theme-text-muted'} shadow-inner`}>
-                              {isOwned ? getTermIcon(term, 20) : <Lock size={20} />}
-                            </div>
-                            
-                            <div className="space-y-0.5 w-full shrink-0">
-                              <h3 className={`text-sm md:text-base font-bold leading-tight ${isOwned ? 'text-theme-text' : 'text-theme-text-muted'} break-words drop-shadow-sm`}>{isOwned ? term : '???'}</h3>
-                            </div>
-
-                            {isOwned && (
-                                <motion.div 
-                                  key={pickedCard?.term === term ? pickedCard.descriptionIndex : 0}
-                                  initial={{ opacity: 0, scale: 0.9 }}
-                                  animate={{ opacity: 1, scale: 1 }}
-                                  exit={{ opacity: 0, scale: 0.9 }}
-                                  transition={{ duration: 0.5, ease: "easeInOut" }}
-                                  className="pt-2 md:pt-3 border-t border-theme-border w-full flex-1 flex flex-col justify-between"
-                                >
-                                <p className="text-[10px] md:text-xs text-theme-text leading-relaxed text-left mb-1 drop-shadow-sm font-bold">
-                                  {(allTermsMap[term]?.descriptions || ["説明がありません。"])[pickedCard?.term === term ? pickedCard.descriptionIndex : 0]}
-                                </p>
-                                {allTermsMap[term]?.flavorTexts && (
-                                  <p className="text-[8px] md:text-[10px] text-theme-text-muted leading-relaxed text-left mb-2 italic">
-                                    {(() => {
-                                      const flavor = allTermsMap[term]?.flavorTexts;
-                                      const idx = pickedCard?.term === term ? pickedCard.descriptionIndex : 0;
-                                      if (Array.isArray(flavor)) {
-                                        return flavor[idx % flavor.length];
-                                      }
-                                      return flavor;
-                                    })()}
-                                  </p>
-                                )}
-                                <div className="flex justify-center gap-1 mt-auto pb-1">
-                                  {[...Array(Math.min(allTermsMap[term]?.descriptions?.length || 1, 3))].map((_, i) => (
-                                    <div 
-                                      key={i} 
-                                      className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${
-                                        (pickedCard?.term === term ? i === pickedCard.descriptionIndex : i === 0)
-                                          ? (isOwned ? styles.bg : 'bg-theme-text-muted') 
-                                          : (i < count ? 'bg-theme-border-strong' : 'bg-theme-border')
-                                      }`} 
-                                    />
-                                  ))}
-                                </div>
-                              </motion.div>
-                            )}
-                          </div>
-                        </div>
-                      </motion.div>
-                    </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="bg-theme-card rounded-2xl border border-theme-border overflow-x-auto">
-                  <table className="w-full text-left text-sm md:text-base min-w-[600px]">
-                    <thead className="bg-theme-muted text-theme-text-muted">
-                      <tr>
-                        <th className="p-4 font-bold w-24 md:w-48">Term</th>
-                        <th className="p-4 font-bold">Description</th>
-                        <th className="p-4 font-bold">Flavor Text</th>
-                        <th className="p-4 font-bold w-16 text-center">Rarity</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-theme-border">
-                      {categoryTerms.map(({ term }: any, index: number) => {
-                        const rarity = allTermsMap[term]?.rarity || 'C';
-                        const styles = getRarityStyles(rarity);
-                        const isOwned = !!ownedCards[term];
-                        const count = ownedCards[term] || 0;
-                        const currentIndex = wordModeIndexes[term] || 0;
-                        
-                        const handleRowClick = () => {
-                          const maxDescriptions = Math.min(allTermsMap[term]?.descriptions?.length || 1, 3);
-                          if (isOwned && count > 1 && maxDescriptions > 1) {
-                            setWordModeIndexes(prev => ({
-                              ...prev,
-                              [term]: (currentIndex + 1) % Math.min(count, maxDescriptions)
-                            }));
-                          }
-                        };
-
-                        // Helper to wrap term every 6 characters for mobile
-                        const formatTerm = (t: string) => {
-                          if (!t) return '';
-                          const chunks = [];
-                          for (let i = 0; i < t.length; i += 6) {
-                            chunks.push(t.substring(i, i + 6));
-                          }
-                          return chunks.join('\n');
-                        };
-
-                        return (
-                          <tr 
-                            key={term} 
-                            onClick={handleRowClick}
-                            className={`${isOwned ? 'hover:bg-theme-muted/50 cursor-pointer' : 'opacity-50'} transition-colors`}
-                          >
-                            <td className="p-4 font-bold align-top">
-                              {isOwned ? (
-                                <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
-                                  <span className="hidden md:inline">{term}</span>
-                                  <span className="md:hidden whitespace-pre-wrap leading-tight">{formatTerm(term)}</span>
-                                  {count > 1 && (
-                                    <span className="text-[10px] bg-theme-border px-1.5 py-0.5 rounded-full text-theme-text-muted w-fit">x{count}</span>
-                                  )}
-                                </div>
-                              ) : '???'}
-                            </td>
-                            <td className="p-4">
-                              {isOwned ? (
-                                <div className="flex flex-col gap-1">
-                                  <span>{(allTermsMap[term]?.descriptions || ["説明がありません。"])[currentIndex]}</span>
-                                  {Math.min(count, allTermsMap[term]?.descriptions?.length || 1, 3) > 1 && (
-                                    <div className="flex gap-1 mt-1">
-                                      {[...Array(Math.min(count, allTermsMap[term]?.descriptions?.length || 1, 3))].map((_, i) => (
-                                        <div 
-                                          key={i} 
-                                          className={`w-1.5 h-1.5 rounded-full ${i === currentIndex ? styles.bg : 'bg-theme-border-strong'}`} 
-                                        />
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              ) : '???'}
-                            </td>
-                            <td className="p-4 text-theme-text-muted italic text-xs md:text-sm">
-                              {isOwned ? (
-                                (() => {
-                                  const flavor = allTermsMap[term]?.flavorTexts;
-                                  if (Array.isArray(flavor)) {
-                                    return flavor[currentIndex % flavor.length];
-                                  }
-                                  return flavor;
-                                })()
-                              ) : '???'}
-                            </td>
-                            <td className="p-4 text-center">
-                              {isOwned ? (
-                                <span className={`inline-block px-2 py-1 rounded text-[10px] font-bold tracking-widest uppercase ${styles.bg} ${rarity === 'C' ? 'text-theme-text' : 'text-white'}`}>
-                                  {styles.label}
-                                </span>
-                              ) : (
-                                <span className="text-theme-text-muted"><Lock size={16} className="mx-auto" /></span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              {collectionMode === 'card' ? renderCardList(categoryTerms) : renderWordTable(categoryTerms)}
             </div>
           );
         })

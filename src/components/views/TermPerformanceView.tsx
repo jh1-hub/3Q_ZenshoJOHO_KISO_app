@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, BarChart, RotateCcw, Search } from 'lucide-react';
+import { PerformanceRow } from '../performance/PerformanceRow';
 
 interface TermPerformanceViewProps {
   setGameState: (state: any) => void;
@@ -45,6 +46,63 @@ export const TermPerformanceView: React.FC<TermPerformanceViewProps> = ({
   termPerformanceDescIndexes,
   setTermPerformanceDescIndexes
 }) => {
+  const handleRowClick = (termName: string, ownedCount: number, descriptions: string[]) => {
+    const currentIndex = termPerformanceDescIndexes[termName] || 0;
+    const isOwned = ownedCount > 0;
+    
+    if (isOwned && ownedCount > 1) {
+      const unlockedCount = Math.min(ownedCount, descriptions.length);
+      if (unlockedCount > 1) {
+        setTermPerformanceDescIndexes(prev => ({
+          ...prev,
+          [termName]: (currentIndex + 1) % unlockedCount
+        }));
+      }
+    }
+  };
+
+  const renderPerformanceTable = (terms: any[]) => (
+    <div className="bg-theme-card rounded-[2rem] border border-theme-border overflow-hidden shadow-sm">
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-xs md:text-sm min-w-[700px]">
+          <thead className="bg-theme-muted text-theme-text-muted border-b border-theme-border">
+            <tr>
+              <th className="p-4 md:p-6 font-bold w-24 md:w-32 text-center">正答率</th>
+              <th className="p-4 md:p-6 font-bold w-32 md:w-48">用語</th>
+              <th className="p-4 md:p-6 font-bold">説明文</th>
+              <th className="p-4 md:p-6 font-bold w-24 md:w-32 text-center">正解 / 出題</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-theme-border">
+            {terms.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="p-12 text-center text-theme-text-muted">
+                  一致する用語が見つかりませんでした。
+                </td>
+              </tr>
+            ) : (
+              terms.map(({ term, stat, rate, ownedCount }) => {
+                const descriptions = allTermsMap[term.name]?.descriptions || ["説明がありません。"];
+                return (
+                  <PerformanceRow
+                    key={term.name}
+                    termName={term.name}
+                    stat={stat}
+                    rate={rate}
+                    ownedCount={ownedCount}
+                    descriptions={descriptions}
+                    currentIndex={termPerformanceDescIndexes[term.name] || 0}
+                    onRowClick={() => handleRowClick(term.name, ownedCount, descriptions)}
+                  />
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
   return (
     <motion.div 
       key="term-performance"
@@ -189,119 +247,33 @@ export const TermPerformanceView: React.FC<TermPerformanceViewProps> = ({
               <div className="flex-1 h-px bg-theme-border" />
             </div>
 
-            <div className="bg-theme-card rounded-[2rem] border border-theme-border overflow-hidden shadow-sm">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs md:text-sm min-w-[700px]">
-                  <thead className="bg-theme-muted text-theme-text-muted border-b border-theme-border">
-                    <tr>
-                      <th className="p-4 md:p-6 font-bold w-24 md:w-32 text-center">正答率</th>
-                      <th className="p-4 md:p-6 font-bold w-32 md:w-48">用語</th>
-                      <th className="p-4 md:p-6 font-bold">説明文</th>
-                      <th className="p-4 md:p-6 font-bold w-24 md:w-32 text-center">正解 / 出題</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-theme-border">
-                    {(() => {
-                      const allMatches = quizCategories.flatMap(category => 
-                        category.subcategories.flatMap((sub: any) => 
-                          sub.terms.filter((t: any) => !termPerformanceSearchTerm || t.name.includes(termPerformanceSearchTerm))
-                            .map((term: any) => {
-                              const stat = termStats[term.name] || { correct: 0, total: 0 };
-                              const rate = stat.total > 0 ? (stat.correct / stat.total) * 100 : 0;
-                              const ownedCount = ownedCards[term.name] || 0;
-                              return { term, stat, rate, ownedCount };
-                            })
-                        )
-                      );
+            {renderPerformanceTable(
+              (() => {
+                const allMatches = quizCategories.flatMap(category => 
+                  category.subcategories.flatMap((sub: any) => 
+                    sub.terms.filter((t: any) => !termPerformanceSearchTerm || t.name.includes(termPerformanceSearchTerm))
+                      .map((term: any) => {
+                        const stat = termStats[term.name] || { correct: 0, total: 0 };
+                        const rate = stat.total > 0 ? (stat.correct / stat.total) * 100 : 0;
+                        const ownedCount = ownedCards[term.name] || 0;
+                        return { term, stat, rate, ownedCount };
+                      })
+                  )
+                );
 
-                      if (termSortOrder) {
-                        allMatches.sort((a, b) => {
-                          if (a.rate !== b.rate) {
-                            return termSortOrder === 'asc' ? a.rate - b.rate : b.rate - a.rate;
-                          }
-                          const aSec = a.stat.correct - a.stat.total;
-                          const bSec = b.stat.correct - b.stat.total;
-                          return termSortOrder === 'asc' ? aSec - bSec : bSec - aSec;
-                        });
-                      }
-
-                      if (allMatches.length === 0) {
-                        return (
-                          <tr>
-                            <td colSpan={4} className="p-12 text-center text-theme-text-muted">
-                              一致する用語が見つかりませんでした。
-                            </td>
-                          </tr>
-                        );
-                      }
-
-                      return allMatches.map(({ term, stat, rate, ownedCount }) => {
-                        const descriptions = allTermsMap[term.name]?.descriptions || ["説明がありません。"];
-                        const currentIndex = termPerformanceDescIndexes[term.name] || 0;
-                        const isOwned = ownedCount > 0;
-                        
-                        return (
-                          <tr 
-                            key={term.name} 
-                            className={`transition-colors ${isOwned && ownedCount > 1 ? 'hover:bg-theme-muted/50 cursor-pointer' : 'hover:bg-theme-muted/30'}`}
-                            onClick={() => {
-                              if (isOwned && ownedCount > 1) {
-                                const unlockedCount = Math.min(ownedCount, descriptions.length);
-                                if (unlockedCount > 1) {
-                                  setTermPerformanceDescIndexes(prev => ({
-                                    ...prev,
-                                    [term.name]: (currentIndex + 1) % unlockedCount
-                                  }));
-                                }
-                              }
-                            }}
-                          >
-                            <td className="p-4 md:p-6 text-center align-middle">
-                              <div className={`inline-flex flex-col items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl ${
-                                stat.total === 0 ? 'bg-theme-muted text-theme-text-muted' :
-                                rate < 40 ? 'bg-red-50 text-red-600 border border-red-100' :
-                                rate < 70 ? 'bg-amber-50 text-amber-600 border border-amber-100' :
-                                'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                              }`}>
-                                <span className="text-sm md:text-lg font-mono font-bold leading-none">{rate.toFixed(1)}</span>
-                                <span className="text-[8px] font-bold uppercase mt-1">%</span>
-                              </div>
-                            </td>
-                            <td className="p-4 md:p-6 align-top">
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-bold text-sm md:text-base">
-                                    {term.name}
-                                  </span>
-                                </div>
-                                <div className={`text-[9px] md:text-[10px] font-bold px-2 py-0.5 rounded-full uppercase w-fit ${
-                                  isOwned ? 'bg-theme-accent/10 text-theme-accent' : 'bg-theme-muted text-theme-text-muted'
-                                }`}>
-                                  {isOwned ? `x${ownedCount}` : '未所持'}
-                                </div>
-                              </div>
-                            </td>
-                            <td className="p-4 md:p-6 align-top">
-                              <div className="space-y-3">
-                                <p className="text-xs md:text-sm text-theme-text leading-relaxed">
-                                  {descriptions[currentIndex]}
-                                </p>
-                              </div>
-                            </td>
-                            <td className="p-4 md:p-6 text-center align-middle">
-                              <div className="space-y-1">
-                                <p className="text-xs md:text-sm font-mono font-bold">{stat.correct} / {stat.total}</p>
-                                <p className="text-[8px] md:text-[10px] font-bold text-theme-text-muted uppercase tracking-widest">Correct / Total</p>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      });
-                    })()}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                if (termSortOrder) {
+                  allMatches.sort((a, b) => {
+                    if (a.rate !== b.rate) {
+                      return termSortOrder === 'asc' ? a.rate - b.rate : b.rate - a.rate;
+                    }
+                    const aSec = a.stat.correct - a.stat.total;
+                    const bSec = b.stat.correct - b.stat.total;
+                    return termSortOrder === 'asc' ? aSec - bSec : bSec - aSec;
+                  });
+                }
+                return allMatches;
+              })()
+            )}
           </div>
         ) : (
           quizCategories.filter(c => c.id === activeCollectionTab).map(category => {
@@ -338,84 +310,7 @@ export const TermPerformanceView: React.FC<TermPerformanceViewProps> = ({
                   <div className="flex-1 h-px bg-theme-border" />
                 </div>
 
-                <div className="bg-theme-card rounded-[2rem] border border-theme-border overflow-hidden shadow-sm">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs md:text-sm min-w-[700px]">
-                      <thead className="bg-theme-muted text-theme-text-muted border-b border-theme-border">
-                        <tr>
-                          <th className="p-4 md:p-6 font-bold w-24 md:w-32 text-center">正答率</th>
-                          <th className="p-4 md:p-6 font-bold w-32 md:w-48">用語</th>
-                          <th className="p-4 md:p-6 font-bold">説明文</th>
-                          <th className="p-4 md:p-6 font-bold w-24 md:w-32 text-center">正解 / 出題</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-theme-border">
-                        {displayTerms.map(({ term, stat, rate, ownedCount }: any) => {
-                          const descriptions = allTermsMap[term.name]?.descriptions || ["説明がありません。"];
-                          const currentIndex = termPerformanceDescIndexes[term.name] || 0;
-                          const isOwned = ownedCount > 0;
-                          
-                          return (
-                            <tr 
-                              key={term.name} 
-                              className={`transition-colors ${isOwned && ownedCount > 1 ? 'hover:bg-theme-muted/50 cursor-pointer' : 'hover:bg-theme-muted/30'}`}
-                              onClick={() => {
-                                if (isOwned && ownedCount > 1) {
-                                  const unlockedCount = Math.min(ownedCount, descriptions.length);
-                                  if (unlockedCount > 1) {
-                                    setTermPerformanceDescIndexes(prev => ({
-                                      ...prev,
-                                      [term.name]: (currentIndex + 1) % unlockedCount
-                                    }));
-                                  }
-                                }
-                              }}
-                            >
-                              <td className="p-4 md:p-6 text-center align-middle">
-                                <div className={`inline-flex flex-col items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl ${
-                                  stat.total === 0 ? 'bg-theme-muted text-theme-text-muted' :
-                                  rate < 40 ? 'bg-red-50 text-red-600 border border-red-100' :
-                                  rate < 70 ? 'bg-amber-50 text-amber-600 border border-amber-100' :
-                                  'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                                }`}>
-                                  <span className="text-sm md:text-lg font-mono font-bold leading-none">{rate.toFixed(1)}</span>
-                                  <span className="text-[8px] font-bold uppercase mt-1">%</span>
-                                </div>
-                              </td>
-                              <td className="p-4 md:p-6 align-top">
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-bold text-sm md:text-base">
-                                      {term.name}
-                                    </span>
-                                  </div>
-                                  <div className={`text-[9px] md:text-[10px] font-bold px-2 py-0.5 rounded-full uppercase w-fit ${
-                                    isOwned ? 'bg-theme-accent/10 text-theme-accent' : 'bg-theme-muted text-theme-text-muted'
-                                  }`}>
-                                    {isOwned ? `x${ownedCount}` : '未所持'}
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="p-4 md:p-6 align-top">
-                                <div className="space-y-3">
-                                  <p className="text-xs md:text-sm text-theme-text leading-relaxed">
-                                    {descriptions[currentIndex]}
-                                  </p>
-                                </div>
-                              </td>
-                              <td className="p-4 md:p-6 text-center align-middle">
-                                <div className="space-y-1">
-                                  <p className="text-xs md:text-sm font-mono font-bold">{stat.correct} / {stat.total}</p>
-                                  <p className="text-[8px] md:text-[10px] font-bold text-theme-text-muted uppercase tracking-widest">Correct / Total</p>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                {renderPerformanceTable(displayTerms)}
               </div>
             );
           })

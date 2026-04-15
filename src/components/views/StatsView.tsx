@@ -1,9 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { 
-  ChevronLeft, BarChart, Camera, UserCheck, 
-  Trophy, RotateCcw, Zap, Database, AlertCircle, ChevronRight
+  ChevronLeft, BarChart, Camera, UserCheck
 } from 'lucide-react';
+import { StatsSummary } from '../stats/StatsSummary';
+import { SpeedStarStats } from '../stats/SpeedStarStats';
+import { CategoryStats } from '../stats/CategoryStats';
+import { WeakPointsStats } from '../stats/WeakPointsStats';
 
 interface StatsViewProps {
   setGameState: (state: any) => void;
@@ -33,9 +36,10 @@ export const StatsView: React.FC<StatsViewProps> = ({
   speedStarMaxCombo,
   speedStarChallenges,
   quizCategories,
-  getCategoryColor,
   weakPoints
 }) => {
+  const allStats = getStatsFor('all');
+
   return (
     <motion.div 
       key="stats"
@@ -108,131 +112,33 @@ export const StatsView: React.FC<StatsViewProps> = ({
 
       <div className="space-y-16">
         {/* Comprehensive Summary */}
-        <section className="space-y-6">
-          <h3 className="text-xl font-bold flex items-center gap-2 text-theme-accent">
-            <Trophy size={24} /> 総合演習
-          </h3>
-          <div className="bg-theme-card p-8 rounded-[2rem] shadow-sm border border-theme-border grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="space-y-1">
-              <p className="text-sm text-theme-text-muted font-bold uppercase tracking-wider">ハイスコア</p>
-              <p className="text-3xl font-mono font-bold">{getStatsFor('all').highScore.toLocaleString()}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm text-theme-text-muted font-bold uppercase tracking-wider">演習回数</p>
-              <p className="text-3xl font-mono font-bold">{getStatsFor('all').attempts}回</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm text-theme-text-muted font-bold uppercase tracking-wider">平均スコア</p>
-              <p className="text-3xl font-mono font-bold">
-                {getStatsFor('all').attempts > 0 
-                  ? Math.floor(getStatsFor('all').totalScore / getStatsFor('all').attempts).toLocaleString() 
-                  : 0}
-              </p>
-            </div>
-          </div>
-        </section>
+        <StatsSummary
+          highScore={allStats.highScore}
+          attempts={allStats.attempts}
+          totalScore={allStats.totalScore}
+        />
 
         {/* Speed Star Stats */}
-        <section className="space-y-6">
-          <h3 className="text-xl font-bold flex items-center gap-2 text-amber-500">
-            <Zap size={24} /> SPEED STAR
-          </h3>
-          <div className="bg-black p-8 rounded-[2rem] shadow-xl border border-amber-400/30 grid grid-cols-1 md:grid-cols-3 gap-8 relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-5">
-              <Zap size={120} className="text-amber-400" />
-            </div>
-            <div className="space-y-1 relative z-10">
-              <p className="text-sm text-amber-400/60 font-bold uppercase tracking-wider">最高正答数</p>
-              <p className="text-3xl font-mono font-bold text-amber-400">{speedStarMaxCorrect}回</p>
-            </div>
-            <div className="space-y-1 relative z-10">
-              <p className="text-sm text-amber-400/60 font-bold uppercase tracking-wider">最大コンボ</p>
-              <p className="text-3xl font-mono font-bold text-amber-400">{speedStarMaxCombo} COMBO</p>
-            </div>
-            <div className="space-y-1 relative z-10">
-              <p className="text-sm text-amber-400/60 font-bold uppercase tracking-wider">挑戦回数</p>
-              <p className="text-3xl font-mono font-bold text-amber-400">{speedStarChallenges}回</p>
-            </div>
-          </div>
-        </section>
+        <SpeedStarStats
+          maxCorrect={speedStarMaxCorrect}
+          maxCombo={speedStarMaxCombo}
+          challenges={speedStarChallenges}
+        />
 
         {/* Category Breakdown */}
         {quizCategories.map(category => (
-          <section key={category.id} className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-theme-border-strong pb-2 gap-2">
-              <h3 className="text-xl font-bold text-theme-accent">
-                {category.title}
-              </h3>
-              <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
-                <span className="text-theme-text-muted">単元ハイスコア: <span className="text-black font-mono font-bold">{getStatsFor(category.id).highScore.toLocaleString()}</span></span>
-                <span className="text-theme-text-muted">演習回数: <span className="text-black font-mono font-bold">{getStatsFor(category.id).attempts}回</span></span>
-                <span className="text-theme-text-muted">平均スコア: <span className="text-black font-mono font-bold">
-                  {getStatsFor(category.id).attempts > 0 
-                    ? Math.floor(getStatsFor(category.id).totalScore / getStatsFor(category.id).attempts).toLocaleString() 
-                    : 0}
-                </span></span>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {category.subcategories.map((sub: any) => {
-                const s = getStatsFor(sub.id);
-                return (
-                  <div key={sub.id} className="bg-theme-card p-6 rounded-2xl border border-theme-border shadow-sm flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="font-bold">{sub.title}</p>
-                      <p className="text-xs text-theme-text-muted">演習回数: {s.attempts}回</p>
-                    </div>
-                    <div className="flex gap-8">
-                      <div className="text-right">
-                        <p className="text-[10px] text-theme-text-muted font-bold uppercase tracking-tighter">Avg Score</p>
-                        <p className="text-lg font-mono font-bold text-theme-text-muted">
-                          {s.attempts > 0 ? Math.floor(s.totalScore / s.attempts).toLocaleString() : 0}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[10px] text-theme-text-muted font-bold uppercase tracking-tighter">High Score</p>
-                        <p className="text-xl font-mono font-bold">{s.highScore.toLocaleString()}</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
+          <CategoryStats
+            key={category.id}
+            category={category}
+            getStatsFor={getStatsFor}
+          />
         ))}
 
         {/* Weak Points Section */}
-        {weakPoints.length > 0 && (
-          <section className="space-y-6 mt-12">
-            <div className="flex items-center justify-between border-b border-theme-border-strong pb-2">
-              <h3 className="text-xl font-bold text-red-500 flex items-center gap-2 uppercase tracking-tighter">
-                <AlertCircle size={24} /> weak point 3
-              </h3>
-              <button 
-                onClick={() => setGameState('TERM_PERFORMANCE')}
-                className="text-sm font-bold text-theme-accent hover:underline flex items-center gap-1"
-              >
-                詳細データ <ChevronRight size={16} />
-              </button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {weakPoints.slice(0, 3).map((wp, idx) => (
-                <div key={wp.name} className="bg-red-50 p-6 rounded-2xl border border-red-100 shadow-sm relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-2 opacity-10">
-                    <span className="text-4xl font-black text-red-900">#{idx + 1}</span>
-                  </div>
-                  <p className="font-bold text-red-900 mb-1 truncate pr-8">{wp.name}</p>
-                  <div className="flex items-end gap-2">
-                    <p className="text-2xl font-mono font-bold text-red-600">{wp.rate.toFixed(1)}%</p>
-                    <p className="text-[10px] text-red-400 font-bold mb-1 uppercase tracking-tighter">Correct Rate</p>
-                  </div>
-                  <p className="text-xs text-red-400 mt-2">正解: {wp.correct} / 出題: {wp.total}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+        <WeakPointsStats
+          weakPoints={weakPoints}
+          setGameState={setGameState}
+        />
       </div>
     </motion.div>
   );

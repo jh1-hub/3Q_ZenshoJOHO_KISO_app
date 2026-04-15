@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, Zap, Trophy, ChevronRight, BookOpen } from 'lucide-react';
+import { ChevronLeft, Zap, Trophy, ChevronRight } from 'lucide-react';
+import { CategoryCard } from '../category/CategoryCard';
 
 interface CategorySelectViewProps {
   setGameState: (state: any) => void;
@@ -116,49 +117,13 @@ export const CategorySelectView: React.FC<CategorySelectViewProps> = ({
 
       <div className="space-y-12">
         {quizCategories.map((category) => (
-          <div key={category.id} className="space-y-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-theme-border-strong pb-3 md:pb-2 gap-3 md:gap-0">
-              <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-4">
-                <h3 className="text-lg md:text-xl font-bold text-theme-accent">
-                  {category.title}
-                </h3>
-                <div className="flex gap-3 text-[10px] font-bold text-theme-text-muted uppercase tracking-wider">
-                  <span>Best: {getStatsFor(category.id).highScore.toLocaleString()}</span>
-                  <span>Cleared: {getStatsFor(category.id).attempts}</span>
-                </div>
-              </div>
-              <button
-                onClick={() => startQuiz(category)}
-                className="text-xs md:text-sm font-bold bg-theme-accent text-white px-4 py-2 md:py-1 rounded-full hover:bg-black transition-colors self-start md:self-auto"
-              >
-                単元演習を開始
-              </button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {category.subcategories.map((sub: any) => (
-                <button
-                  key={sub.id}
-                  onClick={() => startQuiz(sub)}
-                  disabled={isLoading}
-                  className="flex items-center justify-between p-4 md:p-6 bg-theme-card rounded-2xl border border-theme-border shadow-sm hover:shadow-md hover:border-theme-accent transition-all text-left group"
-                >
-                  <div className="flex items-center gap-3 md:gap-4">
-                    <div className="p-2 md:p-3 bg-theme-bg rounded-xl group-hover:bg-theme-accent group-hover:text-white transition-colors">
-                      <BookOpen size={20} />
-                    </div>
-                    <div>
-                      <p className="font-bold text-sm md:text-base">{sub.title}</p>
-                      <div className="flex gap-3 text-[9px] md:text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mt-1">
-                        <span>Best: {getStatsFor(sub.id).highScore.toLocaleString()}</span>
-                        <span>Cleared: {getStatsFor(sub.id).attempts}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <ChevronRight size={20} className="text-theme-text-muted group-hover:text-theme-accent transition-colors flex-shrink-0" />
-                </button>
-              ))}
-            </div>
-          </div>
+          <CategoryCard
+            key={category.id}
+            category={category}
+            getStatsFor={getStatsFor}
+            startQuiz={startQuiz}
+            isLoading={isLoading}
+          />
         ))}
       </div>
     </motion.div>
