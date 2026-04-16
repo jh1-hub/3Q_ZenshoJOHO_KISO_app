@@ -62,17 +62,17 @@ export const GachaBonusSection: React.FC<GachaBonusSectionProps> = ({
                '1枚引けます！'}
             </p>
             
-            {gachaResults.length === 0 && (
+            {(gachaResults.length === 0 || gachaResults.length > 0) && (
               <button 
                 onClick={pullGacha}
-                disabled={isGachaRolling}
+                disabled={isGachaRolling || gachaResults.length > 0}
                 className={`w-full md:w-auto px-8 py-4 md:px-12 md:py-6 rounded-full text-lg md:text-xl font-bold shadow-xl transition-all ${
-                  isGachaRolling 
+                  isGachaRolling || gachaResults.length > 0
                     ? 'bg-theme-border-strong text-theme-text-muted cursor-not-allowed' 
                     : 'bg-gradient-to-r from-amber-400 to-orange-500 text-white hover:scale-105 active:scale-95'
                 }`}
               >
-                {isGachaRolling ? 'ガチャを回しています...' : 'ガチャを引く！'}
+                {isGachaRolling ? 'ガチャを回しています...' : gachaResults.length > 0 ? 'ガチャを引きました' : 'ガチャを引く！'}
               </button>
             )}
           </div>

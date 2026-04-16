@@ -238,7 +238,7 @@ export default function App() {
   const {
     questions, setQuestions,
     currentQuestionIndex, setCurrentQuestionIndex,
-    score, setScore,
+    score: quizScore, setScore,
     combo, setCombo,
     maxCombo, setMaxCombo,
     timeLeft, setTimeLeft,
@@ -271,7 +271,8 @@ export default function App() {
     setQuizCount,
     setSpeedStarMaxCombo,
     setSpeedStarMaxCorrect,
-    setSpeedStarChallenges
+    setSpeedStarChallenges,
+    () => clearGachaState()
   );
 
   const {
@@ -286,7 +287,7 @@ export default function App() {
     redrawGachaCard,
     getGachaPullCount,
     clearGachaState
-  } = useGacha(ownedCards, score, selectedSubcategory, saveCollection, jumpToCollection);
+  } = useGacha(ownedCards, () => quizScore, selectedSubcategory, saveCollection, jumpToCollection);
 
 
   useEffect(() => {
@@ -348,9 +349,9 @@ export default function App() {
   };
 
   const handleKeepCard = (action: 'next' | 'close' | 'collection') => {
-    confirmGachaCard();
+    confirmGachaCard(action);
     if (action === 'collection' && currentGachaCard) {
-      jumpToCollection(currentGachaCard.term);
+      // confirmGachaCard already handles jumpToCollection if action is 'collection'
     } else if (action === 'close') {
       // ResultView will handle closing via state if needed, 
       // but confirmGachaCard already handles queue
@@ -569,7 +570,7 @@ export default function App() {
             questions={questions}
             currentQuestionIndex={currentQuestionIndex}
             timeLeft={timeLeft}
-            score={score}
+            score={quizScore}
             combo={combo}
             userAnswer={userAnswer}
             feedback={feedback}
@@ -592,7 +593,7 @@ export default function App() {
             gachaResults={gachaResults}
             pullGacha={() => pullGacha(speedStarCorrectCount, questions.length, correctCount, isDailyChallenge)}
             isGachaRolling={isGachaRolling}
-            score={score}
+            score={quizScore}
             maxCombo={maxCombo}
             hasBonusTicket={hasBonusTicket}
             startSpeedStar={startSpeedStar}

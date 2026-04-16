@@ -3,7 +3,7 @@ import { allTerms, allTermsMap, quizCategories, Rarity, Subcategory } from '../d
 
 export const useGacha = (
   ownedCards: Record<string, number>,
-  score: number,
+  getScore: () => number,
   selectedSubcategory: Subcategory | null,
   saveCollection: (newCollection: Record<string, number>) => void,
   jumpToCollection: (termName: string) => void
@@ -23,6 +23,7 @@ export const useGacha = (
   const gachaTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const drawSingleCard = useCallback((currentCollection: Record<string, number>) => {
+    const score = getScore();
     // Rarity weights based on score
     let weights = { UR: 1, SR: 5, R: 20, C: 74 };
     if (score > 3000) weights = { UR: 10, SR: 25, R: 40, C: 25 };
@@ -88,7 +89,7 @@ export const useGacha = (
     }
     
     return { term: resultTerm, rarity: selectedRarity };
-  }, [score, selectedSubcategory]);
+  }, [getScore, selectedSubcategory]);
 
   const getGachaPullCount = useCallback((speedStarCorrectCount: number, questionsCount: number, correctCount: number, isDailyChallenge: boolean) => {
     if (!selectedSubcategory && questionsCount === 100) {
@@ -157,7 +158,7 @@ export const useGacha = (
     }, 3000);
   }, [isGachaRolling, getGachaPullCount, ownedCards, drawSingleCard]);
 
-  const confirmGachaCard = useCallback(() => {
+  const confirmGachaCard = useCallback((action: 'next' | 'close' | 'collection' = 'next') => {
     if (!currentGachaCard) return;
     
     const newCollection = { ...ownedCards, [currentGachaCard.term]: (ownedCards[currentGachaCard.term] || 0) + 1 };
@@ -189,7 +190,7 @@ export const useGacha = (
       setGachaResults(newHistory);
       setCurrentGachaCard(null);
       setGachaHistory([]);
-      if (newHistory.length === 1) {
+      if (action === 'collection' && currentGachaCard) {
         jumpToCollection(currentGachaCard.term);
       }
     }

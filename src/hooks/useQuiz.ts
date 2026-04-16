@@ -19,7 +19,8 @@ export const useQuiz = (
   setQuizCount: (val: number | ((prev: number) => number)) => void,
   setSpeedStarMaxCombo: (val: number | ((prev: number) => number)) => void,
   setSpeedStarMaxCorrect: (val: number | ((prev: number) => number)) => void,
-  setSpeedStarChallenges: (val: number | ((prev: number) => number)) => void
+  setSpeedStarChallenges: (val: number | ((prev: number) => number)) => void,
+  clearGachaState: () => void
 ) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -188,6 +189,7 @@ export const useQuiz = (
     if (isLoading) return;
     setIsLoading(true);
     resetQuizState();
+    clearGachaState();
 
     let quizTerms: any[] = [];
     let selectedItem: any = item;
@@ -235,6 +237,7 @@ export const useQuiz = (
     if (isLoading) return;
     setIsLoading(true);
     resetQuizState();
+    clearGachaState();
     setSelectedSubcategory({ id: 'all', title, terms: [] });
 
     const allSubcategories = quizCategories.flatMap(cat => cat.subcategories);
@@ -279,6 +282,7 @@ export const useQuiz = (
     if (isLoading) return;
     setIsLoading(true);
     resetQuizState();
+    clearGachaState();
     setIsDailyChallenge(true);
     
     const allSubcategories = quizCategories.flatMap(cat => cat.subcategories);
@@ -308,6 +312,7 @@ export const useQuiz = (
     if (isLoading) return;
     setIsLoading(true);
     resetQuizState();
+    clearGachaState();
     setSelectedSubcategory(null);
     setSpeedStarCorrectCount(0);
     setSpeedStarRequiredForNext(3);
