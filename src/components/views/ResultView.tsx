@@ -64,6 +64,14 @@ export const ResultView: React.FC<ResultViewProps> = ({
   handleRedraw,
   handleKeepCard
 }) => {
+  const canPullGacha = getGachaPullCount() > 0 && (
+    isDailyChallenge || 
+    (speedStarCorrectCount > 0 && !selectedSubcategory) || 
+    (questions.length > 0 && (correctCount / questions.length) >= 0.5)
+  );
+  
+  const isActionsDisabled = canPullGacha && gachaResults.length === 0;
+
   return (
     <motion.div 
       key="result"
@@ -103,6 +111,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
           selectedSubcategory={selectedSubcategory}
           startComprehensiveQuiz={startComprehensiveQuiz}
           startQuiz={startQuiz}
+          disabled={isActionsDisabled}
         />
 
         {/* Gacha Rolling Overlay */}

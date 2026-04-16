@@ -72,7 +72,7 @@ export const GachaBonusSection: React.FC<GachaBonusSectionProps> = ({
                     : 'bg-gradient-to-r from-amber-400 to-orange-500 text-white hover:scale-105 active:scale-95'
                 }`}
               >
-                {isGachaRolling ? 'ガチャを回しています...' : gachaResults.length > 0 ? 'ガチャを引きました' : 'ガチャを引く！'}
+                {isGachaRolling ? 'loading...' : gachaResults.length > 0 ? 'Complete' : 'Get Card!'}
               </button>
             )}
           </div>

@@ -9,6 +9,7 @@ interface ResultActionsProps {
   selectedSubcategory: any;
   startComprehensiveQuiz: () => void;
   startQuiz: (category: any) => void;
+  disabled?: boolean;
 }
 
 export const ResultActions: React.FC<ResultActionsProps> = ({
@@ -18,16 +19,18 @@ export const ResultActions: React.FC<ResultActionsProps> = ({
   setGameState,
   selectedSubcategory,
   startComprehensiveQuiz,
-  startQuiz
+  startQuiz,
+  disabled = false
 }) => {
   return (
     <div className="space-y-3 md:space-y-4">
       {hasBonusTicket && (
         <button 
           onClick={startSpeedStar}
-          className="w-full py-4 md:py-5 bg-black text-amber-400 border-2 border-amber-400 rounded-2xl text-lg md:text-xl font-bold flex items-center justify-center gap-3 hover:bg-amber-400/10 transition-colors"
+          disabled={disabled}
+          className={`w-full py-4 md:py-5 bg-black text-amber-400 border-2 border-amber-400 rounded-2xl text-lg md:text-xl font-bold flex items-center justify-center gap-3 transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-amber-400/10'}`}
         >
-          <Zap size={24} className="animate-pulse" /> SPEED STAR に挑戦
+          <Zap size={24} className={disabled ? '' : 'animate-pulse'} /> SPEED STAR に挑戦
         </button>
       )}
       <button 
@@ -35,7 +38,8 @@ export const ResultActions: React.FC<ResultActionsProps> = ({
           resetQuizState();
           setGameState('CATEGORY_SELECT');
         }}
-        className="w-full py-4 md:py-5 bg-theme-text text-theme-bg text-white rounded-2xl text-lg md:text-xl font-bold flex items-center justify-center gap-3 hover:bg-black transition-colors"
+        disabled={disabled}
+        className={`w-full py-4 md:py-5 bg-theme-text text-theme-bg text-white rounded-2xl text-lg md:text-xl font-bold flex items-center justify-center gap-3 transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black'}`}
       >
         <LayoutGrid size={24} /> 他の単元を選ぶ
       </button>
@@ -47,7 +51,8 @@ export const ResultActions: React.FC<ResultActionsProps> = ({
             startQuiz(selectedSubcategory as any);
           }
         }}
-        className="w-full py-4 md:py-5 bg-theme-card border-2 border-theme-border-strong text-theme-text rounded-2xl text-lg md:text-xl font-bold flex items-center justify-center gap-3 hover:bg-theme-muted transition-colors"
+        disabled={disabled}
+        className={`w-full py-4 md:py-5 bg-theme-card border-2 border-theme-border-strong text-theme-text rounded-2xl text-lg md:text-xl font-bold flex items-center justify-center gap-3 transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-theme-muted'}`}
       >
         <RotateCcw size={24} /> もう一度挑戦
       </button>

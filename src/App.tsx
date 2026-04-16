@@ -197,6 +197,7 @@ export default function App() {
     speedStarMaxCombo, setSpeedStarMaxCombo,
     speedStarMaxCorrect, setSpeedStarMaxCorrect,
     speedStarChallenges, setSpeedStarChallenges,
+    speedStarProgress, setSpeedStarProgress,
     lastDailyChallengeId, setLastDailyChallengeId,
     dailyStreak, setDailyStreak,
     isLoaded,
@@ -272,7 +273,10 @@ export default function App() {
     setSpeedStarMaxCombo,
     setSpeedStarMaxCorrect,
     setSpeedStarChallenges,
-    () => clearGachaState()
+    () => clearGachaState(),
+    hasBonusTicket,
+    speedStarProgress,
+    setSpeedStarProgress
   );
 
   const {

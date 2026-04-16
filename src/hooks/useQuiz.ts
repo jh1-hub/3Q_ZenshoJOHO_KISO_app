@@ -20,7 +20,10 @@ export const useQuiz = (
   setSpeedStarMaxCombo: (val: number | ((prev: number) => number)) => void,
   setSpeedStarMaxCorrect: (val: number | ((prev: number) => number)) => void,
   setSpeedStarChallenges: (val: number | ((prev: number) => number)) => void,
-  clearGachaState: () => void
+  clearGachaState: () => void,
+  hasBonusTicket: boolean,
+  speedStarProgress: number,
+  setSpeedStarProgress: (val: number | ((prev: number) => number)) => void
 ) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -83,6 +86,7 @@ export const useQuiz = (
     }
 
     let nextScore = score;
+    const nextCorrectCount = correctCount + (isCorrect ? 1 : 0);
     if (isCorrect) {
       updateTermStats(currentQuestion.term, true);
       const timeBonus = Math.floor(timeLeft * 2.5);
@@ -91,7 +95,7 @@ export const useQuiz = (
       setScore(nextScore);
       setCombo(prev => prev + 1);
       setMaxCombo(prev => Math.max(prev, combo + 1));
-      setCorrectCount(prev => prev + 1);
+      setCorrectCount(nextCorrectCount);
       setFeedback('CORRECT');
     } else {
       updateTermStats(currentQuestion.term, false);
@@ -132,10 +136,38 @@ export const useQuiz = (
         }
         
         setQuizCount(prev => prev + 1);
+
+        // Speed Star Bonus Ticket Logic
+        if (gameState === 'QUIZ') {
+          const isCleared = (nextCorrectCount / questions.length) >= 0.5;
+          if (isCleared && !hasBonusTicket) {
+            let increment = 0;
+            if (questions.length === 5) increment = 1;
+            else if (questions.length === 10) increment = 2;
+            else if (questions.length === 20) increment = 4;
+
+            if (increment > 0) {
+              const newProgress = speedStarProgress + increment;
+              setSpeedStarProgress(newProgress);
+              
+              let probability = newProgress * 0.1;
+              // Add bonus probability for 10 or 20 question quizzes based on correct answers
+              if (questions.length === 10 || questions.length === 20) {
+                probability += (nextCorrectCount * 0.01);
+              }
+              probability = Math.min(probability, 1.0);
+
+              if (Math.random() < probability) {
+                setHasBonusTicket(true);
+              }
+            }
+          }
+        }
+
         setGameState('RESULT');
       }
     }, delay);
-  }, [penaltyActive, questions, currentQuestionIndex, combo, maxCombo, speedStarCorrectCount, timeLeft, selectedSubcategory, isDailyChallenge, score, updateTermStats, updateStats, setGameState, setSpeedStarMaxCombo, setSpeedStarMaxCorrect, setQuizCount, setLastDailyChallengeId, setDailyStreak, getDailyId]);
+  }, [penaltyActive, questions, currentQuestionIndex, combo, maxCombo, speedStarCorrectCount, timeLeft, selectedSubcategory, isDailyChallenge, score, correctCount, hasBonusTicket, speedStarProgress, updateTermStats, updateStats, setGameState, setSpeedStarMaxCombo, setSpeedStarMaxCorrect, setQuizCount, setLastDailyChallengeId, setDailyStreak, getDailyId, setSpeedStarProgress, setHasBonusTicket]);
 
   const resetQuizState = useCallback(() => {
     setScore(0);
@@ -318,6 +350,7 @@ export const useQuiz = (
     setSpeedStarRequiredForNext(3);
     setSpeedStarNextIncrement(4);
     setSpeedStarChallenges(prev => prev + 1);
+    setSpeedStarProgress(0);
     
     try {
       const allSubcategories = quizCategories.flatMap(cat => cat.subcategories);

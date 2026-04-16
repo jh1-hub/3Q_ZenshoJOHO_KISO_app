@@ -161,7 +161,8 @@ export const useGacha = (
   const confirmGachaCard = useCallback((action: 'next' | 'close' | 'collection' = 'next') => {
     if (!currentGachaCard) return;
     
-    const newCollection = { ...ownedCards, [currentGachaCard.term]: (ownedCards[currentGachaCard.term] || 0) + 1 };
+    const currentCount = ownedCards[currentGachaCard.term] || 0;
+    const newCollection = { ...ownedCards, [currentGachaCard.term]: Math.min(currentCount + 1, 3) };
     saveCollection(newCollection);
     
     const newHistory = [...gachaHistory, currentGachaCard.term];

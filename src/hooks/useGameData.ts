@@ -18,6 +18,7 @@ export const useGameData = (showToast?: (message: string, type?: any) => void) =
   const [speedStarMaxCombo, setSpeedStarMaxCombo] = useState(0);
   const [speedStarMaxCorrect, setSpeedStarMaxCorrect] = useState(0);
   const [speedStarChallenges, setSpeedStarChallenges] = useState(0);
+  const [speedStarProgress, setSpeedStarProgress] = useState(0);
   const [lastDailyChallengeId, setLastDailyChallengeId] = useState<string | null>(null);
   const [dailyStreak, setDailyStreak] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -57,6 +58,7 @@ export const useGameData = (showToast?: (message: string, type?: any) => void) =
         setSpeedStarMaxCombo(parsed.maxCombo || 0);
         setSpeedStarMaxCorrect(parsed.maxCorrect || 0);
         setSpeedStarChallenges(parsed.challenges || 0);
+        setSpeedStarProgress(parsed.progress || 0);
       } catch (e) {
         console.error("Failed to parse speed star stats", e);
       }
@@ -145,10 +147,11 @@ export const useGameData = (showToast?: (message: string, type?: any) => void) =
     const speedStats = {
       maxCombo: speedStarMaxCombo,
       maxCorrect: speedStarMaxCorrect,
-      challenges: speedStarChallenges
+      challenges: speedStarChallenges,
+      progress: speedStarProgress
     };
     storage.setItem('it_quiz_speed_star_stats', JSON.stringify(speedStats));
-  }, [speedStarMaxCombo, speedStarMaxCorrect, speedStarChallenges, isLoaded]);
+  }, [speedStarMaxCombo, speedStarMaxCorrect, speedStarChallenges, speedStarProgress, isLoaded]);
 
   // Save daily challenge info
   useEffect(() => {
@@ -362,6 +365,7 @@ export const useGameData = (showToast?: (message: string, type?: any) => void) =
     speedStarMaxCombo, setSpeedStarMaxCombo,
     speedStarMaxCorrect, setSpeedStarMaxCorrect,
     speedStarChallenges, setSpeedStarChallenges,
+    speedStarProgress, setSpeedStarProgress,
     lastDailyChallengeId, setLastDailyChallengeId,
     dailyStreak, setDailyStreak,
     isLoaded,
