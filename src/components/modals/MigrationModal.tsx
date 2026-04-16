@@ -81,6 +81,21 @@ export const MigrationModal: React.FC<MigrationModalProps> = ({
     }
   };
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const html5QrCode = new Html5Qrcode("qr-reader-hidden");
+      const decodedText = await html5QrCode.scanFile(file, true);
+      processDecodedData(decodedText);
+      setIsScanning(false);
+    } catch (err) {
+      console.error("File scan error:", err);
+      setMigrationError("画像からQRコードを検出できませんでした。ピントの合った写真を選んでください。");
+    }
+  };
+
   useEffect(() => {
     if (!isOpen) {
       // Reset states when modal closes
@@ -298,7 +313,7 @@ export const MigrationModal: React.FC<MigrationModalProps> = ({
                 value={migrationQR} 
                 size={isQRFullscreen ? undefined : 256} 
                 className={isQRFullscreen ? 'w-full h-full' : ''}
-                level="M"
+                level="L"
                 includeMargin={true}
               />
             </div>
@@ -334,12 +349,34 @@ export const MigrationModal: React.FC<MigrationModalProps> = ({
         {isScanning && (
           <div className="space-y-6">
             <div id="qr-reader" className="w-full overflow-hidden rounded-3xl border-2 border-theme-accent bg-black aspect-square" />
-            <button 
-              onClick={() => setIsScanning(false)}
-              className="w-full py-4 bg-theme-border text-theme-text-muted rounded-2xl font-bold hover:bg-theme-border-strong transition-all"
-            >
-              キャンセル
-            </button>
+            <div id="qr-reader-hidden" className="hidden" />
+            
+            <div className="grid grid-cols-1 gap-3">
+              <label className="w-full py-4 bg-theme-accent text-white rounded-2xl font-bold text-center cursor-pointer hover:bg-black transition-all flex items-center justify-center gap-2">
+                <Download size={20} />
+                写真（画像）を選択して読み込む
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="hidden" 
+                  onChange={handleFileSelect}
+                />
+              </label>
+              
+              <button 
+                onClick={() => setIsScanning(false)}
+                className="w-full py-4 bg-theme-border text-theme-text-muted rounded-2xl font-bold hover:bg-theme-border-strong transition-all"
+              >
+                キャンセル
+              </button>
+            </div>
+
+            <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 flex gap-3">
+              <AlertCircle className="text-blue-500 shrink-0" size={20} />
+              <p className="text-[10px] text-blue-700 leading-relaxed">
+                カメラで反応しない場合は、標準のカメラアプリでQRコードを撮影し、上の「写真を選択」からその画像を選んでください。
+              </p>
+            </div>
           </div>
         )}
 
