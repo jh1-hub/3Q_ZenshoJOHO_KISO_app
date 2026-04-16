@@ -28,6 +28,8 @@ export const MigrationModal: React.FC<MigrationModalProps> = ({
   const [isQRFullscreen, setIsQRFullscreen] = useState(false);
   const [pendingMigrationData, setPendingMigrationData] = useState<any | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [showPasteInput, setShowPasteInput] = useState(false);
+  const [pasteText, setPasteText] = useState('');
   const scannerRef = useRef<Html5Qrcode | null>(null);
 
   useEffect(() => {
@@ -63,11 +65,19 @@ export const MigrationModal: React.FC<MigrationModalProps> = ({
       if (data.userName && data.stats && data.ownedCards) {
         setPendingMigrationData(data);
         setMigrationError(null);
+        setShowPasteInput(false);
+        setPasteText('');
       } else {
         setMigrationError("無効なデータ形式です。");
       }
     } catch (e) {
-      setMigrationError("データの復号に失敗しました。正しいQRコードか確認してください。");
+      setMigrationError("データの復号に失敗しました。正しいデータか確認してください。");
+    }
+  };
+
+  const handlePasteImport = () => {
+    if (pasteText.trim()) {
+      processDecodedData(pasteText.trim());
     }
   };
 
@@ -79,6 +89,8 @@ export const MigrationModal: React.FC<MigrationModalProps> = ({
       setMigrationError(null);
       setPendingMigrationData(null);
       setIsQRFullscreen(false);
+      setShowPasteInput(false);
+      setPasteText('');
     }
   }, [isOpen]);
 
@@ -117,9 +129,26 @@ export const MigrationModal: React.FC<MigrationModalProps> = ({
           const html5QrCode = new Html5Qrcode("qr-reader");
           scannerRef.current = html5QrCode;
           
+          const qrboxSize = (viewWidth: number, viewHeight: number) => {
+            const minEdge = Math.min(viewWidth, viewHeight);
+            return {
+              width: Math.floor(minEdge * 0.7),
+              height: Math.floor(minEdge * 0.7)
+            };
+          };
+
           await html5QrCode.start(
             { facingMode: "environment" },
-            { fps: 10, qrbox: { width: 250, height: 250 } },
+            { 
+              fps: 20, 
+              qrbox: qrboxSize,
+              aspectRatio: 1.0,
+              videoConstraints: {
+                width: { min: 640, ideal: 1280, max: 1920 },
+                height: { min: 480, ideal: 720, max: 1080 },
+                facingMode: "environment"
+              }
+            },
             (decodedText) => {
               processDecodedData(decodedText);
               setIsScanning(false);
@@ -177,7 +206,7 @@ export const MigrationModal: React.FC<MigrationModalProps> = ({
           </div>
         )}
 
-        {!migrationQR && !isScanning && !pendingMigrationData && (
+        {!migrationQR && !isScanning && !pendingMigrationData && !showPasteInput && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <button 
               onClick={handleExport}
@@ -201,12 +230,54 @@ export const MigrationModal: React.FC<MigrationModalProps> = ({
             </button>
 
             <button 
+              onClick={() => setShowPasteInput(true)}
+              className="col-span-1 sm:col-span-2 p-4 bg-theme-muted border-2 border-theme-border rounded-2xl hover:border-theme-accent transition-all flex items-center justify-center gap-2 text-theme-text font-bold text-sm"
+            >
+              <Copy size={18} />
+              テキストを貼り付けて読み込む
+            </button>
+
+            <button 
               onClick={onReset}
               className="col-span-1 sm:col-span-2 p-4 bg-rose-50 border-2 border-rose-100 rounded-2xl hover:bg-rose-100 transition-all flex items-center justify-center gap-2 text-rose-600 font-bold text-sm"
             >
               <RefreshCw size={18} />
               データをすべてリセットする
             </button>
+          </div>
+        )}
+
+        {showPasteInput && !pendingMigrationData && (
+          <div className="space-y-4">
+            <div className="text-center space-y-2">
+              <h3 className="font-bold">テキスト貼り付け</h3>
+              <p className="text-xs text-theme-text-muted">コピーした移行データを下の枠に貼り付けてください。</p>
+            </div>
+            <textarea
+              value={pasteText}
+              onChange={(e) => setPasteText(e.target.value)}
+              placeholder="ここにデータを貼り付け..."
+              className="w-full h-32 p-4 bg-theme-muted border-2 border-theme-border rounded-2xl focus:border-theme-accent outline-none text-xs font-mono resize-none"
+            />
+            <div className="flex gap-3">
+              <button 
+                onClick={handlePasteImport}
+                disabled={!pasteText.trim()}
+                className="flex-1 py-4 bg-theme-accent text-white rounded-2xl font-bold shadow-lg shadow-theme-accent/20 hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                読み込む
+              </button>
+              <button 
+                onClick={() => {
+                  setShowPasteInput(false);
+                  setPasteText('');
+                  setMigrationError(null);
+                }}
+                className="px-6 py-4 bg-theme-border text-theme-text-muted rounded-2xl font-bold hover:bg-theme-border-strong transition-all"
+              >
+                戻る
+              </button>
+            </div>
           </div>
         )}
 
@@ -220,7 +291,7 @@ export const MigrationModal: React.FC<MigrationModalProps> = ({
                 value={migrationQR} 
                 size={isQRFullscreen ? undefined : 256} 
                 className={isQRFullscreen ? 'w-full h-full' : ''}
-                level="L"
+                level="M"
                 includeMargin={true}
               />
             </div>
