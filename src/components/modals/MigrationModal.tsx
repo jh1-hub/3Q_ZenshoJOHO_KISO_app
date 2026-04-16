@@ -126,26 +126,33 @@ export const MigrationModal: React.FC<MigrationModalProps> = ({
             scannerRef.current = null;
           }
 
-          const html5QrCode = new Html5Qrcode("qr-reader");
+          // Initialize with experimental features for better performance
+          const html5QrCode = new Html5Qrcode("qr-reader", { 
+            verbose: false,
+            experimentalFeatures: {
+              useBarCodeDetectorIfSupported: true
+            }
+          });
           scannerRef.current = html5QrCode;
           
           const qrboxSize = (viewWidth: number, viewHeight: number) => {
             const minEdge = Math.min(viewWidth, viewHeight);
             return {
-              width: Math.floor(minEdge * 0.7),
-              height: Math.floor(minEdge * 0.7)
+              width: Math.floor(minEdge * 0.8),
+              height: Math.floor(minEdge * 0.8)
             };
           };
 
           await html5QrCode.start(
             { facingMode: "environment" },
             { 
-              fps: 20, 
+              fps: 25, 
               qrbox: qrboxSize,
               aspectRatio: 1.0,
+              disableFlip: true,
               videoConstraints: {
-                width: { min: 640, ideal: 1280, max: 1920 },
-                height: { min: 480, ideal: 720, max: 1080 },
+                width: { min: 640, ideal: 1280 },
+                height: { min: 480, ideal: 720 },
                 facingMode: "environment"
               }
             },
