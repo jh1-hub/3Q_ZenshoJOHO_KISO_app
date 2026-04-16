@@ -272,7 +272,8 @@ export const useGameData = (showToast?: (message: string, type?: any) => void) =
       speedStarStats: {
         maxCombo: speedStarMaxCombo,
         maxCorrect: speedStarMaxCorrect,
-        challenges: speedStarChallenges
+        challenges: speedStarChallenges,
+        progress: speedStarProgress
       },
       dailyStreak,
       lastDailyChallengeId
@@ -293,6 +294,7 @@ export const useGameData = (showToast?: (message: string, type?: any) => void) =
         setSpeedStarMaxCombo(data.speedStarStats.maxCombo || 0);
         setSpeedStarMaxCorrect(data.speedStarStats.maxCorrect || 0);
         setSpeedStarChallenges(data.speedStarStats.challenges || 0);
+        setSpeedStarProgress(data.speedStarStats.progress || 0);
       }
 
       // Save all to storage

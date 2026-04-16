@@ -1,4 +1,3 @@
-import CryptoJS from 'crypto-js';
 import LZString from 'lz-string';
 import { quizCategories, allTermsMap, Rarity } from '../data/quizData';
 
@@ -27,6 +26,7 @@ export interface MigrationData {
     maxCombo: number;
     maxCorrect: number;
     challenges: number;
+    progress: number;
   };
   lastDailyChallengeId: string | null;
   dailyStreak: number;
@@ -104,7 +104,8 @@ export const exportMigrationData = (data: MigrationData): string | null => {
       ss: {
         c: data.speedStarStats.maxCombo,
         m: data.speedStarStats.maxCorrect,
-        a: data.speedStarStats.challenges
+        a: data.speedStarStats.challenges,
+        p: data.speedStarStats.progress
       },
       ld: data.lastDailyChallengeId,
       ds: data.dailyStreak,
@@ -120,22 +121,12 @@ export const exportMigrationData = (data: MigrationData): string | null => {
 
 export const decryptMigrationData = (encryptedData: string): any => {
   try {
-    let decryptedData;
     const lzDecoded = LZString.decompressFromEncodedURIComponent(encryptedData);
+    if (!lzDecoded) throw new Error("Invalid data");
     
-    if (lzDecoded && lzDecoded.includes('"v":5')) {
-      decryptedData = JSON.parse(lzDecoded);
-    } else {
-      let bytes;
-      try {
-        bytes = CryptoJS.AES.decrypt(encryptedData, 'it-quiz-master-v3-key');
-      } catch (e) {
-        bytes = CryptoJS.AES.decrypt(encryptedData, 'it-quiz-master-secret-key');
-      }
-      decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-    }
+    const decryptedData = JSON.parse(lzDecoded);
 
-    if (decryptedData.v >= 2 && decryptedData.v <= 5) {
+    if (decryptedData.v >= 4) {
       const idToName: Record<number, string> = {};
       Object.values(allTermsMap).forEach(t => idToName[t.id] = t.name);
 
@@ -157,41 +148,18 @@ export const decryptMigrationData = (encryptedData: string): any => {
           if (id) parsedCategoryStats[id] = { highScore, attempts, totalScore };
           i += 11;
         } else if (type === 'T') {
-          let id, correct, total, step;
-          if (version >= 4) {
-            id = fromB64(d.substring(i + 1, i + 3));
-            correct = fromB64(d.substring(i + 3, i + 6));
-            total = fromB64(d.substring(i + 6, i + 9));
-            step = 9;
-          } else {
-            id = parseInt(d.substring(i + 1, i + 4), 16);
-            if (version === 3) {
-              correct = parseInt(d.substring(i + 4, i + 8), 16);
-              total = parseInt(d.substring(i + 8, i + 12), 16);
-              step = 12;
-            } else {
-              correct = parseInt(d.substring(i + 4, i + 6), 16);
-              total = parseInt(d.substring(i + 6, i + 8), 16);
-              step = 8;
-            }
-          }
+          const id = fromB64(d.substring(i + 1, i + 3));
+          const correct = fromB64(d.substring(i + 3, i + 6));
+          const total = fromB64(d.substring(i + 6, i + 9));
           const name = idToName[id];
           if (name) parsedStats[name] = { correct, total };
-          i += step;
+          i += 9;
         } else if (type === 'C') {
-          let id, count, step;
-          if (version >= 4) {
-            id = fromB64(d.substring(i + 1, i + 3));
-            count = fromB64(d.substring(i + 3, i + 4));
-            step = 4;
-          } else {
-            id = parseInt(d.substring(i + 1, i + 4), 16);
-            count = parseInt(d.substring(i + 4, i + 6), 16);
-            step = 6;
-          }
+          const id = fromB64(d.substring(i + 1, i + 3));
+          const count = fromB64(d.substring(i + 3, i + 4));
           const name = idToName[id];
           if (name) owned[name] = count;
-          i += step;
+          i += 4;
         } else {
           i++;
         }
@@ -208,7 +176,8 @@ export const decryptMigrationData = (encryptedData: string): any => {
         speedStarStats: {
           maxCombo: decryptedData.ss?.c || 0,
           maxCorrect: decryptedData.ss?.m || 0,
-          challenges: decryptedData.ss?.a || 0
+          challenges: decryptedData.ss?.a || 0,
+          progress: decryptedData.ss?.p || 0
         },
         lastDailyChallengeId: decryptedData.ld,
         dailyStreak: decryptedData.ds
