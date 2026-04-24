@@ -315,14 +315,14 @@ export default function App() {
     }
   };
 
-  const prevLevelRef = useRef<number>(userLevel);
+  const prevLevelRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (isLoaded) {
-      if (userLevel > prevLevelRef.current) {
-        if (prevLevelRef.current > 0) {
-          setShowLevelUp(userLevel);
-        }
+      if (prevLevelRef.current === null) {
+        prevLevelRef.current = userLevel;
+      } else if (userLevel > prevLevelRef.current) {
+        setShowLevelUp(userLevel);
         prevLevelRef.current = userLevel;
       } else if (userLevel < prevLevelRef.current) {
         prevLevelRef.current = userLevel;
