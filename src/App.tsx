@@ -315,6 +315,21 @@ export default function App() {
     }
   };
 
+  const prevLevelRef = useRef<number>(userLevel);
+
+  useEffect(() => {
+    if (isLoaded) {
+      if (userLevel > prevLevelRef.current) {
+        if (prevLevelRef.current > 0) {
+          setShowLevelUp(userLevel);
+        }
+        prevLevelRef.current = userLevel;
+      } else if (userLevel < prevLevelRef.current) {
+        prevLevelRef.current = userLevel;
+      }
+    }
+  }, [userLevel, isLoaded]);
+
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
