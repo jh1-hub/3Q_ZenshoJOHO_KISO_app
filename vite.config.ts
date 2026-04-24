@@ -7,7 +7,8 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
   return {
-    base: '/3Q_ZenshoJOHO_KISO_app/',
+    // VERCEL環境変数がtrueの場合はルート'/'を使用し、それ以外はGitHub Pages用のパスを使用
+    base: process.env.VERCEL || env.VERCEL ? '/' : '/3Q_ZenshoJOHO_KISO_app/',
     plugins: [
       react(), 
       tailwindcss(),
