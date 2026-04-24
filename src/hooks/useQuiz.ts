@@ -114,7 +114,7 @@ export const useQuiz = (
         setCurrentQuestionIndex(prev => prev + 1);
         setTimeLeft(60);
       } else {
-        if (selectedSubcategory) {
+        if (selectedSubcategory && selectedSubcategory.id !== 'weakness') {
           updateStats(selectedSubcategory.id, nextScore);
         }
         
@@ -138,7 +138,7 @@ export const useQuiz = (
         setQuizCount(prev => prev + 1);
 
         // Speed Star Bonus Ticket Logic
-        if (gameState === 'QUIZ') {
+        if (gameState === 'QUIZ' && selectedSubcategory?.id !== 'weakness') {
           const isCleared = (nextCorrectCount / questions.length) >= 0.5;
           if (isCleared && !hasBonusTicket) {
             let increment = 0;
@@ -260,6 +260,48 @@ export const useQuiz = (
       setGameState('QUIZ');
     } catch (error) {
       console.error("Failed to start quiz:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const startWeaknessQuiz = async (termStats: any) => {
+    if (isLoading) return;
+    setIsLoading(true);
+    resetQuizState();
+    clearGachaState();
+    setSelectedSubcategory({ id: 'weakness', title: '苦手克服', terms: [] });
+
+    const allQuizTerms = quizCategories.flatMap(cat => cat.subcategories).flatMap(sub => sub.terms);
+
+    let candidates = Object.entries(termStats)
+      .filter(([name, stat]: [string, any]) => stat.total > 0 && stat.correct < stat.total)
+      .map(([name, stat]: [string, any]) => ({ name, wrongRate: (stat.total - stat.correct) / stat.total }))
+      .sort((a, b) => b.wrongRate - a.wrongRate);
+
+    const topCandidates = candidates.slice(0, 15).sort(() => 0.5 - Math.random());
+    let selectedNames = topCandidates.slice(0, 5).map(c => c.name);
+
+    if (selectedNames.length < 5) {
+      const remainingNeeded = 5 - selectedNames.length;
+      const otherTerms = allQuizTerms
+        .filter(t => !selectedNames.includes(t.name))
+        .sort(() => 0.5 - Math.random())
+        .slice(0, remainingNeeded);
+      selectedNames = [...selectedNames, ...otherTerms.map(t => t.name)];
+    }
+
+    try {
+      const generatedQuestions = await Promise.all(
+        selectedNames.map(name => 
+          generateQuestion(name, allQuizTerms.map(t => t.name), allTerms)
+        )
+      );
+
+      setQuestions(generatedQuestions);
+      setGameState('QUIZ');
+    } catch (error) {
+      console.error("Failed to start weakness quiz:", error);
     } finally {
       setIsLoading(false);
     }
@@ -394,6 +436,7 @@ export const useQuiz = (
     startComprehensiveQuiz,
     startDailyChallenge,
     startSpeedStar,
+    startWeaknessQuiz,
     handleAnswer,
     resetQuizState
   };

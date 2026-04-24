@@ -9,6 +9,7 @@ interface ResultActionsProps {
   selectedSubcategory: any;
   startComprehensiveQuiz: () => void;
   startQuiz: (category: any) => void;
+  startWeaknessQuiz: () => void;
   disabled?: boolean;
 }
 
@@ -20,6 +21,7 @@ export const ResultActions: React.FC<ResultActionsProps> = ({
   selectedSubcategory,
   startComprehensiveQuiz,
   startQuiz,
+  startWeaknessQuiz,
   disabled = false
 }) => {
   return (
@@ -47,6 +49,8 @@ export const ResultActions: React.FC<ResultActionsProps> = ({
         onClick={() => {
           if (selectedSubcategory?.id === 'all') {
             startComprehensiveQuiz();
+          } else if (selectedSubcategory?.id === 'weakness') {
+            startWeaknessQuiz();
           } else if (selectedSubcategory) {
             startQuiz(selectedSubcategory as any);
           }

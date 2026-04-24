@@ -25,6 +25,7 @@ interface ResultViewProps {
   setGameState: (state: any) => void;
   startComprehensiveQuiz: () => void;
   startQuiz: (category: any) => void;
+  startWeaknessQuiz: () => void;
   currentGachaCard: any;
   getRarityStyles: (rarity: string) => any;
   allTermsMap: Record<string, any>;
@@ -54,6 +55,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
   setGameState,
   startComprehensiveQuiz,
   startQuiz,
+  startWeaknessQuiz,
   currentGachaCard,
   getRarityStyles,
   allTermsMap,
@@ -111,6 +113,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
           selectedSubcategory={selectedSubcategory}
           startComprehensiveQuiz={startComprehensiveQuiz}
           startQuiz={startQuiz}
+          startWeaknessQuiz={startWeaknessQuiz}
           disabled={isActionsDisabled}
         />
 

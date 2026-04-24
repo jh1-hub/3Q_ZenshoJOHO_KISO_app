@@ -254,6 +254,7 @@ export default function App() {
     startComprehensiveQuiz,
     startDailyChallenge,
     startSpeedStar,
+    startWeaknessQuiz,
     handleAnswer,
     resetQuizState
   } = useQuiz(
@@ -550,6 +551,7 @@ export default function App() {
             speedStarMaxCorrect={speedStarMaxCorrect}
             speedStarMaxCombo={speedStarMaxCombo}
             startComprehensiveQuiz={() => startComprehensiveQuiz("総合演習")}
+            startWeaknessQuiz={() => startWeaknessQuiz(termStats)}
             quizCategories={quizCategories}
             getStatsFor={getStatsFor}
             startQuiz={startQuiz}
@@ -604,6 +606,7 @@ export default function App() {
             resetQuizState={resetQuizState}
             setGameState={setGameState}
             startComprehensiveQuiz={() => startComprehensiveQuiz("総合演習")}
+            startWeaknessQuiz={() => startWeaknessQuiz(termStats)}
             startQuiz={startQuiz}
             currentGachaCard={currentGachaCard}
             getRarityStyles={getRarityStyles}

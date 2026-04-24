@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, Zap, Trophy, ChevronRight } from 'lucide-react';
+import { ChevronLeft, Zap, Trophy, ChevronRight, TrendingDown } from 'lucide-react';
 import { CategoryCard } from '../category/CategoryCard';
 
 interface CategorySelectViewProps {
@@ -11,6 +11,7 @@ interface CategorySelectViewProps {
   speedStarMaxCorrect: number;
   speedStarMaxCombo: number;
   startComprehensiveQuiz: () => void;
+  startWeaknessQuiz: () => void;
   quizCategories: any[];
   getStatsFor: (id: string) => { highScore: number; attempts: number };
   startQuiz: (category: any) => void;
@@ -24,6 +25,7 @@ export const CategorySelectView: React.FC<CategorySelectViewProps> = ({
   speedStarMaxCorrect,
   speedStarMaxCombo,
   startComprehensiveQuiz,
+  startWeaknessQuiz,
   quizCategories,
   getStatsFor,
   startQuiz
@@ -91,7 +93,7 @@ export const CategorySelectView: React.FC<CategorySelectViewProps> = ({
         whileTap={{ scale: 0.98 }}
         onClick={startComprehensiveQuiz}
         disabled={isLoading}
-        className="w-full mb-8 md:mb-12 p-6 md:p-8 bg-gradient-to-r from-[#141414] to-[#5A5A40] text-white rounded-[2rem] shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0 group overflow-hidden relative"
+        className="w-full mb-6 p-6 md:p-8 bg-gradient-to-r from-[#141414] to-[#5A5A40] text-white rounded-[2rem] shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0 group overflow-hidden relative"
       >
         <div className="relative z-10 flex items-center gap-4 md:gap-6">
           <div className="p-3 md:p-4 bg-theme-card/10 rounded-2xl backdrop-blur-md">
@@ -112,6 +114,36 @@ export const CategorySelectView: React.FC<CategorySelectViewProps> = ({
           }}
           transition={{ repeat: Infinity, duration: 4 }}
           className="absolute -right-10 -bottom-10 w-64 h-64 bg-theme-card rounded-full blur-3xl"
+        />
+      </motion.button>
+
+      {/* Weakness Mode Button */}
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={startWeaknessQuiz}
+        disabled={isLoading}
+        className="w-full mb-8 md:mb-12 p-6 md:p-8 bg-gradient-to-r from-red-900 to-rose-900 text-white rounded-[2rem] shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0 group overflow-hidden relative"
+      >
+        <div className="relative z-10 flex items-center gap-4 md:gap-6">
+          <div className="p-3 md:p-4 bg-white/10 rounded-2xl backdrop-blur-md">
+            <TrendingDown size={28} className="text-rose-300 md:w-8 md:h-8" />
+          </div>
+          <div className="text-left">
+            <h3 className="text-xl md:text-2xl font-bold mb-1">苦手克服</h3>
+            <p className="text-sm md:text-base text-white/60">全単元から誤答率の高い単語がランダムに5問出題されます</p>
+          </div>
+        </div>
+        <div className="relative z-10 flex items-center gap-2 font-bold text-base md:text-lg self-end md:self-auto">
+          挑戦する <ChevronRight className="group-hover:translate-x-2 transition-transform" />
+        </div>
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.1, 0.2, 0.1]
+          }}
+          transition={{ repeat: Infinity, duration: 4 }}
+          className="absolute -right-10 -bottom-10 w-64 h-64 bg-rose-500 rounded-full blur-3xl"
         />
       </motion.button>
 
