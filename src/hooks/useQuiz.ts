@@ -274,22 +274,21 @@ export const useQuiz = (
 
     const allQuizTerms = quizCategories.flatMap(cat => cat.subcategories).flatMap(sub => sub.terms);
 
-    let candidates = Object.entries(termStats)
-      .filter(([name, stat]: [string, any]) => stat.total > 0 && stat.correct < stat.total)
-      .map(([name, stat]: [string, any]) => ({ name, wrongRate: (stat.total - stat.correct) / stat.total }))
-      .sort((a, b) => b.wrongRate - a.wrongRate);
+    let candidates = allQuizTerms.map(term => {
+      const stat = termStats[term.name];
+      // 未着手（total === 0）または未登録の単語は誤答率100%（1.0）として扱う
+      const wrongRate = (stat && stat.total > 0) ? (stat.total - stat.correct) / stat.total : 1.0;
+      return { name: term.name, wrongRate };
+    });
 
+    // 誤答率が同じ要素同士をランダムにするため、先にシャッフルする
+    candidates.sort(() => 0.5 - Math.random());
+    // 誤答率の降順でソート
+    candidates.sort((a, b) => b.wrongRate - a.wrongRate);
+
+    // 誤答率が高い上位15件からランダムに5件選出する
     const topCandidates = candidates.slice(0, 15).sort(() => 0.5 - Math.random());
-    let selectedNames = topCandidates.slice(0, 5).map(c => c.name);
-
-    if (selectedNames.length < 5) {
-      const remainingNeeded = 5 - selectedNames.length;
-      const otherTerms = allQuizTerms
-        .filter(t => !selectedNames.includes(t.name))
-        .sort(() => 0.5 - Math.random())
-        .slice(0, remainingNeeded);
-      selectedNames = [...selectedNames, ...otherTerms.map(t => t.name)];
-    }
+    const selectedNames = topCandidates.slice(0, 5).map(c => c.name);
 
     try {
       const generatedQuestions = await Promise.all(
