@@ -138,7 +138,7 @@ export const useQuiz = (
         setQuizCount(prev => prev + 1);
 
         // Speed Star Bonus Ticket Logic
-        if (gameState === 'QUIZ' && selectedSubcategory?.id !== 'weakness') {
+        if (gameState === 'QUIZ') {
           const isCleared = (nextCorrectCount / questions.length) >= 0.5;
           if (isCleared && !hasBonusTicket) {
             let increment = 0;
