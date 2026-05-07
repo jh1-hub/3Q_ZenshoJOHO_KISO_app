@@ -32,7 +32,7 @@ export const QuizQuestion: React.FC<QuizQuestionProps> = ({
         }`}
       >
         <div className={`absolute top-0 left-0 w-2 h-full ${isDailyChallenge ? 'bg-amber-400' : 'bg-theme-accent'}`} />
-        <h3 className="text-xl md:text-3xl font-theme-heading leading-relaxed mb-0">
+        <h3 className="text-xl md:text-3xl font-sans font-bold leading-relaxed mb-0">
           {question.description}
         </h3>
       </motion.div>
