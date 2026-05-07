@@ -83,7 +83,7 @@ export const SpeedStarView: React.FC<SpeedStarViewProps> = ({
             className="bg-white/5 p-8 md:p-12 rounded-[2rem] border border-white/10 mb-8 relative overflow-hidden backdrop-blur-sm"
           >
             <div className="absolute top-0 left-0 w-2 h-full bg-amber-400" />
-            <h3 className="text-xl md:text-3xl font-sans font-bold leading-relaxed mb-0">
+            <h3 className="text-xl md:text-3xl font-question font-semibold leading-relaxed mb-0">
               {questions[currentQuestionIndex].description}
             </h3>
           </motion.div>
