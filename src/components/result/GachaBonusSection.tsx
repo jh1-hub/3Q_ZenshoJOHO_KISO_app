@@ -56,10 +56,10 @@ export const GachaBonusSection: React.FC<GachaBonusSectionProps> = ({
 
             <p className="text-xs md:text-sm text-theme-accent font-bold">
               {speedStarCorrectCount > 0 && !selectedSubcategory ? `スピードスターボーナス：${getGachaPullCount()}枚引けます！` :
-               questions.length === 20 ? '総合演習ボーナス：5枚引けます！' : 
-               questions.length === 10 ? '単元演習ボーナス：2枚引けます！' : 
-               isDailyChallenge ? ((correctCount / questions.length) >= 0.5 ? '1枚 + ボーナス1枚引けます！' : 'デイリーボーナス：1枚引けます！') :
-               '1枚引けます！'}
+               questions.length === 15 ? `総合演習ボーナス：${getGachaPullCount()}枚引けます！${correctCount === 15 ? ' (パーフェクト!)' : ''}` : 
+               questions.length === 5 && !isDailyChallenge ? `単元演習ボーナス：${getGachaPullCount()}枚引けます！${correctCount === 5 ? ' (パーフェクト!)' : ''}` : 
+               isDailyChallenge ? `特別ボーナス：${getGachaPullCount()}枚引けます！` :
+               `${getGachaPullCount()}枚引けます！`}
             </p>
             
             {(gachaResults.length === 0 || gachaResults.length > 0) && (

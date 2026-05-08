@@ -1,18 +1,6 @@
 import LZString from 'lz-string';
-import { quizCategories, allTermsMap, Rarity } from '../data/quizData';
-
-interface TermStat {
-  correct: number;
-  total: number;
-}
-
-export interface GameStats {
-  [key: string]: {
-    highScore: number;
-    attempts: number;
-    totalScore: number;
-  };
-}
+import { quizCategories, allTermsMap } from '../data/quizData';
+import { Rarity, GameStats, TermStat } from '../types';
 
 export interface MigrationData {
   userName: string | null;

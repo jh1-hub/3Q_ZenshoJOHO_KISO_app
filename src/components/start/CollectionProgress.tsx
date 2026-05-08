@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { LayoutGrid, ChevronRight, Trophy } from 'lucide-react';
-import { Rarity } from '../../data/quizData';
+import { Rarity } from '../../types';
 
 interface CollectionProgressProps {
   rarityOwned: Record<Rarity, number>;

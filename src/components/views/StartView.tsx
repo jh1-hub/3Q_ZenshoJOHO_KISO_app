@@ -4,7 +4,7 @@ import {
   BrainCircuit, Zap, ChevronRight, LayoutGrid, 
   BarChart, BookOpen, Sparkles
 } from 'lucide-react';
-import { Rarity } from '../../data/quizData';
+import { Rarity } from '../../types';
 import { CollectionProgress } from '../start/CollectionProgress';
 import { StartStats } from '../start/StartStats';
 

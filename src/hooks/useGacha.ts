@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
-import { allTerms, allTermsMap, quizCategories, Rarity, Subcategory } from '../data/quizData';
+import { allTerms, allTermsMap, quizCategories } from '../data/quizData';
+import { Rarity, Subcategory } from '../types';
 
 export const useGacha = (
   ownedCards: Record<string, number>,
@@ -108,14 +109,25 @@ export const useGacha = (
       return count;
     }
     
-    // Regular Quiz Modes
-    if (questionsCount === 20) return 5;
-    if (questionsCount === 10) return 2;
+    // Normal Subcategory Quiz (Single Subcategory)
+    if (!selectedSubcategory?.id.includes('practical-') && !selectedSubcategory?.id.includes('daily-') && questionsCount === 10) {
+      if ((correctCount / questionsCount) < 0.5) return 0;
+      return 1;
+    }
+
+    // Regular Quiz Modes (Unit and Comprehensive)
+    if (questionsCount === 15) {
+      if ((correctCount / questionsCount) < 0.5) return 0;
+      const isPerfect = correctCount === questionsCount;
+      return isPerfect ? 7 : 5;
+    }
     if (questionsCount === 5) {
       if (isDailyChallenge) {
         return (correctCount / questionsCount) >= 0.5 ? 2 : 1;
       }
-      return (correctCount / questionsCount) >= 0.5 ? 1 : 0;
+      if ((correctCount / questionsCount) < 0.5) return 0;
+      const isPerfect = correctCount === questionsCount;
+      return isPerfect ? 3 : 2;
     }
     return 0;
   }, [selectedSubcategory]);

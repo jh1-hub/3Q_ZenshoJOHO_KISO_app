@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Rarity } from '../../data/quizData';
+import { Rarity } from '../../types';
 
 export const HaloEffect = ({ rarity }: { rarity: Rarity }) => {
   const getColors = () => {

@@ -1,14 +1,5 @@
 import { allTermsMap } from "../data/quizData";
-
-export type QuestionType = 'TERM_TO_DESC' | 'DESC_TO_TERM';
-
-export interface Question {
-  term: string;
-  description: string;
-  correctAnswer: string;
-  options: string[];
-  type: QuestionType;
-}
+import { Question, QuestionType } from "../types";
 
 /**
  * Generates a question from static data.
@@ -60,7 +51,8 @@ export async function generateQuestion(
       description: `${term} の説明として最も適切なものはどれか。`,
       correctAnswer: correctDescription,
       options: options,
-      type: 'TERM_TO_DESC'
+      type: 'TERM_TO_DESC',
+      displayType: 'single'
     };
   }
 
@@ -81,7 +73,8 @@ export async function generateQuestion(
       description: randomDescription,
       correctAnswer: term,
       options: options,
-      type: 'DESC_TO_TERM'
+      type: 'DESC_TO_TERM',
+      displayType: 'single'
     };
   }
 
@@ -91,6 +84,7 @@ export async function generateQuestion(
     description: `${term}に関する説明文が見つかりませんでした。`,
     correctAnswer: term,
     options: options,
-    type: 'DESC_TO_TERM'
+    type: 'DESC_TO_TERM',
+    displayType: 'single'
   };
 }

@@ -1,4 +1,5 @@
-import { Category, UnitStats, allTerms, allTermsMap, quizCategories } from '../data/quizData';
+import { allTerms, allTermsMap, quizCategories } from '../data/quizData';
+import { Category, UnitStats } from '../types';
 
 interface UserProfile {
   grade: string;

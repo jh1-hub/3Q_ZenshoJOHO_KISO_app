@@ -85,9 +85,10 @@ import {
   Loader2
 } from 'lucide-react';
 import { storage } from './lib/storage';
-import { quizCategories, Category, Subcategory, allTermsMap, allTerms, Rarity, GameStats, TermStat, TermStats, UnitStats } from './data/quizData';
+import { quizCategories, allTermsMap, allTerms } from './data/quizData';
+import { Category, Subcategory, Rarity, Question, QuestionType, GameStats, TermStat, TermStats, UnitStats } from './types';
 import { storyCards, StoryCard } from './data/storyData';
-import { generateQuestion, Question, QuestionType } from './services/geminiService';
+import { generateQuestion } from './services/geminiService';
 
 import { getTermIcon } from './lib/termIcon';
 import { HaloEffect } from './components/effects/HaloEffect';

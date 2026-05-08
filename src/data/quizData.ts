@@ -1,25 +1,4 @@
-
-export type Rarity = 'C' | 'R' | 'SR' | 'UR';
-
-export interface TermData {
-  id: number;
-  name: string;
-  descriptions: string[];
-  rarity: Rarity;
-  flavorTexts: string[];
-}
-
-export interface Subcategory {
-  id: string;
-  title: string;
-  terms: TermData[];
-}
-
-export interface Category {
-  id: string;
-  title: string;
-  subcategories: Subcategory[];
-}
+import { Category, Subcategory, TermData, Rarity, UnitStats, GameStats, TermStat, TermStats } from '../types';
 
 export const quizCategories: Category[] = [
   {
@@ -4042,18 +4021,3 @@ quizCategories.forEach(cat => {
 });
 
 export const allTerms = Object.keys(allTermsMap);
-
-export interface UnitStats {
-  highScore: number;
-  attempts: number;
-  totalScore: number;
-}
-
-export type GameStats = Record<string, UnitStats>;
-
-export interface TermStat {
-  correct: number;
-  total: number;
-}
-
-export type TermStats = Record<string, TermStat>;

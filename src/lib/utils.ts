@@ -1,4 +1,5 @@
-import { quizCategories, Rarity } from '../data/quizData';
+import { quizCategories } from '../data/quizData';
+import { Rarity } from '../types';
 
 /**
  * Mapping of terms to unique IDs.

@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Question, QuestionType, generateQuestion } from '../services/geminiService';
-import { Category, Subcategory, quizCategories, allTerms } from '../data/quizData';
+import { generateQuestion } from '../services/geminiService';
+import { quizCategories, allTerms } from '../data/quizData';
+import { Category, Subcategory, Question, QuestionType } from '../types';
+import { practicalQuestions } from '../data/practicalQuestions';
 import { storage } from '../lib/storage';
 
 export const useQuiz = (
@@ -49,7 +51,17 @@ export const useQuiz = (
     const currentQuestion = questions[currentQuestionIndex];
     if (!currentQuestion) return;
     
-    const isCorrect = answer === currentQuestion.correctAnswer;
+    let isCorrect = false;
+    if (Array.isArray(currentQuestion.correctAnswer)) {
+      // For multiple choice, check if subsets match (or order-independent comparison)
+      // Expecting answer to be a comma-separated string of sorted options
+      const sortedCorrect = [...currentQuestion.correctAnswer].sort().join(',');
+      const sortedUser = answer.split(',').filter(a => a).sort().join(',');
+      isCorrect = sortedCorrect === sortedUser;
+    } else {
+      isCorrect = answer === currentQuestion.correctAnswer;
+    }
+    
     setUserAnswer(answer);
     
     if (gameState === 'SPEED_STAR') {
@@ -230,7 +242,7 @@ export const useQuiz = (
     if ('subcategories' in item) {
       // It's a Category - include all terms from all subcategories
       quizTerms = item.subcategories.flatMap(sub => sub.terms);
-      targetCount = 10;
+      targetCount = 5;
       // Create a dummy subcategory for the UI
       selectedItem = {
         id: item.id,
@@ -243,9 +255,21 @@ export const useQuiz = (
       selectedItem = item;
     }
 
-    // Shuffle and slice to target count
+    // Get practical questions only if it's a unit (Category) quiz
+    const isUnitQuiz = 'subcategories' in item;
+    const applicablePractical = isUnitQuiz 
+      ? practicalQuestions.filter(pq => item.subcategories.some(s => s.id === pq.categoryId))
+      : [];
+
+    // Shuffle and pick practical questions up to targetCount
+    const shuffledPractical = [...applicablePractical].sort(() => 0.5 - Math.random());
+    const limitedPractical = shuffledPractical.slice(0, targetCount);
+
+    // Calculate how many terms we need to reach targetCount
+    const itemsNeeded = Math.max(0, targetCount - limitedPractical.length);
+    
     const shuffledTerms = [...quizTerms].sort(() => 0.5 - Math.random());
-    const selectedTerms = shuffledTerms.slice(0, targetCount);
+    const selectedTerms = shuffledTerms.slice(0, itemsNeeded);
 
     setSelectedSubcategory(selectedItem);
 
@@ -256,7 +280,14 @@ export const useQuiz = (
         )
       );
 
-      setQuestions(generatedQuestions);
+      // Add applicable practical questions
+      const finalQuestions = [...generatedQuestions, ...limitedPractical.map(pq => ({
+        ...pq,
+        type: 'PRACTICAL' as const,
+        term: pq.id
+      }))].sort(() => 0.5 - Math.random());
+
+      setQuestions(finalQuestions);
       setGameState('QUIZ');
     } catch (error) {
       console.error("Failed to start quiz:", error);
@@ -314,8 +345,15 @@ export const useQuiz = (
     setSelectedSubcategory({ id: 'all', title, terms: [] });
 
     const allSubcategories = quizCategories.flatMap(cat => cat.subcategories);
+    const targetCount = 15;
+    
+    // Mix in practical questions for comprehensive quiz
+    const mixedPractical = [...practicalQuestions]
+      .sort(() => 0.5 - Math.random())
+      .slice(0, 3); // Take up to 3 practical questions
+
     const selectedQuestionsData = [];
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < targetCount - mixedPractical.length; i++) {
       const randomSub = allSubcategories[Math.floor(Math.random() * allSubcategories.length)];
       const randomTerm = randomSub.terms[Math.floor(Math.random() * randomSub.terms.length)];
       selectedQuestionsData.push({ term: randomTerm, subTerms: randomSub.terms });
@@ -326,7 +364,7 @@ export const useQuiz = (
       let consecutiveDescToTerm = 0;
       
       for (const data of selectedQuestionsData) {
-        let forcedType: QuestionType | undefined = undefined;
+        let forcedType: any = undefined;
         if (consecutiveDescToTerm >= 3) {
           forcedType = 'TERM_TO_DESC';
         }
@@ -342,7 +380,13 @@ export const useQuiz = (
         generatedQuestions.push(q);
       }
 
-      setQuestions(generatedQuestions);
+      const finalQuestions = [...generatedQuestions, ...mixedPractical.map(pq => ({
+        ...pq,
+        type: 'PRACTICAL' as const,
+        term: pq.id
+      }))].sort(() => 0.5 - Math.random());
+
+      setQuestions(finalQuestions);
       setGameState('QUIZ');
     } catch (error) {
       console.error("Failed to start comprehensive quiz:", error);

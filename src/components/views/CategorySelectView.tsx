@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, Zap, Trophy, ChevronRight, TrendingDown } from 'lucide-react';
+import { ChevronLeft, Zap, Trophy, ChevronRight, TrendingDown, CreditCard } from 'lucide-react';
 import { CategoryCard } from '../category/CategoryCard';
 
 interface CategorySelectViewProps {
@@ -101,7 +101,15 @@ export const CategorySelectView: React.FC<CategorySelectViewProps> = ({
           </div>
           <div className="text-left">
             <h3 className="text-xl md:text-2xl font-bold mb-1">総合演習</h3>
-            <p className="text-sm md:text-base text-white/60">全単元からランダムに20問出題されます</p>
+            <p className="text-sm md:text-base text-white/60">全単元からランダムに15問出題されます</p>
+            <div className="flex gap-4 mt-2">
+              <span className="flex items-center gap-1.5 text-[10px] font-black bg-theme-secondary/20 text-theme-secondary border border-theme-secondary/30 px-2 py-0.5 rounded-full uppercase">
+                <CreditCard size={12} /> CARD x5
+              </span>
+              <span className="flex items-center gap-1.5 text-[10px] font-black bg-amber-400/20 text-amber-400 border border-amber-400/30 px-2 py-0.5 rounded-full uppercase">
+                PERFECT +2
+              </span>
+            </div>
           </div>
         </div>
         <div className="relative z-10 flex items-center gap-2 font-bold text-base md:text-lg self-end md:self-auto">

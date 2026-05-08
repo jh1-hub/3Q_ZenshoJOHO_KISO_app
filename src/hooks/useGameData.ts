@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { storage } from '../lib/storage';
-import { allTermsMap, GameStats, TermStat, TermStats, UnitStats } from '../data/quizData';
+import { allTermsMap } from '../data/quizData';
+import { GameStats, TermStat, TermStats, UnitStats } from '../types';
 import { calculateLevel, calculateLevelProgress } from '../lib/level';
 import { MigrationData } from '../lib/migration';
 
