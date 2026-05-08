@@ -280,12 +280,30 @@ export const useQuiz = (
         )
       );
 
-      // Add applicable practical questions
-      const finalQuestions = [...generatedQuestions, ...limitedPractical.map(pq => ({
-        ...pq,
-        type: 'PRACTICAL' as const,
-        term: pq.id
-      }))].sort(() => 0.5 - Math.random());
+    // Add applicable practical questions
+      const finalQuestions = [...generatedQuestions, ...limitedPractical.map(pq => {
+        // Shuffle options and fix correctAnswer if single choice
+        if (pq.displayType === 'single') {
+          const originalOptions = [...pq.options];
+          const shuffledOptions = [...pq.options].sort(() => 0.5 - Math.random());
+          
+          return {
+            ...pq,
+            type: 'PRACTICAL' as const,
+            term: pq.id,
+            options: shuffledOptions,
+          };
+        }
+        
+        // For multiple choice, we also shuffle
+        const shuffledOptions = [...pq.options].sort(() => 0.5 - Math.random());
+        return {
+          ...pq,
+          type: 'PRACTICAL' as const,
+          term: pq.id,
+          options: shuffledOptions,
+        };
+      })].sort(() => 0.5 - Math.random());
 
       setQuestions(finalQuestions);
       setGameState('QUIZ');
@@ -380,11 +398,16 @@ export const useQuiz = (
         generatedQuestions.push(q);
       }
 
-      const finalQuestions = [...generatedQuestions, ...mixedPractical.map(pq => ({
-        ...pq,
-        type: 'PRACTICAL' as const,
-        term: pq.id
-      }))].sort(() => 0.5 - Math.random());
+      const finalQuestions = [...generatedQuestions, ...mixedPractical.map(pq => {
+        // Shuffle options
+        const shuffledOptions = [...pq.options].sort(() => 0.5 - Math.random());
+        return {
+          ...pq,
+          type: 'PRACTICAL' as const,
+          term: pq.id,
+          options: shuffledOptions
+        };
+      })].sort(() => 0.5 - Math.random());
 
       setQuestions(finalQuestions);
       setGameState('QUIZ');
