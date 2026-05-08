@@ -255,15 +255,18 @@ export const useQuiz = (
       selectedItem = item;
     }
 
-    // Get practical questions only if it's a unit (Category) quiz
-    const isUnitQuiz = 'subcategories' in item;
-    const applicablePractical = isUnitQuiz 
+    // Get practical questions only if it's a unit (Category) quiz or Subcategory quiz
+    const isCategory = 'subcategories' in item;
+    const applicablePractical = isCategory
       ? practicalQuestions.filter(pq => item.subcategories.some(s => s.id === pq.categoryId))
-      : [];
+      : practicalQuestions.filter(pq => pq.categoryId === item.id);
 
-    // Shuffle and pick practical questions up to targetCount
+    // Calculate how many practical questions we want (80%)
+    const practicalTargetCount = Math.floor(targetCount * 0.8);
+    
+    // Shuffle and pick practical questions
     const shuffledPractical = [...applicablePractical].sort(() => 0.5 - Math.random());
-    const limitedPractical = shuffledPractical.slice(0, targetCount);
+    const limitedPractical = shuffledPractical.slice(0, practicalTargetCount);
 
     // Calculate how many terms we need to reach targetCount
     const itemsNeeded = Math.max(0, targetCount - limitedPractical.length);
@@ -364,14 +367,16 @@ export const useQuiz = (
 
     const allSubcategories = quizCategories.flatMap(cat => cat.subcategories);
     const targetCount = 15;
+    const practicalTargetCount = 12; // 80% of 15
     
     // Mix in practical questions for comprehensive quiz
     const mixedPractical = [...practicalQuestions]
       .sort(() => 0.5 - Math.random())
-      .slice(0, 3); // Take up to 3 practical questions
+      .slice(0, practicalTargetCount);
 
     const selectedQuestionsData = [];
-    for (let i = 0; i < targetCount - mixedPractical.length; i++) {
+    const termTargetCount = targetCount - mixedPractical.length;
+    for (let i = 0; i < termTargetCount; i++) {
       const randomSub = allSubcategories[Math.floor(Math.random() * allSubcategories.length)];
       const randomTerm = randomSub.terms[Math.floor(Math.random() * randomSub.terms.length)];
       selectedQuestionsData.push({ term: randomTerm, subTerms: randomSub.terms });
