@@ -22,10 +22,10 @@ export const ResultHeader: React.FC<ResultHeaderProps> = ({
       </motion.div>
       
       <h2 className="text-3xl md:text-4xl font-theme-heading font-bold mb-2">
-        {speedStarCorrectCount > 0 && !selectedSubcategory ? 'Speed Star Result!' : 'Quiz Complete!'}
+        {speedStarCorrectCount > 0 && !selectedSubcategory ? 'SPEED STAR RESULT' : 'QUIZ CLEAR!'}
       </h2>
-      <p className="text-sm md:text-base text-theme-text-muted mb-6 md:mb-8">
-        {speedStarCorrectCount > 0 && !selectedSubcategory ? `Correct Answers: ${speedStarCorrectCount}` : selectedSubcategory?.title}
+      <p className="text-sm md:text-base text-theme-text-muted mb-6 md:mb-8 font-bold tracking-widest uppercase">
+        {speedStarCorrectCount > 0 && !selectedSubcategory ? `CORRECT: ${speedStarCorrectCount}` : selectedSubcategory?.title}
       </p>
     </>
   );

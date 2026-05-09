@@ -30,7 +30,7 @@ export const ResultActions: React.FC<ResultActionsProps> = ({
         <button 
           onClick={startSpeedStar}
           disabled={disabled}
-          className={`w-full py-4 md:py-5 bg-black text-amber-400 border-2 border-amber-400 rounded-2xl text-lg md:text-xl font-bold flex items-center justify-center gap-3 transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-amber-400/10'}`}
+          className={`w-full py-4 md:py-5 bg-black text-amber-400 border-2 border-amber-400 rounded-2xl text-lg md:text-xl font-black flex items-center justify-center gap-3 transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-amber-400/10'}`}
         >
           <Zap size={24} className={disabled ? '' : 'animate-pulse'} /> SPEED STAR に挑戦
         </button>
@@ -41,7 +41,7 @@ export const ResultActions: React.FC<ResultActionsProps> = ({
           setGameState('CATEGORY_SELECT');
         }}
         disabled={disabled}
-        className={`w-full py-4 md:py-5 bg-theme-text text-theme-bg text-white rounded-2xl text-lg md:text-xl font-bold flex items-center justify-center gap-3 transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black'}`}
+        className={`w-full py-4 md:py-5 bg-theme-text text-theme-bg text-white rounded-2xl text-lg md:text-xl font-black flex items-center justify-center gap-3 transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black'}`}
       >
         <LayoutGrid size={24} /> 他の単元を選ぶ
       </button>
@@ -56,9 +56,9 @@ export const ResultActions: React.FC<ResultActionsProps> = ({
           }
         }}
         disabled={disabled}
-        className={`w-full py-4 md:py-5 bg-theme-card border-2 border-theme-border-strong text-theme-text rounded-2xl text-lg md:text-xl font-bold flex items-center justify-center gap-3 transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-theme-muted'}`}
+        className={`w-full py-4 md:py-5 bg-theme-card border-2 border-theme-border-strong text-theme-text rounded-2xl text-lg md:text-xl font-black flex items-center justify-center gap-3 transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-theme-muted'}`}
       >
-        <RotateCcw size={24} /> もう一度挑戦
+        <RotateCcw size={24} /> RETRY
       </button>
     </div>
   );
