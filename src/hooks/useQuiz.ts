@@ -255,14 +255,16 @@ export const useQuiz = (
       selectedItem = item;
     }
 
-    // Get practical questions only if it's a unit (Category) quiz or Subcategory quiz
-    const isCategory = 'subcategories' in item;
-    const applicablePractical = isCategory
+    // Get practical questions only if it's a unit (Category) quiz
+    const isCategoryQuiz = 'subcategories' in item;
+    
+    // Practical questions are ONLY for Category-level or Comprehensive quizzes
+    const applicablePractical = isCategoryQuiz
       ? practicalQuestions.filter(pq => item.subcategories.some(s => s.id === pq.categoryId))
-      : practicalQuestions.filter(pq => pq.categoryId === item.id);
+      : []; // Empty for subcategories
 
-    // Calculate how many practical questions we want (80%)
-    const practicalTargetCount = Math.floor(targetCount * 0.8);
+    // Calculate how many practical questions we want (80% for Category quizzes, 0% for sub)
+    const practicalTargetCount = isCategoryQuiz ? Math.floor(targetCount * 0.8) : 0;
     
     // Shuffle and pick practical questions
     const shuffledPractical = [...applicablePractical].sort(() => 0.5 - Math.random());

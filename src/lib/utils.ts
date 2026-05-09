@@ -46,9 +46,10 @@ export const getRarityStyles = (rarity: Rarity) => {
         label: 'Ultra Rare',
         accent: 'bg-theme-card/20',
         glow: 'shadow-[0_0_30px_rgba(236,72,153,0.8)]',
-        pulse: 'animate-pulse',
+        pulse: '',
         flash: 'bg-purple-400',
-        particles: 20
+        particles: 40,
+        speedLines: 30
       };
     case 'SR':
       return {
@@ -59,9 +60,10 @@ export const getRarityStyles = (rarity: Rarity) => {
         label: 'Super Rare',
         accent: 'bg-theme-card/20',
         glow: 'shadow-[0_0_20px_rgba(250,204,21,0.6)]',
-        pulse: 'animate-pulse',
+        pulse: '',
         flash: 'bg-yellow-300',
-        particles: 15
+        particles: 25,
+        speedLines: 15
       };
     case 'R':
       return {
@@ -74,7 +76,8 @@ export const getRarityStyles = (rarity: Rarity) => {
         glow: 'shadow-[0_0_10px_rgba(59,130,246,0.4)]',
         pulse: '',
         flash: 'bg-blue-300',
-        particles: 8
+        particles: 12,
+        speedLines: 8
       };
     default:
       return {
@@ -87,7 +90,8 @@ export const getRarityStyles = (rarity: Rarity) => {
         glow: '',
         pulse: '',
         flash: 'bg-white',
-        particles: 0
+        particles: 5,
+        speedLines: 0
       };
   }
 };

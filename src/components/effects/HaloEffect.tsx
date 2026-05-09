@@ -20,6 +20,7 @@ export const HaloEffect = ({ rarity }: { rarity: Rarity }) => {
         animate={{ 
           opacity: [0.3, 0.5, 0.3],
           scale: [1, 1.3, 1],
+          rotate: [0, 90, 0]
         }}
         transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
         className="absolute w-[150vmax] h-[150vmax] rounded-full"
@@ -28,6 +29,38 @@ export const HaloEffect = ({ rarity }: { rarity: Rarity }) => {
           filter: 'blur(100px)',
         }}
       />
+      
+      {rarity === 'UR' && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{
+            opacity: [0.1, 0.3, 0.1],
+            rotate: [0, 360]
+          }}
+          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+          className="absolute w-[100vmax] h-[100vmax] rounded-full mix-blend-screen"
+          style={{
+            background: 'conic-gradient(from 0deg, transparent, rgba(168, 85, 247, 0.2), transparent, rgba(236, 72, 153, 0.2), transparent)',
+            filter: 'blur(80px)',
+          }}
+        />
+      )}
+      
+      {rarity === 'SR' && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{
+            opacity: [0.1, 0.2, 0.1],
+            rotate: [0, 180]
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute w-[120vmax] h-[120vmax] rounded-full mix-blend-screen"
+          style={{
+            background: 'conic-gradient(from 0deg, transparent, rgba(250, 204, 21, 0.1), transparent, rgba(249, 115, 22, 0.1), transparent)',
+            filter: 'blur(100px)',
+          }}
+        />
+      )}
     </div>
   );
 };

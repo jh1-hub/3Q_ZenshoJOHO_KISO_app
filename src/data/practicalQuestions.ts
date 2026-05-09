@@ -5603,5 +5603,245 @@ export const practicalQuestions: PracticalQuestion[] = [
     ],
     correctAnswer: '自社にとってのビジネスチャンスを最大化する。',
     displayType: 'single'
+  },
+  {
+    id: 'p-extra-1',
+    categoryId: '1-a',
+    description: '電子商取引(EC)のうち、企業と一般消費者の間の取引を意味する言葉を選択しなさい。',
+    options: ['B to B', 'B to C', 'C to C', 'D to C'],
+    correctAnswer: 'B to C',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-2',
+    categoryId: '1-a',
+    description: 'インターネット上のサービスを利用する際など、年齢や住んでいる地域、性別などを偽って登録する行為を示す言葉として適切なものを選びなさい。',
+    options: ['なりすまし', 'ハッキング', 'クラッキング', 'スパム'],
+    correctAnswer: 'なりすまし',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-3',
+    categoryId: '1-b',
+    description: '音楽や画像などの著作物を創り出した人が、その著作物を利用する権利を保護する法律として適切なものを選びなさい。',
+    options: ['特許法', '商標法', '意匠法', '著作権法'],
+    correctAnswer: '著作権法',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-4',
+    categoryId: '1-b',
+    description: '新しい発明を保護する権利として適切なものを選びなさい。',
+    options: ['商標権', '特許権', '著作権', '意匠権'],
+    correctAnswer: '特許権',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-5',
+    categoryId: '1-c',
+    description: '利用者のパソコンに感染し、キーボードの操作履歴を盗み出してパスワードなどを不正に取得するソフトウェアを何というか。',
+    options: ['ランサムウェア', 'キーロガー', 'アドウェア', 'ボット'],
+    correctAnswer: 'キーロガー',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-6',
+    categoryId: '1-c',
+    description: 'マルウェアの一種で、パソコン内のデータを勝手に暗号化して使えなくし、元に戻すことと引き換えに身代金を要求するものを何というか。',
+    options: ['ランサムウェア', 'スパイウェア', 'ワーム', 'トロイの木馬'],
+    correctAnswer: 'ランサムウェア',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-7',
+    categoryId: '2-a',
+    description: 'コンピュータ内で演算処理や制御処理を行う、人間の頭脳に相当する装置を何というか。',
+    options: ['メインメモリ', 'CPU(中央処理装置)', 'HDD', 'GPU'],
+    correctAnswer: 'CPU(中央処理装置)',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-8',
+    categoryId: '2-a',
+    description: '電源を切ってもデータが消えない記憶媒体のうち、フラッシュメモリを利用していて読み書きが高速なものを何というか。',
+    options: ['SSD', 'HDD', 'CD-ROM', 'RAM'],
+    correctAnswer: 'SSD',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-9',
+    categoryId: '2-b',
+    description: 'インターネット上の住所とも言える数字の羅列(例: 192.168.0.1)を何というか。',
+    options: ['MACアドレス', 'IPアドレス', 'URL', 'ドメイン名'],
+    correctAnswer: 'IPアドレス',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-10',
+    categoryId: '2-b',
+    description: 'URL「https://www.example.co.jp」のうち「example.co.jp」の部分を何というか。',
+    options: ['IPアドレス', 'プロトコル', 'ドメイン名', 'ディレクトリ'],
+    correctAnswer: 'ドメイン名',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-11',
+    categoryId: '2-c',
+    description: 'コンピュータの世界で最小の情報の単位を何というか。',
+    options: ['バイト', 'ビット', 'ワード', 'ブロック'],
+    correctAnswer: 'ビット',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-12',
+    categoryId: '2-c',
+    description: '10進数の「5」を2進数で表したものとして正しいものを選びなさい。',
+    options: ['10', '11', '100', '101'],
+    correctAnswer: '101',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-13',
+    categoryId: '3-a',
+    description: '問題解決の手順や計算方法を明確に定めたものを何というか。',
+    options: ['アルゴリズム', 'フローチャート', 'プログラム', 'デバッグ'],
+    correctAnswer: 'アルゴリズム',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-14',
+    categoryId: '3-a',
+    description: 'アルゴリズムを図で分かりやすく表したものを何というか。',
+    options: ['ベン図', '散布図', 'フローチャート', 'ヒストグラム'],
+    correctAnswer: 'フローチャート',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-15',
+    categoryId: '3-b',
+    description: 'データの集まりの中で、大きさが真ん中に来る値を何というか。',
+    options: ['平均値', '中央値', '最頻値', '最大値'],
+    correctAnswer: '中央値',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-16',
+    categoryId: '3-b',
+    description: 'データの集まりの中で、最も多く現れる値を何というか。',
+    options: ['平均値', '中央値', '最頻値', '最小値'],
+    correctAnswer: '最頻値',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-17',
+    categoryId: '3-c',
+    description: '特定の条件に一致するデータを抽出する機能（フィルタなど）の目的として最も適切なものを選びなさい。',
+    options: ['データを削除するため', '目的のデータを素早く見つけるため', 'データのバックアップをとるため', '文字の大きさを変えるため'],
+    correctAnswer: '目的のデータを素早く見つけるため',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-18',
+    categoryId: '3-c',
+    description: '情報を暗号化する際、暗号化と復号に同じ鍵を使う方式を何というか。',
+    options: ['公開鍵暗号方式', '共通鍵暗号方式', '生体認証', '二段階認証'],
+    correctAnswer: '共通鍵暗号方式',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-19',
+    categoryId: '1-b',
+    description: '文字や記号などの並び方からなるパスワードに加えて、指紋や顔認証などを使って本人確認を強化する仕組みを何というか。',
+    options: ['シングルサインオン', 'ワンタイムパスワード', '多要素認証(二段階認証)', '暗号化'],
+    correctAnswer: '多要素認証(二段階認証)',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-20',
+    categoryId: '1-a',
+    description: 'インターネット上で商品を購入する際、クレジットカードなどの個人情報が盗まれないように通信を暗号化する仕組みは何と呼ばれているか。',
+    options: ['HTTP', 'SSL/TLS', 'FTP', 'SMTP'],
+    correctAnswer: 'SSL/TLS',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-21',
+    categoryId: '2-a',
+    description: 'ディスプレイやプリンタなど、コンピュータの処理結果を人間がわかる形で出す装置を何というか。',
+    options: ['入力装置', '出力装置', '記憶装置', '演算装置'],
+    correctAnswer: '出力装置',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-22',
+    categoryId: '2-b',
+    description: 'メールを相手に送信するために使われるプロトコル(通信の約束事)を何というか。',
+    options: ['POP', 'IMAP', 'SMTP', 'HTTP'],
+    correctAnswer: 'SMTP',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-23',
+    categoryId: '2-c',
+    description: '2進数の「1010」を10進数で表したものとして正しいものを選びなさい。',
+    options: ['8', '10', '12', '14'],
+    correctAnswer: '10',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-24',
+    categoryId: '3-a',
+    description: 'プログラミングにおいて、同じ処理を何度も繰り返す制御構造を何というか。',
+    options: ['順次', '選択', '反復(ループ)', '分岐'],
+    correctAnswer: '反復(ループ)',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-25',
+    categoryId: '3-b',
+    description: 'データ全体の傾向をつかむために、平均値・中央値・最頻値などのように集団の特徴を一つの数値で表したものを何というか。',
+    options: ['外れ値', '欠損値', '代表値', '誤差'],
+    correctAnswer: '代表値',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-26',
+    categoryId: '3-c',
+    description: '公開鍵暗号方式でデータを暗号化する際、送信者が使う鍵はどれか。',
+    options: ['送信者の共通鍵', '受信者の秘密鍵', '受信者の公開鍵', '送信者の秘密鍵'],
+    correctAnswer: '受信者の公開鍵',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-27',
+    categoryId: '1-c',
+    description: '実在する銀行やショッピングサイトを装ったメールを送りつけ、偽のサイトに誘導してパスワードなどを盗み取る詐欺を何というか。',
+    options: ['ワンクリック詐欺', 'フィッシング詐欺', 'ランサムウェア', 'DoS攻撃'],
+    correctAnswer: 'フィッシング詐欺',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-28',
+    categoryId: '1-b',
+    description: 'コンピュータのソフトウェアに関して、著作権を放棄せずに、自由な改変や再配布を認めるライセンス形態はどれか。',
+    options: ['プロプライエタリ', 'オープンソースソフトウェア(OSS)', 'シェアウェア', '商用ソフトウェア'],
+    correctAnswer: 'オープンソースソフトウェア(OSS)',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-29',
+    categoryId: '2-a',
+    description: 'キーボード、マウス、マイクなど、コンピュータにデータを取り込むための装置を何というか。',
+    options: ['出力装置', '記憶装置', '入力装置', '制御装置'],
+    correctAnswer: '入力装置',
+    displayType: 'single'
+  },
+  {
+    id: 'p-extra-30',
+    categoryId: '2-b',
+    description: 'インターネットと社内ネットワークの境界に設置し、外部からの不正な侵入を防ぐ役割を持つ仕組みを何というか。',
+    options: ['ルータ', 'ハブ', 'ファイアウォール', 'スイッチ'],
+    correctAnswer: 'ファイアウォール',
+    displayType: 'single'
   }
 ];

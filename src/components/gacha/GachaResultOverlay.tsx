@@ -40,15 +40,15 @@ export const GachaResultOverlay: React.FC<GachaResultOverlayProps> = ({
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 overflow-y-auto"
     >
-      <SpeedLines />
+      <SpeedLines count={styles.speedLines} />
       
       {/* Reveal Flash */}
       <motion.div
         key={`flash-${currentGachaCard.term}-${currentGachaCard.redrawsUsed}`}
         initial={{ opacity: 1 }}
         animate={{ opacity: 0 }}
-        transition={{ duration: 0.8 }}
-        className={`absolute inset-0 z-[250] pointer-events-none ${styles.flash}`}
+        transition={{ duration: 0.5 }}
+        className="absolute inset-0 z-[250] pointer-events-none bg-white"
       />
 
       <HaloEffect rarity={rarity} />

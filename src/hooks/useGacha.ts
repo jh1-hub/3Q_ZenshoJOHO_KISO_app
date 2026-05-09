@@ -109,26 +109,44 @@ export const useGacha = (
       return count;
     }
     
-    // Normal Subcategory Quiz (Single Subcategory)
-    if (!selectedSubcategory?.id.includes('practical-') && !selectedSubcategory?.id.includes('daily-') && questionsCount === 10) {
-      if ((correctCount / questionsCount) < 0.5) return 0;
-      return 1;
-    }
-
-    // Regular Quiz Modes (Unit and Comprehensive)
-    if (questionsCount === 15) {
+    // Comprehensive Quiz
+    if (questionsCount === 15 || selectedSubcategory?.id === 'all') {
       if ((correctCount / questionsCount) < 0.5) return 0;
       const isPerfect = correctCount === questionsCount;
       return isPerfect ? 7 : 5;
     }
-    if (questionsCount === 5) {
-      if (isDailyChallenge) {
-        return (correctCount / questionsCount) >= 0.5 ? 2 : 1;
-      }
-      if ((correctCount / questionsCount) < 0.5) return 0;
-      const isPerfect = correctCount === questionsCount;
-      return isPerfect ? 3 : 2;
+
+    // Daily Challenge
+    if (isDailyChallenge && questionsCount === 5) {
+      return (correctCount / questionsCount) >= 0.5 ? 2 : 1;
     }
+
+    // Weakness Quiz
+    if (selectedSubcategory?.id === 'weakness' && questionsCount === 5) {
+      if ((correctCount / questionsCount) < 0.5) return 0;
+      return 1;
+    }
+
+    // Category (Unit) Quiz or Subcategory Quiz
+    if (questionsCount === 5) {
+      if ((correctCount / questionsCount) < 0.5) return 0;
+
+      // Check if it's a Category (Unit) quiz
+      // Category IDs are "1", "2", etc. (length 1 or 2, no hyphen)
+      const isCategoryQuiz = selectedSubcategory && 
+                             !selectedSubcategory.id.includes('-') && 
+                             ['1','2','3','4','5','6','7','8','9'].includes(selectedSubcategory.id);
+
+      if (isCategoryQuiz) {
+        const isPerfect = correctCount === questionsCount;
+        return isPerfect ? 3 : 2;
+      } else {
+        // Subcategory Quiz
+        // Exactly 1 card for 50%+ accuracy, no perfect bonus
+        return 1;
+      }
+    }
+
     return 0;
   }, [selectedSubcategory]);
 

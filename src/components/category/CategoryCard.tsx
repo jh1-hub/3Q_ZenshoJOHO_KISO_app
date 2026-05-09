@@ -29,23 +29,24 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
             <span>Cleared: {catStats.attempts}</span>
           </div>
         </div>
-        <div className="flex items-center gap-3 self-start md:self-auto">
-          <div className="hidden sm:flex flex-col items-end gap-1">
-            <span className="flex items-center gap-1.5 text-[10px] font-black bg-theme-secondary/20 text-theme-secondary border border-theme-secondary/30 px-2 py-0.5 rounded-full uppercase">
-              <CreditCard size={12} /> CARD x2
-            </span>
-            <span className="flex items-center gap-1.5 text-[10px] font-black bg-amber-400/20 text-amber-400 border border-amber-400/30 px-2 py-0.5 rounded-full uppercase">
-              PERFECT +1
-            </span>
-          </div>
+        <div className="flex flex-row items-center gap-3 self-start md:self-auto">
           <button
             onClick={() => startQuiz(category)}
-            className="text-xs md:text-sm font-bold bg-theme-accent text-white px-4 py-2 md:py-1.5 rounded-xl hover:bg-black transition-all flex items-center gap-2 group shadow-sm hover:shadow-md"
+            className="text-xs md:text-sm font-bold bg-theme-accent text-white px-4 py-2 md:py-1.5 rounded-xl hover:bg-black transition-all flex items-center gap-2 group shadow-sm hover:shadow-md order-1"
           >
             <span className="sm:hidden text-[10px] opacity-70">5問</span>
             単元演習
             <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
           </button>
+          
+          <div className="flex flex-row items-center gap-2 order-2">
+            <span className="flex items-center gap-1.5 text-[10px] font-black bg-theme-secondary/20 text-theme-secondary border border-theme-secondary/30 px-2 py-0.5 rounded-full uppercase whitespace-nowrap">
+              <CreditCard size={12} /> CARD x2
+            </span>
+            <span className="flex items-center gap-1.5 text-[10px] font-black bg-amber-400/20 text-amber-500 border border-amber-400/30 px-2 py-0.5 rounded-full uppercase whitespace-nowrap">
+              PERFECT +1
+            </span>
+          </div>
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

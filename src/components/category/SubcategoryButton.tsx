@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, ChevronRight } from 'lucide-react';
+import { BookOpen, ChevronRight, CreditCard } from 'lucide-react';
 
 interface SubcategoryButtonProps {
   sub: any;
@@ -27,10 +27,13 @@ export const SubcategoryButton: React.FC<SubcategoryButtonProps> = ({
           <BookOpen size={20} />
         </div>
         <div>
-          <p className="font-bold text-sm md:text-base">{sub.title}</p>
-          <div className="flex gap-3 text-[9px] md:text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mt-1">
-            <span>Best: {highScore.toLocaleString()}</span>
-            <span>Cleared: {attempts}</span>
+          <p className="font-bold text-sm md:text-base pr-8">{sub.title}</p>
+          <div className="flex flex-wrap gap-2 md:gap-3 text-[9px] md:text-[10px] font-bold text-theme-text-muted uppercase tracking-wider mt-1.5">
+            <span className="flex items-center gap-1 bg-theme-bg px-2 py-0.5 rounded-lg border border-theme-border">Best: {highScore.toLocaleString()}</span>
+            <span className="flex items-center gap-1 bg-theme-bg px-2 py-0.5 rounded-lg border border-theme-border">Cleared: {attempts}</span>
+            <span className="flex items-center gap-1 bg-theme-secondary/20 text-theme-secondary px-2 py-0.5 rounded-lg border border-theme-secondary/30">
+              <CreditCard size={10} /> CARD x1
+            </span>
           </div>
         </div>
       </div>

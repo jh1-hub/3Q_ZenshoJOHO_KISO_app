@@ -1,13 +1,15 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-export const SpeedLines = () => (
+export const SpeedLines = ({ count = 15 }: { count?: number }) => {
+  if (count === 0) return null;
+  return (
   <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    {[...Array(15)].map((_, i) => (
+    {[...Array(count)].map((_, i) => (
       <motion.div
         key={i}
         initial={{ 
-          rotate: (i * 360) / 15,
+          rotate: (i * 360) / count,
           scaleX: 0,
           opacity: 0,
           x: "-50%",
@@ -29,4 +31,5 @@ export const SpeedLines = () => (
       />
     ))}
   </div>
-);
+  );
+};
