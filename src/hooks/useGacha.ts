@@ -18,7 +18,9 @@ export const useGacha = (
     redrawsUsed: number;
     maxRedraws: number;
     isDuplicate: boolean;
+    pullId: number;
   } | null>(null);
+
   const [gachaHistory, setGachaHistory] = useState<string[]>([]);
   
   const gachaTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -182,7 +184,8 @@ export const useGacha = (
         initialRarity: firstDraw.rarity,
         redrawsUsed: 0,
         maxRedraws,
-        isDuplicate
+        isDuplicate,
+        pullId: Date.now()
       });
       setIsGachaRolling(false);
     }, 3000);
@@ -200,23 +203,19 @@ export const useGacha = (
     
     if (gachaQueue > 0) {
       setGachaQueue(prev => prev - 1);
-      setIsGachaRolling(true);
-      setCurrentGachaCard(null);
       
       const nextDraw = drawSingleCard(newCollection);
       const isDuplicate = (newCollection[nextDraw.term] || 0) > 0;
       const maxRedraws = nextDraw.rarity === 'UR' ? 3 : nextDraw.rarity === 'SR' ? 2 : 1;
       
-      gachaTimeoutRef.current = setTimeout(() => {
-        setCurrentGachaCard({
-          term: nextDraw.term,
-          initialRarity: nextDraw.rarity,
-          redrawsUsed: 0,
-          maxRedraws,
-          isDuplicate
-        });
-        setIsGachaRolling(false);
-      }, 3000);
+      setCurrentGachaCard({
+        term: nextDraw.term,
+        initialRarity: nextDraw.rarity,
+        redrawsUsed: 0,
+        maxRedraws,
+        isDuplicate,
+        pullId: Date.now()
+      });
     } else {
       setGachaResults(newHistory);
       setCurrentGachaCard(null);
@@ -230,22 +229,17 @@ export const useGacha = (
   const redrawGachaCard = useCallback(() => {
     if (!currentGachaCard || currentGachaCard.redrawsUsed >= currentGachaCard.maxRedraws) return;
     
-    setIsGachaRolling(true);
-    setCurrentGachaCard(null);
-    
     const redraw = drawSingleCard(ownedCards);
     const isDuplicate = (ownedCards[redraw.term] || 0) > 0;
     
-    gachaTimeoutRef.current = setTimeout(() => {
-      setCurrentGachaCard({
-        term: redraw.term,
-        initialRarity: currentGachaCard.initialRarity,
-        redrawsUsed: currentGachaCard.redrawsUsed + 1,
-        maxRedraws: currentGachaCard.maxRedraws,
-        isDuplicate
-      });
-      setIsGachaRolling(false);
-    }, 3000);
+    setCurrentGachaCard({
+      term: redraw.term,
+      initialRarity: currentGachaCard.initialRarity,
+      redrawsUsed: currentGachaCard.redrawsUsed + 1,
+      maxRedraws: currentGachaCard.maxRedraws,
+      isDuplicate,
+      pullId: Date.now()
+    });
   }, [currentGachaCard, ownedCards, drawSingleCard]);
 
   return {

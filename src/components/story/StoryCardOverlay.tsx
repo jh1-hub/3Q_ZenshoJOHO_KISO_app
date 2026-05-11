@@ -4,7 +4,7 @@ import { BookOpen } from 'lucide-react';
 import { StoryCard } from '../../data/storyData';
 import { SpeedLines } from '../effects/SpeedLines';
 
-export const StoryCardOverlay = ({ card, onClose }: { card: StoryCard; onClose: () => void }) => {
+export const StoryCardOverlay = React.memo(({ card, onClose }: { card: StoryCard; onClose: () => void }) => {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -57,4 +57,4 @@ export const StoryCardOverlay = ({ card, onClose }: { card: StoryCard; onClose: 
       </motion.div>
     </motion.div>
   );
-};
+});

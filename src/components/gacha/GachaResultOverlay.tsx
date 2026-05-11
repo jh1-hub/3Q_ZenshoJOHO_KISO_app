@@ -17,7 +17,7 @@ interface GachaResultOverlayProps {
   handleKeepCard: (action: 'next' | 'close' | 'collection') => void;
 }
 
-export const GachaResultOverlay: React.FC<GachaResultOverlayProps> = ({
+export const GachaResultOverlay: React.FC<GachaResultOverlayProps> = React.memo(({
   currentGachaCard,
   getRarityStyles,
   allTermsMap,
@@ -44,23 +44,27 @@ export const GachaResultOverlay: React.FC<GachaResultOverlayProps> = ({
       
       {/* Reveal Flash */}
       <motion.div
-        key={`flash-${currentGachaCard.term}-${currentGachaCard.redrawsUsed}`}
+        key={`flash-${currentGachaCard.pullId}`}
         initial={{ opacity: 1 }}
         animate={{ opacity: 0 }}
         transition={{ duration: 0.5 }}
         className="absolute inset-0 z-[250] pointer-events-none bg-white"
       />
 
-      <HaloEffect rarity={rarity} />
+      <div key={`halo-${currentGachaCard.pullId}`}>
+        <HaloEffect rarity={rarity} />
+      </div>
       
       {/* Burst Effect */}
-      <Burst 
-        color={styles.flash} 
-        count={styles.particles} 
-      />
+      <div key={`burst-${currentGachaCard.pullId}`}>
+        <Burst 
+          color={styles.flash} 
+          count={styles.particles} 
+        />
+      </div>
 
       <motion.div
-        key={`${currentGachaCard.term}-${currentGachaCard.redrawsUsed}`}
+        key={`card-${currentGachaCard.pullId}`}
         initial={{ scale: 0.2, opacity: 0, rotateY: 180, rotate: -15 }}
         animate={{ 
           scale: 1,
@@ -195,4 +199,4 @@ export const GachaResultOverlay: React.FC<GachaResultOverlayProps> = ({
       </div>
     </motion.div>
   );
-};
+});

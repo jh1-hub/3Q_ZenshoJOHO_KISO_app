@@ -11,7 +11,7 @@ interface LevelUpOverlayProps {
   setShowStoryCard: (card: StoryCard | null) => void;
 }
 
-export const LevelUpOverlay: React.FC<LevelUpOverlayProps> = ({
+export const LevelUpOverlay: React.FC<LevelUpOverlayProps> = React.memo(({
   showLevelUp,
   setShowLevelUp,
   setShowStoryCard
@@ -93,4 +93,4 @@ export const LevelUpOverlay: React.FC<LevelUpOverlayProps> = ({
       )}
     </AnimatePresence>
   );
-};
+});
