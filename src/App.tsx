@@ -383,7 +383,7 @@ export default function App() {
     takeScreenshot(
       userName,
       userProfile,
-      quizCount,
+      userLevel,
       ownedCards,
       getStatsFor,
       speedStarMaxCorrect,

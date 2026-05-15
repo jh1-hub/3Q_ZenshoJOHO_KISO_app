@@ -22,7 +22,7 @@ interface TermStats {
 export const takeScreenshot = (
   userName: string | null,
   userProfile: UserProfile | null,
-  quizCount: number,
+  userLevel: number,
   ownedCards: Record<string, number>,
   getStatsFor: (id: string) => UnitStats,
   speedStarMaxCorrect: number,
@@ -30,7 +30,7 @@ export const takeScreenshot = (
   weakPoints: { name: string; rate: number }[]
 ) => {
   const fileName = `${userProfile?.grade || '0'}${userProfile?.classNum || '0'}${userProfile?.attendanceNum || '00'}stats.png`;
-  const level = Math.floor(quizCount / 10) + 1;
+  const level = userLevel;
 
   const canvas = document.createElement('canvas');
   canvas.width = 1920;
