@@ -30,13 +30,17 @@ export const takeScreenshot = (
   weakPoints: { name: string; rate: number }[]
 ) => {
   const fileName = `${userProfile?.grade || '0'}${userProfile?.classNum || '0'}${userProfile?.attendanceNum || '00'}stats.png`;
-  const level = userLevel;
+  // Ensure level is treated as a number
+  const level = Number(userLevel) || 1;
 
   const canvas = document.createElement('canvas');
   canvas.width = 1920;
   canvas.height = 1080;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
+
+  // Font family priority for Japanese and emojis
+  const fontFamily = '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Meiryo", "MS PGothic", "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
 
   // Color palette based on level
   let color1 = '#1e1b4b'; // Default (Lv 1-5)
@@ -74,25 +78,25 @@ export const takeScreenshot = (
 
   // Watermark
   ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
-  ctx.font = 'bold 120px Arial';
+  ctx.font = `bold 120px ${fontFamily}`;
   ctx.textAlign = 'center';
   ctx.fillText('IT QUIZ STATS', 960, 540);
 
   // Header
   ctx.fillStyle = '#ffffff';
   ctx.textAlign = 'left';
-  ctx.font = 'bold 56px Arial';
+  ctx.font = `bold 56px ${fontFamily}`;
   ctx.fillText('学習成績レポート', 50, 80);
 
   // User Info (Right side)
-  ctx.font = '32px Arial';
+  ctx.font = `32px ${fontFamily}`;
   ctx.fillText(`ユーザー: ${userName || '未設定'}`, 1400, 60);
   ctx.fillText(`学年: ${userProfile?.grade || '0'}年 ${userProfile?.classNum || '0'}組 ${userProfile?.attendanceNum || '0'}番`, 1400, 100);
   
   // Level and Collection Status
   const collectionRate = allTerms.length > 0 ? Math.floor((Object.keys(ownedCards).length / allTerms.length) * 100) : 0;
   ctx.fillStyle = accentColor;
-  ctx.font = 'bold 36px Arial';
+  ctx.font = `bold 36px ${fontFamily}`;
   ctx.fillText(`Lv. ${level} | 収集率: ${collectionRate}%`, 1400, 150);
 
   // Stats Data
@@ -103,10 +107,10 @@ export const takeScreenshot = (
   }
 
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 36px Arial';
+  ctx.font = `bold 36px ${fontFamily}`;
   ctx.fillText('【総合成績】', 50, y);
   y += 45;
-  ctx.font = '28px Arial';
+  ctx.font = `28px ${fontFamily}`;
   drawStats('全体', getStatsFor('all'), 80, y);
   y += 40;
   drawStats('SPEED STAR', { highScore: speedStarMaxCorrect, attempts: speedStarChallenges, totalScore: 0 }, 80, y);
@@ -115,10 +119,10 @@ export const takeScreenshot = (
   // Weak Points Ranking
   if (weakPoints.length > 0) {
     ctx.fillStyle = '#ff4444';
-    ctx.font = 'bold 36px Arial';
+    ctx.font = `bold 36px ${fontFamily}`;
     ctx.fillText('【WEAK POINT 10】', 1300, 200);
     let y_wp = 245;
-    ctx.font = '24px Arial';
+    ctx.font = `24px ${fontFamily}`;
     weakPoints.forEach((wp, idx) => {
       ctx.fillStyle = '#ffcccc';
       ctx.fillText(`#${idx + 1} ${wp.name}`, 1320, y_wp);
@@ -131,21 +135,21 @@ export const takeScreenshot = (
   }
 
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 36px Arial';
+  ctx.font = `bold 36px ${fontFamily}`;
   ctx.fillText('【詳細成績】', 50, y);
   y += 45;
-  ctx.font = '22px Arial';
+  ctx.font = `22px ${fontFamily}`;
   
   quizCategories.forEach((category) => {
     if (y > 1000) return;
     ctx.fillStyle = accentColor;
-    ctx.font = 'bold 30px Arial';
+    ctx.font = `bold 30px ${fontFamily}`;
     const catStats = getStatsFor(category.id);
     ctx.fillText(`■ ${category.title}`, 80, y);
     y += 35;
     
     ctx.fillStyle = '#ffffff';
-    ctx.font = '22px Arial';
+    ctx.font = `22px ${fontFamily}`;
     const catAvg = catStats.attempts > 0 ? Math.floor(catStats.totalScore / catStats.attempts) : 0;
     ctx.fillText(`  [単元合計] HS: ${catStats.highScore.toLocaleString()} | Avg: ${catAvg} | 回数: ${catStats.attempts}`, 100, y);
     y += 30;
@@ -163,9 +167,9 @@ export const takeScreenshot = (
   // Logo (Bottom right)
   ctx.textAlign = 'right';
   ctx.fillStyle = accentColor;
-  ctx.font = 'italic bold 80px "Times New Roman", serif';
+  ctx.font = `italic bold 80px "Times New Roman", ${fontFamily}`;
   ctx.fillText('IT QUIZ MASTER', 1870, 1000);
-  ctx.font = 'bold 24px Arial';
+  ctx.font = `bold 24px ${fontFamily}`;
   ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
   ctx.fillText('Knowledge is Power', 1870, 1035);
   
