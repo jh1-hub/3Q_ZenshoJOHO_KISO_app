@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Lock } from 'lucide-react';
-import { getTermIcon } from '../../lib/termIcon';
+import { getTermIcon, getTermEmoji } from '../../lib/termIcon';
 
 interface CardItemProps {
   term: string;
@@ -68,7 +68,7 @@ export const CardItem: React.FC<CardItemProps> = ({
           {/* Card Content */}
           <div className="flex-1 p-3 md:p-4 flex flex-col items-center justify-start text-center space-y-2 md:space-y-3">
             <div className={`hidden md:flex w-12 h-12 shrink-0 rounded-xl items-center justify-center ${isOwned ? styles.bg : 'bg-theme-border'} ${isOwned ? (rarity === 'C' ? 'text-theme-text' : 'text-white') : 'text-theme-text-muted'} shadow-inner`}>
-              {isOwned ? getTermIcon(term, 20) : <Lock size={20} />}
+              {isOwned ? <span className="text-2xl">{getTermEmoji(term)}</span> : <Lock size={20} />}
             </div>
             
             <div className="space-y-0.5 w-full shrink-0">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { SubcategoryButton } from './SubcategoryButton';
+import { SubcategoryButton } from '../category/SubcategoryButton';
 import { CreditCard, Play } from 'lucide-react';
 
 interface CategoryCardProps {

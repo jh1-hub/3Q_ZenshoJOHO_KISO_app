@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, Zap, Trophy, ChevronRight, TrendingDown, CreditCard } from 'lucide-react';
-import { CategoryCard } from '../category/CategoryCard';
+import { CategoryCard } from '../collection/CategoryCard';
 
 interface CategorySelectViewProps {
   setGameState: (state: any) => void;

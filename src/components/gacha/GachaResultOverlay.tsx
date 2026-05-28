@@ -4,6 +4,7 @@ import { ArrowRight } from 'lucide-react';
 import { SpeedLines } from '../effects/SpeedLines';
 import { HaloEffect } from '../effects/HaloEffect';
 import { Burst } from '../effects/Burst';
+import { getTermEmoji } from '../../lib/termIcon';
 
 interface GachaResultOverlayProps {
   currentGachaCard: any;
@@ -111,8 +112,7 @@ export const GachaResultOverlay: React.FC<GachaResultOverlayProps> = React.memo(
             {/* Card Content */}
             <div className="flex-1 p-4 md:p-6 flex flex-col items-center justify-center text-center space-y-3 md:space-y-4 relative z-10">
               <div className={`w-16 h-16 md:w-24 md:h-24 rounded-xl md:rounded-2xl flex items-center justify-center ${styles.bg} ${rarity === 'C' ? 'text-theme-text' : 'text-white'} shadow-inner`}>
-                <div className="hidden md:block">{getTermIcon(currentGachaCard.term, 48)}</div>
-                <div className="block md:hidden">{getTermIcon(currentGachaCard.term, 32)}</div>
+                <span className="text-4xl md:text-5xl">{getTermEmoji(currentGachaCard.term)}</span>
               </div>
               
               <div className="space-y-1">

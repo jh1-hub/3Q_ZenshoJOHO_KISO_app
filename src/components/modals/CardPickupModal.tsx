@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Info, RotateCcw, MousePointer2 } from 'lucide-react';
 import { allTermsMap, quizCategories } from '../../data/quizData';
 import { termToId, getRarityStyles } from '../../lib/utils';
-import { getTermIcon } from '../../lib/termIcon';
+import { getTermIcon, getTermEmoji } from '../../lib/termIcon';
 import { HaloEffect } from '../effects/HaloEffect';
 
 interface CardPickupModalProps {
@@ -116,8 +116,7 @@ export const CardPickupModal: React.FC<CardPickupModalProps> = ({
             {/* Body */}
             <div className="flex-1 p-4 md:p-6 flex flex-col items-center justify-center text-center space-y-3 md:space-y-4 overflow-y-auto">
               <div className={`w-16 h-16 md:w-24 md:h-24 rounded-xl md:rounded-2xl flex items-center justify-center ${styles.bg} ${rarity === 'C' || !termData ? 'text-theme-text' : 'text-white'} shadow-inner shrink-0`}>
-                <div className="hidden md:block">{getTermIcon(pickedCard.term, 48)}</div>
-                <div className="block md:hidden">{getTermIcon(pickedCard.term, 32)}</div>
+                <span className="text-4xl md:text-5xl">{getTermEmoji(pickedCard.term)}</span>
               </div>
               
               <div className="space-y-1 shrink-0">
