@@ -15,7 +15,7 @@ export const StoryChapter: React.FC<StoryChapterProps> = ({
   userLevel,
   setShowStoryCard
 }) => {
-  const unlockedInChapter = chapterCards.filter(c => c.id < userLevel);
+  const unlockedInChapter = chapterCards.filter(c => c.id < userLevel || (c.id === 99 && userLevel >= 99));
   
   if (unlockedInChapter.length === 0) return null;
 
@@ -31,7 +31,7 @@ export const StoryChapter: React.FC<StoryChapterProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {chapterCards.map(card => {
-          const isUnlocked = card.id < userLevel;
+          const isUnlocked = card.id < userLevel || (card.id === 99 && userLevel >= 99);
           return (
             <StoryItem
               key={card.id}

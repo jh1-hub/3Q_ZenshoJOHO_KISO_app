@@ -28,7 +28,8 @@ export const LevelUpOverlay: React.FC<LevelUpOverlayProps> = React.memo(({
             const unlockedLevel = showLevelUp;
             setShowLevelUp(null);
             if (unlockedLevel && unlockedLevel >= 2 && unlockedLevel <= 99) {
-              const card = storyCards.find(c => c.id === unlockedLevel - 1);
+              const cardId = unlockedLevel === 99 ? 99 : unlockedLevel - 1;
+              const card = storyCards.find(c => c.id === cardId);
               if (card) setShowStoryCard(card);
             }
           }}

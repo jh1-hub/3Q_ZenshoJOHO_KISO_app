@@ -42,11 +42,11 @@ export const StoryView: React.FC<StoryViewProps> = ({
             <div className="w-48 h-2 bg-theme-border rounded-full overflow-hidden">
               <motion.div 
                 initial={{ width: 0 }}
-                animate={{ width: `${(Math.max(0, userLevel - 1) / 98) * 100}%` }}
+                animate={{ width: `${((userLevel >= 99 ? 99 : Math.max(0, userLevel - 1)) / 99) * 100}%` }}
                 className="h-full bg-amber-500"
               />
             </div>
-            <span className="text-xl font-mono font-bold text-amber-500">{Math.max(0, userLevel - 1)} / 98</span>
+            <span className="text-xl font-mono font-bold text-amber-500">{userLevel >= 99 ? 99 : Math.max(0, userLevel - 1)} / 99</span>
           </div>
         </div>
       </div>

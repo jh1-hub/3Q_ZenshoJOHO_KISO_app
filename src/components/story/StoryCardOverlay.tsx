@@ -40,7 +40,22 @@ export const StoryCardOverlay = React.memo(({ card, onClose }: { card: StoryCard
             <h3 className="text-2xl md:text-3xl font-bold text-white leading-tight">「{card.title}」</h3>
             <div className="w-12 h-1 bg-amber-500 mx-auto rounded-full opacity-50" />
             <p className="text-slate-300 text-sm md:text-base leading-relaxed whitespace-pre-wrap text-left">
-              {card.content}
+              {card.content.split(/(https?:\/\/[^\s]+)/g).map((part, index) => {
+                if (/(https?:\/\/[^\s]+)/.test(part)) {
+                  return (
+                    <a 
+                      key={index} 
+                      href={part} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-amber-400 hover:text-amber-300 underline font-semibold break-all"
+                    >
+                      {part}
+                    </a>
+                  );
+                }
+                return part;
+              })}
             </p>
           </div>
         </div>

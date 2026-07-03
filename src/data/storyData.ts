@@ -593,6 +593,12 @@ export const storyCards: StoryCard[] = [
     chapter: "アフターエピソード：それから",
     title: "最後の一文",
     content: "知識は、\n使わなければ眠ったままだ。\nしかし、\n使えば世界は変わる。\n静かに、確実に。"
+  },
+  {
+    id: 99,
+    chapter: "アフターエピソード：それから",
+    title: "新たなる旅路",
+    content: "別形式のアプリにもチャレンジしてみますか？\n\nhttps://itquestjohokiso.vercel.app/"
   }
 ];
 
