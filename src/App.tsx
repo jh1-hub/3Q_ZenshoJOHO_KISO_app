@@ -388,7 +388,8 @@ export default function App() {
       getStatsFor,
       speedStarMaxCorrect,
       speedStarChallenges,
-      weakPoints
+      weakPoints,
+      speedStarMaxCombo
     );
   };
 

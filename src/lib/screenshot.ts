@@ -27,7 +27,8 @@ export const takeScreenshot = (
   getStatsFor: (id: string) => UnitStats,
   speedStarMaxCorrect: number,
   speedStarChallenges: number,
-  weakPoints: { name: string; rate: number }[]
+  weakPoints: { name: string; rate: number }[],
+  speedStarMaxCombo: number = 0
 ) => {
   const fileName = `${userProfile?.grade || '0'}${userProfile?.classNum || '0'}${userProfile?.attendanceNum || '00'}stats.png`;
   // Ensure level is treated as a number
@@ -113,7 +114,7 @@ export const takeScreenshot = (
   ctx.font = `28px ${fontFamily}`;
   drawStats('全体', getStatsFor('all'), 80, y);
   y += 40;
-  drawStats('SPEED STAR', { highScore: speedStarMaxCorrect, attempts: speedStarChallenges, totalScore: 0 }, 80, y);
+  ctx.fillText(`SPEED STAR | 最高正答: ${speedStarMaxCorrect}回 | MAXコンボ: ${speedStarMaxCombo} | 挑戦: ${speedStarChallenges}回`, 80, y);
   y += 60;
 
   // Weak Points Ranking
