@@ -378,10 +378,18 @@ export const useQuiz = (
 
     const selectedQuestionsData = [];
     const termTargetCount = targetCount - mixedPractical.length;
-    for (let i = 0; i < termTargetCount; i++) {
-      const randomSub = allSubcategories[Math.floor(Math.random() * allSubcategories.length)];
-      const randomTerm = randomSub.terms[Math.floor(Math.random() * randomSub.terms.length)];
-      selectedQuestionsData.push({ term: randomTerm, subTerms: randomSub.terms });
+    
+    // 全単元の用語をシャッフルし、重複なく選択
+    const allTermsFlat = allSubcategories.flatMap(sub => sub.terms.map(term => ({ term, subTerms: sub.terms })));
+    const shuffledFlat = [...allTermsFlat].sort(() => 0.5 - Math.random());
+    const usedTermNames = new Set<string>();
+
+    for (const item of shuffledFlat) {
+      if (selectedQuestionsData.length >= termTargetCount) break;
+      if (!usedTermNames.has(item.term.name)) {
+        usedTermNames.add(item.term.name);
+        selectedQuestionsData.push(item);
+      }
     }
 
     try {
