@@ -25,6 +25,16 @@ export const CardPickupModal: React.FC<CardPickupModalProps> = ({
   const rarity = termData?.rarity || 'C';
   const styles = getRarityStyles(rarity);
 
+  const particles = React.useMemo(() => {
+    return Array.from({ length: 20 }).map(() => ({
+      x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 800),
+      y: Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 600),
+      targetY: -(50 + Math.random() * 150),
+      duration: 2 + Math.random() * 3,
+      delay: Math.random() * 2,
+    }));
+  }, []);
+
   return (
     <AnimatePresence>
       <motion.div
@@ -45,28 +55,29 @@ export const CardPickupModal: React.FC<CardPickupModalProps> = ({
           onClick={() => setPickedCard(null)}
         />
 
-        {/* Floating Particles or Glow for High Rarity */}
+        {/* Floating Particles for High Rarity */}
         {['SR', 'UR'].includes(rarity) && (
           <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-            {[...Array(20)].map((_, i) => (
+            {particles.map((p, i) => (
               <motion.div
                 key={i}
                 initial={{ 
-                  x: Math.random() * window.innerWidth, 
-                  y: Math.random() * window.innerHeight,
+                  x: p.x, 
+                  y: p.y,
                   opacity: 0,
                   scale: 0
                 }}
                 animate={{ 
-                  y: [null, Math.random() * -200],
+                  y: [null, p.targetY],
                   opacity: [0, 0.8, 0],
                   scale: [0, 1, 0]
                 }}
                 transition={{ 
-                  duration: 2 + Math.random() * 3,
+                  duration: p.duration,
                   repeat: Infinity,
-                  delay: Math.random() * 2
+                  delay: p.delay
                 }}
+                style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
                 className={`absolute w-2 h-2 rounded-full ${
                   rarity === 'UR' ? 'bg-pink-400' : 'bg-yellow-300'
                 } blur-sm`}
@@ -77,7 +88,12 @@ export const CardPickupModal: React.FC<CardPickupModalProps> = ({
 
         <motion.div
           layoutId={`card-${pickedCard.term}`}
-          style={{ perspective: 1000 }}
+          style={{ 
+            perspective: 1000,
+            transformStyle: 'preserve-3d',
+            transform: 'translateZ(0)',
+            willChange: 'transform'
+          }}
           initial={{ scale: 0.8, y: 50, rotateY: 180 }}
           animate={{ scale: 1, y: 0, rotateY: 0 }}
           exit={{ scale: 0.8, y: 50, rotateY: 180 }}
@@ -98,6 +114,7 @@ export const CardPickupModal: React.FC<CardPickupModalProps> = ({
           <motion.div 
             animate={{ x: ['-100%', '200%'] }}
             transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            style={{ transform: 'translateZ(0)', willChange: 'transform' }}
             className="absolute inset-0 pointer-events-none bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 z-0"
           />
 
@@ -132,6 +149,7 @@ export const CardPickupModal: React.FC<CardPickupModalProps> = ({
                 animate={{ rotateY: 0, opacity: 1 }}
                 exit={{ rotateY: -90, opacity: 0 }}
                 transition={{ duration: 0.3 }}
+                style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
                 className="pt-3 md:pt-4 border-t border-theme-border w-full shrink-0"
               >
                 <div className="flex items-center justify-center gap-1.5 md:gap-2 text-theme-text-muted mb-2">

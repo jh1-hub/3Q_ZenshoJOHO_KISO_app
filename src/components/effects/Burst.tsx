@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-export const Burst = ({ color, count }: { color: string, count: number }) => {
+export const Burst: React.FC<{ color: string; count: number }> = React.memo(({ color, count }) => {
   const particles = React.useMemo(() => {
     return Array.from({ length: count }).map(() => ({
       targetX: 50 + (Math.random() - 0.5) * 200,
@@ -34,9 +34,10 @@ export const Burst = ({ color, count }: { color: string, count: number }) => {
             ease: "easeOut",
             delay: p.delay
           }}
+          style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
           className={`absolute w-2 h-2 rounded-full ${color} blur-[1px]`}
         />
       ))}
     </div>
   );
-};
+});

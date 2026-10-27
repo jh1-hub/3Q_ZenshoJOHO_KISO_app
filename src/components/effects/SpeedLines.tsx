@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-export const SpeedLines = ({ count = 15 }: { count?: number }) => {
+export const SpeedLines: React.FC<{ count?: number }> = React.memo(({ count = 15 }) => {
   const delays = React.useMemo(() => {
     return Array.from({ length: count }).map(() => Math.random() * 0.5);
   }, [count]);
@@ -31,9 +31,10 @@ export const SpeedLines = ({ count = 15 }: { count?: number }) => {
             delay: delays[i],
             ease: "easeInOut"
           }}
+          style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
           className="absolute h-[2px] w-[1000px] bg-gradient-to-r from-transparent via-white/30 to-transparent origin-left"
         />
       ))}
     </div>
   );
-};
+});

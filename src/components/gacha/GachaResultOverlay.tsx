@@ -78,6 +78,12 @@ export const GachaResultOverlay: React.FC<GachaResultOverlayProps> = React.memo(
           scale: { type: "spring", damping: 12, stiffness: 100, delay: 0.1 },
           x: { duration: 0.4, delay: 0.2 }
         }}
+        style={{
+          perspective: 1000,
+          transformStyle: 'preserve-3d',
+          transform: 'translateZ(0)',
+          willChange: 'transform, opacity'
+        }}
         className="relative w-full max-w-[280px] md:max-w-sm aspect-[2/3] md:aspect-[3/4] z-10"
       >
         {/* Card Display */}
@@ -97,6 +103,7 @@ export const GachaResultOverlay: React.FC<GachaResultOverlayProps> = React.memo(
               <motion.div 
                 animate={{ opacity: [0, 1, 0], scale: [0.8, 1.2, 0.8] }}
                 transition={{ repeat: Infinity, duration: 2 }}
+                style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
                 className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/15 to-white/0"
               />
             </div>

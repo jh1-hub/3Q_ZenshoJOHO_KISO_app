@@ -17,7 +17,7 @@ interface CardItemProps {
   cardRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
 }
 
-export const CardItem: React.FC<CardItemProps> = ({
+export const CardItem: React.FC<CardItemProps> = React.memo(({
   term,
   subId,
   rarity,
@@ -46,6 +46,7 @@ export const CardItem: React.FC<CardItemProps> = ({
       <motion.div
         whileHover={isOwned ? { scale: 1.05, y: -5 } : {}}
         onClick={() => handleCardClick(term)}
+        style={{ transform: 'translateZ(0)' }}
         className={`relative h-full flex flex-col rounded-2xl overflow-hidden ${isOwned ? 'cursor-pointer' : 'cursor-not-allowed grayscale opacity-50'} group ${isOwned ? styles.border : 'border-2 border-dashed border-theme-border-strong'} ${isOwned ? styles.glow : ''} bg-theme-card`}
       >
         {/* Card Backgrounds */}
@@ -116,4 +117,4 @@ export const CardItem: React.FC<CardItemProps> = ({
       </motion.div>
     </div>
   );
-};
+});
